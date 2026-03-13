@@ -38,7 +38,7 @@ services:
       - openday_dev
       - nginx_proxy
     restart: unless-stopped
-    command: python app.py
+    command: python run.py
 
 networks:
   openday_dev:

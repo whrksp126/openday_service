@@ -38,7 +38,7 @@ services:
       - openday_prod
       - nginx_proxy
     restart: always
-    command: gunicorn -w 2 --bind 0.0.0.0:5000 app:app
+    command: gunicorn -w 2 --bind 0.0.0.0:5000 run:app
 
 networks:
   openday_prod:
