@@ -1,0 +1,419 @@
+@keyframes slide-up {
+  from {
+      transform: translateY(100%);
+      opacity: 0; 
+  }
+  to {
+      transform: translateY(0);
+      visibility: visible;
+      opacity: 1; 
+  }
+}
+@keyframes slide-down {
+  from {
+      transform: translateY(-100%);
+      opacity: 0; 
+  }
+  to {
+      transform: translateY(0);
+      visibility: visible;
+      opacity: 1; 
+  }
+}
+@keyframes slide-in-left {
+  from {
+      transform: translateX(-100%);
+      opacity: 0; 
+  }
+  to {
+      transform: translateY(0);
+      visibility: visible;
+      opacity: 1; 
+  }
+}
+@keyframes slide-in-right {
+  from {
+      transform: translateX(100%);
+      opacity: 0; 
+  }
+  to {
+      transform: translateY(0);
+      visibility: visible;
+      opacity: 1; 
+  }
+}
+/* cubic-bezier(0.68, -0.55, 0.265, 1.55) : 빠르게 시작하여 천천히 끝나는 모션입니다. 애니메이션의 후반부에서 높은 가속도를 유지합니다. */
+/* cubic-bezier(0.4, 0, 0.2, 1) : 빠르게 시작하여 천천히 끝나는 모션입니다. ease-out 효과를 강화시킨 애니메이션입니다. */
+/* cubic-bezier(0.17, 0.67, 0.83, 0.67) : 충돌하는 두 물체 사이의 반동 모션과 유사한 효과를 나타냅니다. */
+/* cubic-bezier(0.23, 1, 0.32, 1) : 요소가 바운스하면서 천천히 서서히 멈추는 모션을 나타냅니다. */
+/* cubic-bezier(0.19, 1, 0.22, 1) : 강한 탄성을 가진 공의 바운드 모션과 유사한 효과를 나타냅니다. */
+/* cubic-bezier(0.6, -0.28, 0.735, 0.045) : 물결이 일렁이는 것처럼 자연스러운 효과를 나타냅니다. */
+/* cubic-bezier(0.175, 0.885, 0.32, 1.275) : 요소가 가속도를 받으면서 서서히 멈추는 효과를 나타냅니다. */
+/* cubic-bezier(0.6, 0, 0.3, 1) : 빠르게 시작하여 천천히 끝나는 모션으로, ease-in-out 효과를 강화시킨 애니메이션입니다. */
+.animation {
+  animation-duration: .8s;
+  animation-iteration-count: 1;
+  animation-fill-mode: both;
+  visibility: hidden;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1); 
+
+}
+.order-1 {
+  animation-delay: 0s;
+}
+.order-2 {
+  animation-delay: 0.1s;
+}
+.order-3 {
+  animation-delay: 0.2s;
+}
+.order-4 {
+  animation-delay: 0.3s;
+}
+.order-5 {
+  animation-delay: 0.4s;
+}
+.order-6 {
+  animation-delay: 0.5s;
+}
+.order-7 {
+  animation-delay: 0.6s;
+}
+.order-8 {
+  animation-delay: 0.7s;
+}
+.order-9 {
+  animation-delay: 0.8s;
+}
+
+.inline {
+  display: inline-block;
+}
+.slide-up {
+  animation-name: slide-up;
+}
+.slide-down {
+  animation-name: slide-down;
+}
+.slide-in-left {
+  animation-name: slide-in-left;
+}
+.slide-in-right {
+  animation-name: slide-in-right;
+}
+
+.circle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 20px;
+  height: 20px;
+  background-color: #ff5f7a;
+  color: white;
+  text-align: center;
+  line-height: 100px;
+  border-radius: 50%;
+  font-size: 1.3rem;
+}
+.circle:hover {
+  cursor: pointer;
+}
+.circle.small {
+  width: 12px;
+  height: 12px;
+  opacity: .6;
+}
+.circle.middle {
+  width: 20px;
+  height: 20px;
+  opacity: .8;
+}
+.circle.large {
+  width: 25px;
+  height: 25px;
+}
+.circle.ff3 {
+  background-color: #fffb83;
+}
+.circle.fff {
+  background-color: #fff;
+}
+.circle::after, .circle::before {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 20px;
+  height: 20px;
+  background: #ff5f7a;
+  border-radius: 50%;
+  z-index: -1;
+  animation: grow 1s ease-in-out infinite;
+}
+.circle.small::after, 
+.circle.small::before {
+  width: 12px;
+  height: 12px;
+}
+.circle.middle::after, 
+.circle.middle::before {
+  width: 20px;
+  height: 20px;
+}
+.circle.large::after, 
+.circle.large::before {
+  width: 25px;
+  height: 25px;
+}
+.circle.ff3::after, 
+.circle.ff3::before {
+  /* background: #ff5f7a; */
+  background: rgba(255, 255, 255, 1);
+}
+.circle::after {
+  background: rgba(255, 95, 122, 0.4);
+}
+.circle.ff3::after {
+  /* background: rgba(255, 57, 0, 0.4); */
+  background: rgba(255, 251, 131, 0.6);
+}
+.circle.fff::after {
+  /* background: rgba(255, 57, 0, 0.4); */
+  background: rgba(255, 255, 255, 1);
+}
+.circle::after::before {
+  content: "";
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 10px;
+  height: 10px;
+  background: #5f84ff;
+  border-radius: 50%;
+  z-index: -1;
+  animation: grow 1s ease-in-out infinite;
+  transform: translate(-50%, -50%);
+}
+.circle::before {
+  background: rgba(255, 95, 122, 0.6);
+  animation-delay: -0.5s;
+}
+.circle.ff3::before {
+  background: rgba(255, 251, 131, 0.6);
+}
+.circle.fff::before {
+  background: rgba(255, 255, 255, 0.6);
+}
+@keyframes grow {
+  0% {
+    transform: scale(1, 1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(3, 3);
+    opacity: 0;
+  }
+}
+
+
+.neon-animation {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: #fff;
+  transform: translate(-50%, -50%);
+}  
+
+.neon-animation.x-small {
+  width: 5px;
+  height: 5px;
+}
+.neon-animation.small {
+  width: 10px;
+  height: 10px;
+}
+.neon-animation.middle {
+  width: 20px;
+  height: 20px;
+}
+.neon-animation.large {
+  width: 30px;
+  height: 30px;
+}
+.neon-animation.x-large {
+  width: 40px;
+  height: 40px;
+}
+.neon-animation.fff {
+  background-color: #fff;
+}
+.neon-animation.d4e {
+  background-color: #d4ef1b;
+}
+.neon-animation.fb6 {
+  background-color: #6FBE64;
+}
+.neon-animation.fff::before {
+  box-shadow: 
+      0 0 10px #fff, 
+      0 0 20px #fff, 
+      0 0 30px #fff;
+}
+.neon-animation.d4e::before {
+  box-shadow: 
+      0 0 10px #d4ef1b, 
+      0 0 20px #d4ef1b, 
+      0 0 30px #d4ef1b;
+}
+.neon-animation.fb6::before {
+  box-shadow: 
+      0 0 10px #6FBE64, 
+      0 0 20px #6FBE64, 
+      0 0 30px #6FBE64;
+}
+.neon-animation::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  box-shadow: 0 0 10px #fff, 0 0 20px #fff, 0 0 30px #fff; /* 엘리먼트에 그림자 효과를 적용 */
+  animation: neon 1s linear infinite; /* neon 애니메이션을 1초에 걸쳐서 반복하도록 지정 */
+  opacity: 0; /* 초기에 그림자를 투명하게 설정 */
+} 
+@keyframes neon {
+  0% {
+    opacity: 0; /* 그림자 투명도를 0으로 설정 */
+  }
+  50% {
+    opacity: 1; /* 그림자 투명도를 1로 설정 */
+  }
+  100% {
+    opacity: 0; /* 그림자 투명도를 0으로 설정 */
+  }
+}
+
+@media (max-width: 768px) {
+.circle.small {
+  width: 6px;
+  height: 6px;
+  opacity: .6;
+}
+.circle.middle {
+  width: 10px;
+  height: 10px;
+  opacity: .8;
+}
+.circle.large {
+  width: 12.5px;
+  height: 12.5px;
+}
+.circle.small::after, 
+.circle.small::before {
+  width: 6px;
+  height: 6px;
+}
+.circle.middle::after, 
+.circle.middle::before {
+  width: 10px;
+  height: 10px;
+}
+.circle.large::after, 
+.circle.large::before {
+  width: 12.5px;
+  height: 12.5px;
+}
+}
+
+
+.animation-box {
+opacity: 0;
+transition: opacity 1s;
+}
+
+.animation-box.slide-up {
+animation-name: slideUp;
+animation-duration: 1s;
+animation-fill-mode: forwards;
+}
+.animation-box.slide-down {
+animation-name: slideDown;
+animation-duration: 1s;
+animation-fill-mode: forwards;
+}
+
+.animation-box.slide-right {
+animation-name: slideRight;
+animation-duration: 1s;
+animation-fill-mode: forwards;
+}
+.animation-box.slide-left {
+animation-name: slideLeft;
+animation-duration: 1s;
+animation-fill-mode: forwards;
+}
+
+.animation-box.fade-in {
+animation-name: fadeIn;
+animation-duration: 1s;
+animation-fill-mode: forwards;
+}
+@keyframes slideDown {
+from {
+  transform: translate(0,-100%);
+  opacity: 0;
+}
+to {
+  transform: translate(0,0);
+  opacity: 1;
+}
+}
+
+@keyframes slideUp {
+from {
+  transform: translate(0,50px);
+
+  opacity: 0;
+}
+to {
+  transform: translate(0,0);
+  opacity: 1;
+}
+}
+
+@keyframes slideLeft {
+from {
+  transform: translate(-100%,0);
+  opacity: 0;
+}
+to {
+  transform: translate(0,0);
+  opacity: 1;
+}
+}
+
+@keyframes slideRight {
+from {
+  transform: translate(100%,0);
+  opacity: 0;
+}
+to {
+  transform: translate(0,0);
+  opacity: 1;
+}
+}
+
+@keyframes fadeIn {
+from {
+  opacity: 0;
+}
+to {
+  opacity: 1;
+}
+}

@@ -1,0 +1,51 @@
+version: '3.8'
+
+# ── Production ───────────────────────────────────────────────────────────────
+# 사용: docker compose up -d
+# env:  .env
+# 도메인: https://openday.ghmate.com
+
+services:
+  mysql:
+    container_name: openday_mysql_prod
+    image: mysql:8.0
+    env_file: .env
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - openday_prod
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: always
+
+  openday_service:
+    container_name: openday_service_prod
+    image: whrksp126/openday_service:prod
+    build:
+      context: .
+      platforms:
+        - linux/amd64
+    env_file: .env
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - images_data:/app/app/images
+    networks:
+      - openday_prod
+      - nginx_proxy
+    restart: always
+    command: gunicorn -w 2 --bind 0.0.0.0:5000 app:app
+
+networks:
+  openday_prod:
+    driver: bridge
+  nginx_proxy:
+    external: true
+
+volumes:
+  mysql_data:
+  images_data:

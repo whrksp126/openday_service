@@ -1,0 +1,51 @@
+version: '3.8'
+
+# ── Dev 서버 환경 ──────────────────────────────────────────────────────────────
+# 사용: docker compose -f docker-compose.dev.yml up -d
+# env:  .env.dev
+# 도메인: https://dev-openday.ghmate.com
+
+services:
+  mysql:
+    container_name: openday_mysql_dev
+    image: mysql:8.0
+    env_file: .env.dev
+    volumes:
+      - mysql_dev_data:/var/lib/mysql
+    networks:
+      - openday_dev
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  openday_service:
+    container_name: openday_service_dev
+    image: whrksp126/openday_service:dev
+    build:
+      context: .
+      platforms:
+        - linux/amd64
+    env_file: .env.dev
+    depends_on:
+      mysql:
+        condition: service_healthy
+    volumes:
+      - images_dev_data:/app/app/images
+    networks:
+      - openday_dev
+      - nginx_proxy
+    restart: unless-stopped
+    command: python app.py
+
+networks:
+  openday_dev:
+    driver: bridge
+  nginx_proxy:
+    external: true
+
+volumes:
+  mysql_dev_data:
+  images_dev_data:

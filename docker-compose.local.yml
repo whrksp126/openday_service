@@ -1,0 +1,37 @@
+version: '3.8'
+
+# ── Local 개발환경 ────────────────────────────────────────────────────────────
+# 사용: docker compose -f docker-compose.local.yml up --build
+# env:  .env.local
+# 특징: 코드 volume mount → hot reload, flask debug 모드
+
+services:
+  mysql:
+    image: mysql:8.0
+    env_file: .env.local
+    volumes:
+      - mysql_local_data:/var/lib/mysql
+    ports:
+      - "3330:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  openday_service:
+    build:
+      context: .
+    env_file: .env.local
+    volumes:
+      - .:/app                        # hot reload
+      - /app/app/images               # 이미지 업로드 유지
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "5300:5000"
+    command: python app.py
+
+volumes:
+  mysql_local_data:
