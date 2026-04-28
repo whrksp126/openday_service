@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
     const uploadDir = await ensureUploadDir()
     const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`
     await writeFile(path.join(uploadDir, filename), buf)
-    return NextResponse.json({ url: `/uploads/${filename}` })
+    return NextResponse.json({ url: `/api/uploads/${filename}` })
   }
 
   const formData = await req.formData()

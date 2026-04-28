@@ -30,6 +30,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
 
+# 업로드 디렉토리: docker named volume 이 처음 마운트될 때 이 디렉토리의 소유권/권한이 복사된다
+RUN mkdir -p /app/public/uploads && chown -R nextjs:nodejs /app/public/uploads
+
 USER nextjs
 
 EXPOSE 5000
