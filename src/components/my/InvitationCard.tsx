@@ -71,6 +71,9 @@ export default function InvitationCard({ data }: { data: InvitationCardData }) {
             description,
             slug: data.slug,
             THU: imageUrl,
+            // 빌더의 비율을 '사용자 인자(${SC})' 로 두었을 때 원본 비율 유지(1) 강제.
+            // 캡처 단계에서 이미 1:1 정사각으로 합성하므로 letterbox 없음.
+            SC: '1',
           },
         })
       } else {
