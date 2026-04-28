@@ -9,7 +9,15 @@ interface KakaoSdk {
   isInitialized: () => boolean
   Share: {
     sendDefault: (params: KakaoShareDefaultParams) => void
+    sendCustom: (params: KakaoShareCustomParams) => void
   }
+}
+
+export interface KakaoShareCustomParams {
+  templateId: number
+  templateArgs?: Record<string, string>
+  serverCallbackArgs?: Record<string, string> | string
+  installTalk?: boolean
 }
 
 interface KakaoShareLink {

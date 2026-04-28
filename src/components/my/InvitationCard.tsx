@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Image as ImageIcon, Link as LinkIcon, MessageCircleMore, QrCode, MoreHorizontal, Edit3 } from 'lucide-react'
 import QrModal from './QrModal'
 import MoreMenuModal from './MoreMenuModal'
-import { shareKakaoFeed } from '@/lib/kakao'
+import { getKakaoTemplateId, shareKakaoCustom, shareKakaoFeed } from '@/lib/kakao'
 import { toAbsoluteUrl } from '@/lib/share-fallback'
 
 export interface InvitationCardData {
@@ -58,17 +58,33 @@ export default function InvitationCard({ data }: { data: InvitationCardData }) {
       data.kakaoShareExtra ?? data.fallbackExtra ?? '',
     ].filter(Boolean).join('\n')
     const imageUrl = toAbsoluteUrl(data.thumbnailUrl, origin) ?? ''
+
+    const templateId = getKakaoTemplateId()
     try {
-      shareKakaoFeed({
-        objectType: 'feed',
-        content: {
-          title,
-          description,
-          imageUrl,
-          link: { mobileWebUrl: shareUrl, webUrl: shareUrl },
-        },
-        buttons: [{ title: '청첩장 보기', link: { mobileWebUrl: shareUrl, webUrl: shareUrl } }],
-      })
+      // 콘솔에 등록된 사용자 정의 메시지 템플릿이 있으면 sendCustom (큰 풀폭 버튼 카드).
+      // 없으면 sendDefault feed 로 폴백 (PC 카톡에서 버튼 안 보일 수 있음).
+      if (templateId) {
+        shareKakaoCustom({
+          templateId,
+          templateArgs: {
+            title,
+            description,
+            slug: data.slug,
+            THU: imageUrl,
+          },
+        })
+      } else {
+        shareKakaoFeed({
+          objectType: 'feed',
+          content: {
+            title,
+            description,
+            imageUrl,
+            link: { mobileWebUrl: shareUrl, webUrl: shareUrl },
+          },
+          buttons: [{ title: '초대장 보기', link: { mobileWebUrl: shareUrl, webUrl: shareUrl } }],
+        })
+      }
     } catch {
       showToast('카카오톡 공유 설정이 필요합니다')
     }

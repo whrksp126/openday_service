@@ -7,6 +7,7 @@ services:
       dockerfile: Dockerfile
       args:
         NEXT_PUBLIC_KAKAO_JS_KEY: ${NEXT_PUBLIC_KAKAO_JS_KEY:-}
+        NEXT_PUBLIC_KAKAO_TEMPLATE_ID: ${NEXT_PUBLIC_KAKAO_TEMPLATE_ID:-}
     env_file: .env.stg
     environment:
       NODE_ENV: production

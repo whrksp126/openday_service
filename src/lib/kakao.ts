@@ -1,7 +1,14 @@
-import type { KakaoShareDefaultParams } from '@/types/kakao'
+import type { KakaoShareCustomParams, KakaoShareDefaultParams } from '@/types/kakao'
 
 export function getKakaoJsKey(): string | undefined {
   return process.env.NEXT_PUBLIC_KAKAO_JS_KEY
+}
+
+export function getKakaoTemplateId(): number | undefined {
+  const v = process.env.NEXT_PUBLIC_KAKAO_TEMPLATE_ID
+  if (!v) return undefined
+  const n = Number(v)
+  return Number.isFinite(n) ? n : undefined
 }
 
 export function isKakaoReady(): boolean {
@@ -25,4 +32,11 @@ export function shareKakaoFeed(params: KakaoShareDefaultParams): void {
     throw new Error('카카오 SDK가 준비되지 않았습니다. NEXT_PUBLIC_KAKAO_JS_KEY를 확인하세요.')
   }
   window.Kakao!.Share.sendDefault(params)
+}
+
+export function shareKakaoCustom(params: KakaoShareCustomParams): void {
+  if (!initKakao()) {
+    throw new Error('카카오 SDK가 준비되지 않았습니다. NEXT_PUBLIC_KAKAO_JS_KEY를 확인하세요.')
+  }
+  window.Kakao!.Share.sendCustom(params)
 }
