@@ -1,11 +1,23 @@
-version: '3.8'
-
-# ── Staging 환경 ──────────────────────────────────────────────────────────────
-# 사용: docker compose -f docker-compose.stg.yml up -d
-# env:  .env.stg
-# 도메인: https://stg-openday.ghmate.com
-
 services:
+  nextjs:
+    container_name: openday_nextjs_stg
+    image: whrksp126/openday_service:stg
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env.stg
+    environment:
+      NODE_ENV: production
+    volumes:
+      - uploads_stg_data:/app/public/uploads
+    networks:
+      - openday_stg
+      - nginx_proxy
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+
   mysql:
     container_name: openday_mysql_stg
     image: mysql:8.0
@@ -14,31 +26,12 @@ services:
       - mysql_stg_data:/var/lib/mysql
     networks:
       - openday_stg
+    restart: always
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
-      retries: 10
-    restart: always
-
-  openday_service:
-    container_name: openday_service_stg
-    image: whrksp126/openday_service:stg
-    build:
-      context: .
-      platforms:
-        - linux/amd64
-    env_file: .env.stg
-    depends_on:
-      mysql:
-        condition: service_healthy
-    volumes:
-      - images_stg_data:/app/app/images
-    networks:
-      - openday_stg
-      - nginx_proxy
-    restart: always
-    command: gunicorn -w 2 --bind 0.0.0.0:5000 run:app
+      retries: 5
 
 networks:
   openday_stg:
@@ -48,4 +41,4 @@ networks:
 
 volumes:
   mysql_stg_data:
-  images_stg_data:
+  uploads_stg_data:

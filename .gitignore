@@ -1,9 +1,37 @@
-.venv/
-__pycache__/
-gunicorn_log/
-app/config.py
+# Dependencies
+node_modules/
+
+# Build outputs
+.next/
+out/
+
+# Env files (do NOT commit)
 .env
+.env.local
 .env.dev
 .env.stg
-.env.local
-app/images/
+.env_backup/
+
+# Debug
+npm-debug.log*
+
+# Misc
+.DS_Store
+*.pem
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# Prisma
+prisma/dev.db
+
+# Uploads
+public/uploads/
+
+# Claude Code — 개인 설정 (팀 공유 안 함)
+.claude/settings.local.json
+.claude/.mcp-auth/
+.mcp.json
+CLAUDE.local.md
+

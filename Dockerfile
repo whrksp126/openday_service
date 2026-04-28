@@ -1,19 +1,41 @@
-FROM python:3.11-slim
+# Stage 1: Dependencies
+FROM node:20-alpine AS deps
+WORKDIR /app
+RUN npm config set registry https://registry.npmjs.org/
+COPY package.json package-lock.json* ./
+RUN npm ci
 
+# Stage 2: Build
+FROM node:20-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npx prisma generate
+RUN npm run build
+
+# Stage 3: Runner (standalone)
+FROM node:20-alpine AS runner
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    default-libmysqlclient-dev gcc pkg-config \
-    && rm -rf /var/lib/apt/lists/*
+ENV NODE_ENV=production
 
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt && \
-    pip install --no-cache-dir gunicorn
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
 
-COPY . .
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+# Prisma CLI + schema/migrations for runtime migrate deploy
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
+COPY --from=builder /app/node_modules/.bin/prisma ./node_modules/.bin/prisma
+
+USER nextjs
 
 EXPOSE 5000
+ENV PORT=5000
+ENV HOSTNAME="0.0.0.0"
 
-# prod/stg: gunicorn -w 2 --bind 0.0.0.0:5000 wsgi:app
-# local/dev: python app.py
-CMD ["python", "app.py"]
+CMD ["sh", "-c", "node node_modules/prisma/build/index.js migrate deploy && node server.js"]

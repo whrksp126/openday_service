@@ -1,0 +1,14 @@
+# Local dev with hot reload
+FROM node:20-alpine
+WORKDIR /app
+
+RUN npm config set registry https://registry.npmjs.org/
+
+COPY package.json package-lock.json* ./
+RUN npm install
+
+COPY prisma ./prisma
+RUN npx prisma generate
+
+EXPOSE 3000
+CMD ["npm", "run", "dev"]

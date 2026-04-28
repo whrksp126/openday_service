@@ -1,0 +1,104 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --radius: 0.75rem;
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  body {
+    @apply text-gray-900 bg-white;
+    font-family: 'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont,
+      system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  * {
+    box-sizing: border-box;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
+/* 프리뷰 여백(섹션 구분선) 색상 */
+[data-preview] section {
+  border-color: var(--spacing-color, #e5e7eb);
+}
+
+/* 프리뷰 글자 크기 스케일링 — Tailwind text-* 클래스가 rem 고정값이라
+   wrapper의 font-size로는 스케일되지 않음. data-text-scale로 일괄 보정. */
+[data-preview]                          { --text-scale: 1; }
+[data-preview][data-text-scale="large"]  { --text-scale: 1.12; }
+[data-preview][data-text-scale="xlarge"] { --text-scale: 1.22; }
+
+[data-preview] .text-xs   { font-size: calc(0.75rem  * var(--text-scale)); }
+[data-preview] .text-sm   { font-size: calc(0.875rem * var(--text-scale)); }
+[data-preview] .text-base { font-size: calc(1rem     * var(--text-scale)); }
+[data-preview] .text-lg   { font-size: calc(1.125rem * var(--text-scale)); }
+[data-preview] .text-xl   { font-size: calc(1.25rem  * var(--text-scale)); }
+[data-preview] .text-2xl  { font-size: calc(1.5rem   * var(--text-scale)); }
+[data-preview] .text-3xl  { font-size: calc(1.875rem * var(--text-scale)); }
+[data-preview] .text-4xl  { font-size: calc(2.25rem  * var(--text-scale)); }
+[data-preview] .text-5xl  { font-size: calc(3rem     * var(--text-scale)); }
+
+/* Naver Maps: logoControl 옵션이 막히는 경우에 대비한 폴백 */
+.naver-map-container a[href*="map.naver"],
+.naver-map-container .map_copyright,
+.naver-map-container .map_control_logo {
+  display: none !important;
+}
+
+/* RichText 렌더러 — Tiptap HTML 출력 스타일 */
+.rich-text p {
+  margin: 0;
+  min-height: 1em; /* 빈 단락도 한 줄 높이 확보 */
+}
+.rich-text p + p {
+  margin-top: 0.75rem; /* Tiptap 에디터의 mb-3 와 일치 */
+}
+.rich-text strong {
+  font-weight: 700;
+}
+.rich-text em {
+  font-style: italic;
+}
+
+/* 커스텀 스크롤바 */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: #d1d5db transparent;
+}
+
+/* BGM 플레이어 음파 EQ 막대 애니메이션 */
+@keyframes bgm-eq-bar {
+  0%, 100% { transform: scaleY(0.35); }
+  50%      { transform: scaleY(1); }
+}
+.bgm-eq-bar { transform-origin: bottom; animation: bgm-eq-bar 0.9s ease-in-out infinite; }
+.bgm-eq-bar:nth-child(2) { animation-duration: 1.2s; animation-delay: 0.15s; }
+.bgm-eq-bar:nth-child(3) { animation-duration: 0.8s; animation-delay: 0.35s; }

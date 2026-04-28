@@ -1,11 +1,23 @@
-version: '3.8'
-
-# ── Production ───────────────────────────────────────────────────────────────
-# 사용: docker compose up -d
-# env:  .env
-# 도메인: https://openday.ghmate.com
-
 services:
+  nextjs:
+    container_name: openday_nextjs_prod
+    image: whrksp126/openday_service:main
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file: .env
+    environment:
+      NODE_ENV: production
+    volumes:
+      - uploads_data:/app/public/uploads
+    networks:
+      - openday_prod
+      - nginx_proxy
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+
   mysql:
     container_name: openday_mysql_prod
     image: mysql:8.0
@@ -14,31 +26,12 @@ services:
       - mysql_data:/var/lib/mysql
     networks:
       - openday_prod
+    restart: always
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       timeout: 5s
-      retries: 10
-    restart: always
-
-  openday_service:
-    container_name: openday_service_prod
-    image: whrksp126/openday_service:prod
-    build:
-      context: .
-      platforms:
-        - linux/amd64
-    env_file: .env
-    depends_on:
-      mysql:
-        condition: service_healthy
-    volumes:
-      - images_data:/app/app/images
-    networks:
-      - openday_prod
-      - nginx_proxy
-    restart: always
-    command: gunicorn -w 2 --bind 0.0.0.0:5000 run:app
+      retries: 5
 
 networks:
   openday_prod:
@@ -48,4 +41,4 @@ networks:
 
 volumes:
   mysql_data:
-  images_data:
+  uploads_data:
