@@ -10,6 +10,12 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
+
+# NEXT_PUBLIC_* 변수는 빌드 시점에 클라이언트 번들에 인라인되므로
+# build args 로 받아 ENV 로 옮겨야 한다. (env_file 은 런타임에만 적용)
+ARG NEXT_PUBLIC_KAKAO_JS_KEY
+ENV NEXT_PUBLIC_KAKAO_JS_KEY=$NEXT_PUBLIC_KAKAO_JS_KEY
+
 RUN npx prisma generate
 RUN npm run build
 

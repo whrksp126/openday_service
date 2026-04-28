@@ -21,16 +21,19 @@ case $ENV in
         COMPOSE_FILE="docker-compose.dev.yml"
         PROJECT_NAME="openday_dev"
         DOMAIN="dev-openday.ghmate.com"
+        ENV_FILE=".env.dev"
         ;;
     stg)
         COMPOSE_FILE="docker-compose.stg.yml"
         PROJECT_NAME="openday_stg"
         DOMAIN="stg-openday.ghmate.com"
+        ENV_FILE=".env.stg"
         ;;
     prod)
         COMPOSE_FILE="docker-compose.yml"
         PROJECT_NAME="openday_prod"
         DOMAIN="openday.ghmate.com"
+        ENV_FILE=".env"
         ;;
     *)
         echo "잘못된 환경: $ENV (dev, stg, prod 중 하나를 입력하세요)"
@@ -40,13 +43,15 @@ esac
 
 echo ">>> [$ENV] 배포를 시작합니다..."
 
+# --env-file 을 명시해야 docker compose 의 \${VAR} 치환이 해당 .env 파일에서 동작한다.
+# (compose 의 build.args 에서 NEXT_PUBLIC_* 같은 빌드 타임 인라인 변수에 필수)
 ssh -i "$SSH_KEY" -p "$SSH_PORT" "${SSH_USER}@${SSH_HOST}" "
     set -e
     cd ${REMOTE_DIR}
     echo '>>> git pull...'
     git pull
     echo '>>> docker build & up...'
-    docker compose -p ${PROJECT_NAME} -f ${COMPOSE_FILE} up --build -d nextjs
+    docker compose -p ${PROJECT_NAME} --env-file ${ENV_FILE} -f ${COMPOSE_FILE} up --build -d nextjs
     echo '>>> nginx reload...'
     docker exec nginx_proxy nginx -s reload
 "
