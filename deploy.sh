@@ -43,6 +43,15 @@ esac
 
 echo ">>> [$ENV] 배포를 시작합니다..."
 
+# 환경 파일은 git ignore 대상이라 git pull 로 동기화되지 않는다.
+# 로컬 ${ENV_FILE} 을 원격으로 scp 해서 단일 진실 공급원(local) 에서 관리.
+if [[ ! -f "$ENV_FILE" ]]; then
+    echo ">>> [에러] 로컬에 ${ENV_FILE} 이 없습니다. 먼저 만들어 주세요."
+    exit 1
+fi
+echo ">>> ${ENV_FILE} → 원격 동기화..."
+scp -i "$SSH_KEY" -P "$SSH_PORT" "$ENV_FILE" "${SSH_USER}@${SSH_HOST}:${REMOTE_DIR}/${ENV_FILE}"
+
 # --env-file 을 명시해야 docker compose 의 \${VAR} 치환이 해당 .env 파일에서 동작한다.
 # (compose 의 build.args 에서 NEXT_PUBLIC_* 같은 빌드 타임 인라인 변수에 필수)
 ssh -i "$SSH_KEY" -p "$SSH_PORT" "${SSH_USER}@${SSH_HOST}" "

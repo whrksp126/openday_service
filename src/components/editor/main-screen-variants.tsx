@@ -22,7 +22,15 @@ export type MainScreenInputKey =
   | 'decorations'       // 데코 multi
   | 'backgroundPattern' // 배경 패턴
 
-export type MainCategory = 'wedding' | 'baby' | 'all'
+export type MainCategory =
+  | 'wedding'
+  | 'baby'
+  | 'business'
+  | 'sports'
+  | 'social'
+  | 'seasonal'
+  | 'culture'
+  | 'all'
 
 export interface RendererProps {
   content: InvitationContent
@@ -147,26 +155,9 @@ function MainContainer({
   )
 }
 
-// 자유 텍스트 슬롯 헬퍼 — textSlots 우선, 비어있으면 legacy cfg 필드(구버전 데이터 호환).
-// 기본값 fallback 은 시드/Panel 마운트시 hydration 으로 채워지므로 여기서는 처리하지 않는다.
-const LEGACY_SLOT_FALLBACK: Record<string, keyof MainModuleConfig> = {
-  bottomText: 'bottomText',
-  subText: 'subText',
-  calligraphy: 'calligraphyEnglish',
-  cornerText: 'cornerText',
-  verticalText: 'verticalText',
-  verticalTextRight: 'verticalTextRight',
-}
 function slotText(cfg: MainModuleConfig, key: string, _unused?: string): string {
   void _unused
-  const v = cfg.textSlots?.[key]
-  if (v && v.length > 0) return v
-  const legacyKey = LEGACY_SLOT_FALLBACK[key]
-  if (legacyKey) {
-    const lv = cfg[legacyKey] as string | undefined
-    if (lv && lv.length > 0) return lv
-  }
-  return ''
+  return cfg.textSlots?.[key] ?? ''
 }
 
 // variant 의 모든 textSlots 를 현재 content 기반 실제 값으로 채워 Record 를 반환.
@@ -680,6 +671,526 @@ const StickerPopThumbnail: React.FC = () => (
   </div>
 )
 
+// ── 18. corp-headline (event/MInvite03 풍) — 사진 없음, 우측 웨이브 데코 + 큰 INVITATION ──
+const CorpHeadlineRenderer: React.FC<RendererProps> = ({ content, module, accent, fontFamily }) => {
+  const cfg = (module?.config ?? {}) as MainModuleConfig
+  const inviteLabel = slotText(cfg, 'inviteLabel', 'INVITATION')
+  const title = slotText(cfg, 'title', '㈜ OpenDay 창립기념행사')
+  const dateBig = slotText(cfg, 'dateBig', '2026.05.21')
+  return (
+    <MainContainer cfg={cfg} accent={accent}>
+      {/* 우측 상단 웨이브 SVG 데코 */}
+      <svg
+        viewBox="0 0 200 200" preserveAspectRatio="none"
+        style={{ position: 'absolute', top: 0, right: 0, width: '60%', height: '70%', opacity: 0.18, pointerEvents: 'none' }}
+      >
+        <path d="M0,30 Q50,80 100,40 T200,60 L200,0 L0,0 Z" fill={accent} />
+        <path d="M0,90 Q60,60 120,100 T200,120 L200,40 Q140,80 80,50 T0,70 Z" fill={accent} opacity="0.5" />
+      </svg>
+
+      <div className="px-7 pt-2 pb-12 relative" style={{ fontFamily }}>
+        <div className="text-[11px] tracking-[0.45em] text-gray-400 mb-12">{inviteLabel}</div>
+        <div
+          className="text-[40px] leading-[1.05] font-light tracking-[0.18em] mb-10"
+          style={{ color: accent, fontFamily: 'Georgia, "Times New Roman", serif' }}
+        >
+          INVITATION
+        </div>
+        <RichText
+          html={title}
+          className="text-[17px] leading-snug text-gray-800 mb-8 whitespace-pre-line"
+          style={{ fontWeight: 500 }}
+        />
+        <div className="flex items-end gap-3">
+          <span className="block w-12 h-px" style={{ background: accent }} />
+          <div
+            className="text-[22px] tracking-[0.18em] leading-none"
+            style={{ color: accent, fontFamily: 'Georgia, "Times New Roman", serif' }}
+          >
+            {dateBig}
+          </div>
+        </div>
+        <div className="mt-3 text-xs text-gray-500 leading-relaxed">
+          <RichText html={slotText(cfg, 'bottomText', defaultBottomText(content))} />
+          <RichText html={slotText(cfg, 'subText', defaultSubText(content))} className="text-gray-400 mt-0.5" />
+        </div>
+      </div>
+    </MainContainer>
+  )
+}
+const CorpHeadlineThumbnail: React.FC = () => (
+  <div className="relative pt-1 px-1" style={{ fontFamily: 'Georgia, serif' }}>
+    <svg viewBox="0 0 1 1" preserveAspectRatio="none"
+         style={{ position: 'absolute', top: 0, right: 0, width: '50%', height: '60%', opacity: 0.3 }}>
+      <path d="M0,0.4 Q0.4,0.6 0.7,0.3 T1,0.5 L1,0 L0,0 Z" fill="#5B4FCF" />
+    </svg>
+    <div className="text-[3px] tracking-widest text-gray-400">INVITATION</div>
+    <div className="text-[8px] tracking-widest text-gray-700 mt-1.5 leading-none">INVITATION</div>
+    <div className="h-0.5 w-1/3 bg-gray-300 mt-1.5" />
+    <div className="text-[3px] text-gray-500 mt-0.5">행사명</div>
+    <div className="flex items-end gap-0.5 mt-1.5">
+      <span className="block w-1.5 h-px bg-gray-700" />
+      <span className="text-[5px] text-gray-700">2026.05.21</span>
+    </div>
+  </div>
+)
+
+// ── 19. prestige-product (event/MInvite02 풍) — 큰 MM.DD 두 줄 + 작은 사진 + serif ──
+const PrestigeProductRenderer: React.FC<RendererProps> = ({ content, module, accent }) => {
+  const cfg = (module?.config ?? {}) as MainModuleConfig
+  const titleFF = 'Georgia, "Times New Roman", serif'
+  const monthDay = slotText(cfg, 'monthDay', '06.15')
+  const inviteLabel = slotText(cfg, 'inviteLabel', 'INVITATION')
+  const title = slotText(cfg, 'title', 'PRESTIGE COLLECTION LAUNCH')
+  const shape = (cfg.photoShape as PhotoShapeId | undefined) ?? 'square'
+  return (
+    <MainContainer cfg={cfg} accent={accent}>
+      <div className="px-8 pt-6 pb-10 text-center" style={{ fontFamily: titleFF }}>
+        <div
+          className="leading-none"
+          style={{ color: accent, fontSize: '110px', letterSpacing: '0.02em', fontWeight: 300 }}
+        >
+          {monthDay}
+        </div>
+        <div className="my-6 flex items-center justify-center gap-3" style={{ color: accent, opacity: 0.55 }}>
+          <span className="block w-10 h-px" style={{ background: 'currentColor' }} />
+          <span className="text-[10px] tracking-[0.55em]">{inviteLabel}</span>
+          <span className="block w-10 h-px" style={{ background: 'currentColor' }} />
+        </div>
+        <RichText
+          html={title}
+          className="text-[15px] tracking-[0.18em] text-gray-700 leading-snug mb-7 whitespace-pre-line"
+        />
+        {/* 작은 사진 (선택, 60% 너비, 옅은 보더) */}
+        <div className="mx-auto" style={{ width: '60%' }}>
+          <PhotoShape shape={shape} src={content.coverImage} crop={content.coverImageCrop} fallbackAspect="1/1" />
+        </div>
+        <div className="mt-7 text-[11px] text-gray-500 tracking-[0.1em]">
+          <RichText html={slotText(cfg, 'bottomText', defaultBottomText(content))} />
+          <RichText html={slotText(cfg, 'subText', defaultSubText(content))} className="mt-1 text-gray-400" />
+        </div>
+      </div>
+    </MainContainer>
+  )
+}
+const PrestigeProductThumbnail: React.FC = () => (
+  <div className="text-center pt-1" style={{ fontFamily: 'Georgia, serif' }}>
+    <div className="text-[24px] leading-none text-gray-800 font-light">06.15</div>
+    <div className="flex items-center justify-center gap-0.5 my-1">
+      <span className="block w-2 h-px bg-gray-400" />
+      <span className="text-[3px] tracking-widest text-gray-500">INVITATION</span>
+      <span className="block w-2 h-px bg-gray-400" />
+    </div>
+    <div className="text-[3px] tracking-widest text-gray-500">LAUNCH</div>
+    <div className="rounded-sm bg-gray-200 mx-auto mt-1" style={{ width: '50%', aspectRatio: '1/1' }} />
+  </div>
+)
+
+// ── 20. event-headline (event/MInvite09 풍) — 풀스크린 사진 + 화이트 오버레이 텍스트 ──
+const EventHeadlineRenderer: React.FC<RendererProps> = ({ content, module, accent, fontFamily }) => {
+  const cfg = (module?.config ?? {}) as MainModuleConfig
+  const title = slotText(cfg, 'title', '2026 OPEN\nTENNIS CUP')
+  const dateLine = slotText(cfg, 'dateLine', '26. 04. 23. (Sat) 11:00')
+  const shape = (cfg.photoShape as PhotoShapeId | undefined) ?? 'square'
+  return (
+    <MainContainer cfg={cfg} accent={accent} fullBleed>
+      <div className="relative" style={{ fontFamily }}>
+        <PhotoShape shape={shape} src={content.coverImage} crop={content.coverImageCrop} fallbackAspect="4/5" />
+        {/* 다크 오버레이 그라데이션 */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              'linear-gradient(180deg, rgba(0,0,0,0.55) 0%, rgba(0,0,0,0.25) 35%, rgba(0,0,0,0.45) 100%)',
+          }}
+        />
+        <div className="absolute inset-0 flex flex-col justify-end px-6 pb-10 text-white">
+          <div className="text-[11px] tracking-[0.55em] mb-3 opacity-80">
+            {slotText(cfg, 'inviteLabel', 'INVITATION')}
+          </div>
+          <RichText
+            html={title}
+            className="text-[28px] leading-tight font-medium whitespace-pre-line"
+            style={{ textShadow: '0 1px 8px rgba(0,0,0,0.4)' }}
+          />
+          <div className="mt-4 h-px w-12 bg-white opacity-70" />
+          <div className="mt-3 text-sm leading-relaxed opacity-90">
+            <RichText html={dateLine} />
+            <RichText html={slotText(cfg, 'subText', defaultSubText(content))} className="text-xs opacity-80 mt-0.5" />
+          </div>
+        </div>
+      </div>
+    </MainContainer>
+  )
+}
+const EventHeadlineThumbnail: React.FC = () => (
+  <div className="relative bg-gray-500 overflow-hidden" style={{ aspectRatio: '4/5' }}>
+    <div className="absolute inset-0" style={{
+      background: 'linear-gradient(180deg, rgba(0,0,0,0.4) 0%, transparent 50%, rgba(0,0,0,0.5) 100%)' }} />
+    <div className="absolute inset-x-0 bottom-1 px-1 text-white">
+      <div className="text-[3px] tracking-widest opacity-90">INVITATION</div>
+      <div className="text-[5px] font-medium leading-tight mt-0.5">OPEN TENNIS</div>
+      <div className="text-[5px] font-medium leading-tight">CUP 2026</div>
+      <div className="h-px w-2 bg-white opacity-80 mt-0.5" />
+    </div>
+  </div>
+)
+
+// ── 21. dark-invitation (event/MInvite08 풍) — 다크 풀스크린 사진 + 골드 serif ──
+const DarkInvitationRenderer: React.FC<RendererProps> = ({ content, module, accent }) => {
+  const cfg = (module?.config ?? {}) as MainModuleConfig
+  const titleFF = 'Georgia, "Times New Roman", serif'
+  const inviteLabel = slotText(cfg, 'inviteLabel', 'INVITATION')
+  const brandTitle = slotText(cfg, 'brandTitle', 'VIP NIGHT')
+  const shape = (cfg.photoShape as PhotoShapeId | undefined) ?? 'square'
+  return (
+    <MainContainer cfg={cfg} accent={accent} fullBleed>
+      <div className="relative" style={{ fontFamily: titleFF }}>
+        <PhotoShape shape={shape} src={content.coverImage} crop={content.coverImageCrop} fallbackAspect="3/5" />
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background:
+              'linear-gradient(180deg, rgba(0,0,0,0.6) 0%, rgba(0,0,0,0.35) 30%, rgba(0,0,0,0.7) 100%)',
+          }}
+        />
+        <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-6">
+          <div className="text-[11px] tracking-[0.6em] mb-7" style={{ color: accent }}>
+            {inviteLabel}
+          </div>
+          <div
+            className="text-[44px] leading-tight font-light tracking-[0.32em]"
+            style={{ color: accent }}
+          >
+            {brandTitle}
+          </div>
+          <div className="mt-7 h-px w-14" style={{ background: accent, opacity: 0.7 }} />
+          <div className="mt-5 text-sm text-white opacity-95 italic">
+            <RichText html={slotText(cfg, 'bottomText', defaultBottomText(content))} />
+          </div>
+          <div className="mt-1 text-xs text-white opacity-75">
+            <RichText html={slotText(cfg, 'subText', defaultSubText(content))} />
+          </div>
+        </div>
+      </div>
+    </MainContainer>
+  )
+}
+const DarkInvitationThumbnail: React.FC = () => (
+  <div className="relative overflow-hidden" style={{ aspectRatio: '3/5', background: '#0e1626' }}>
+    <div className="absolute inset-0" style={{
+      background: 'linear-gradient(180deg, rgba(0,0,0,0.5), transparent 40%, rgba(0,0,0,0.6))' }} />
+    <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-1">
+      <div className="text-[3px] tracking-[0.3em]" style={{ color: '#d4af37' }}>INVITATION</div>
+      <div className="text-[7px] tracking-[0.2em] mt-0.5" style={{ color: '#d4af37' }}>VIP NIGHT</div>
+      <div className="h-px w-2 mt-0.5" style={{ background: '#d4af37', opacity: 0.7 }} />
+      <div className="text-[3px] text-white opacity-80 italic mt-0.5">2026.09.26</div>
+    </div>
+  </div>
+)
+
+// ── 22. seal-emblem (event/MInvite10 풍) — 분할 레이아웃: 텍스트 위 / 원형 봉인 / 박스 캡션 ──
+const SealEmblemRenderer: React.FC<RendererProps> = ({ content, module, accent }) => {
+  const cfg = (module?.config ?? {}) as MainModuleConfig
+  const titleFF = 'Georgia, "Times New Roman", serif'
+  const englishTagline = slotText(cfg, 'englishTagline', 'SEASON FINALE')
+  const title = slotText(cfg, 'title', '한 해의 마지막,\n따뜻한 자리에 모십니다')
+  return (
+    <MainContainer cfg={cfg} accent={accent}>
+      <div className="px-7 pt-2 pb-2 text-center">
+        <div
+          className="text-[11px] tracking-[0.55em] mb-3"
+          style={{ color: accent, fontFamily: titleFF }}
+        >
+          {englishTagline}
+        </div>
+        <RichText
+          html={title}
+          className="text-[18px] leading-relaxed text-gray-800 mb-7 whitespace-pre-line"
+          style={{ fontFamily: 'serif', fontWeight: 500 }}
+        />
+
+        {/* 골드 라인 더블 링으로 감싼 원형 봉인 — 컨테이너에 aspectRatio 강제해서 사진 비율과 무관하게 원형 유지 */}
+        <div className="relative mx-auto mb-7" style={{ width: '60%', aspectRatio: '1/1' }}>
+          <div
+            className="absolute pointer-events-none rounded-full"
+            style={{ inset: '-10px', border: `1px solid ${accent}`, opacity: 0.45 }}
+          />
+          <div
+            className="absolute pointer-events-none rounded-full"
+            style={{ inset: '-3px', border: `1px solid ${accent}`, opacity: 0.25 }}
+          />
+          <div className="absolute inset-0 overflow-hidden rounded-full">
+            <PhotoShape shape="circle" src={content.coverImage} crop={content.coverImageCrop} fallbackAspect="1/1" />
+          </div>
+        </div>
+
+        {/* 라이트 박스 캡션 */}
+        <div
+          className="mx-2 px-5 py-4"
+          style={{
+            background: 'rgba(255,255,255,0.7)',
+            border: `1px solid ${accent}`,
+            borderColor: `${accent}33`,
+          }}
+        >
+          <div className="text-[11px] tracking-[0.3em] text-gray-700" style={{ fontFamily: titleFF }}>
+            <RichText html={slotText(cfg, 'bottomText', defaultBottomText(content))} />
+          </div>
+          <div className="mt-1 text-[11px] tracking-[0.1em] text-gray-500" style={{ fontFamily: titleFF }}>
+            <RichText html={slotText(cfg, 'subText', defaultSubText(content))} />
+          </div>
+        </div>
+      </div>
+    </MainContainer>
+  )
+}
+const SealEmblemThumbnail: React.FC = () => (
+  <div className="text-center pt-1" style={{ fontFamily: 'Georgia, serif' }}>
+    <div className="text-[3px] tracking-[0.3em] text-gray-500">SEASON FINALE</div>
+    <div className="h-1 w-3/5 bg-gray-200 rounded-full mx-auto mt-1" />
+    <div className="rounded-full bg-gray-300 mx-auto my-1.5" style={{ width: '45%', aspectRatio: '1/1' }} />
+    <div className="border border-gray-200 bg-white px-1 py-0.5 mx-1">
+      <div className="h-px w-full bg-gray-200" />
+      <div className="h-px w-2/3 bg-gray-200 mx-auto mt-0.5" />
+    </div>
+  </div>
+)
+
+// ── 23. typo-only — 사진 없음, 큰 영문 + 한글 + 라인 디바이더 ──
+const TypoOnlyRenderer: React.FC<RendererProps> = ({ content, module, accent, fontFamily }) => {
+  const cfg = (module?.config ?? {}) as MainModuleConfig
+  const eyebrow = slotText(cfg, 'eyebrow', 'INVITATION')
+  const englishTitle = slotText(cfg, 'englishTitle', 'BUSINESS\nFORUM 2026')
+  const koreanTitle = slotText(cfg, 'koreanTitle', '함께 그리는 내일')
+  return (
+    <MainContainer cfg={cfg} accent={accent}>
+      <div className="px-7 pt-2 pb-12 text-center" style={{ fontFamily }}>
+        <div className="text-[10px] tracking-[0.6em] text-gray-400 mb-12">{eyebrow}</div>
+        <RichText
+          html={englishTitle}
+          className="text-[42px] leading-[1.05] tracking-[0.08em] whitespace-pre-line font-light"
+          style={{ color: accent, fontFamily: 'Georgia, "Times New Roman", serif' }}
+        />
+        <div className="my-9 mx-auto h-px w-12" style={{ background: accent, opacity: 0.5 }} />
+        <RichText
+          html={koreanTitle}
+          className="text-[16px] leading-relaxed text-gray-700 mb-10 whitespace-pre-line"
+        />
+        <div className="text-[11px] tracking-[0.2em] text-gray-500">
+          <RichText html={slotText(cfg, 'bottomText', defaultBottomText(content))} />
+          <RichText html={slotText(cfg, 'subText', defaultSubText(content))} className="mt-1 text-gray-400" />
+        </div>
+      </div>
+    </MainContainer>
+  )
+}
+const TypoOnlyThumbnail: React.FC = () => (
+  <div className="text-center pt-1" style={{ fontFamily: 'Georgia, serif' }}>
+    <div className="text-[3px] tracking-widest text-gray-400">INVITATION</div>
+    <div className="text-[12px] leading-none text-gray-800 font-light mt-2">FORUM</div>
+    <div className="text-[12px] leading-none text-gray-800 font-light mt-0.5">2026</div>
+    <div className="h-px w-3 bg-gray-400 mx-auto my-1.5" />
+    <div className="text-[3px] text-gray-500">함께 그리는 내일</div>
+    <div className="h-0.5 w-2/3 bg-gray-200 rounded-full mx-auto mt-1" />
+  </div>
+)
+
+// ── 24. half-split — 위 풀와이드 사진 + 아래 텍스트 블록 ──
+const HalfSplitRenderer: React.FC<RendererProps> = ({ content, module, accent, fontFamily }) => {
+  const cfg = (module?.config ?? {}) as MainModuleConfig
+  const titleFF = 'Georgia, "Times New Roman", serif'
+  const shape = (cfg.photoShape as PhotoShapeId | undefined) ?? 'square'
+  return (
+    <MainContainer cfg={cfg} accent={accent} fullBleed>
+      <div>
+        <PhotoShape shape={shape} src={content.coverImage} crop={content.coverImageCrop} fallbackAspect="3/2" />
+        <div className="px-7 pt-8 pb-10 text-center" style={{ fontFamily }}>
+          <div className="text-[10px] tracking-[0.55em] mb-4" style={{ color: accent }}>
+            {slotText(cfg, 'inviteLabel', 'INVITATION')}
+          </div>
+          <RichText
+            html={slotText(cfg, 'title', '2026 BUSINESS FORUM')}
+            className="text-[22px] leading-snug whitespace-pre-line"
+            style={{ color: accent, fontFamily: titleFF, letterSpacing: '0.1em' }}
+          />
+          <div className="my-5 mx-auto h-px w-10" style={{ background: accent, opacity: 0.45 }} />
+          <div className="text-xs text-gray-600">
+            <RichText html={slotText(cfg, 'bottomText', defaultBottomText(content))} />
+            <RichText html={slotText(cfg, 'subText', defaultSubText(content))} className="mt-0.5 text-gray-400" />
+          </div>
+        </div>
+      </div>
+    </MainContainer>
+  )
+}
+const HalfSplitThumbnail: React.FC = () => (
+  <div className="overflow-hidden">
+    <div className="bg-gray-300" style={{ aspectRatio: '3/2' }} />
+    <div className="text-center pt-1.5 pb-1" style={{ fontFamily: 'Georgia, serif' }}>
+      <div className="text-[3px] tracking-widest text-gray-500">INVITATION</div>
+      <div className="text-[5px] tracking-widest text-gray-700 mt-0.5">2026 FORUM</div>
+      <div className="h-px w-2 bg-gray-300 mx-auto mt-1" />
+      <div className="h-0.5 w-1/2 bg-gray-200 rounded-full mx-auto mt-0.5" />
+    </div>
+  </div>
+)
+
+// ── 25. side-by-side — 좌측 세로 사진 + 우측 텍스트 ──
+const SideBySideRenderer: React.FC<RendererProps> = ({ content, module, accent, fontFamily }) => {
+  const cfg = (module?.config ?? {}) as MainModuleConfig
+  const titleFF = 'Georgia, "Times New Roman", serif'
+  const shape = (cfg.photoShape as PhotoShapeId | undefined) ?? 'square'
+  return (
+    <MainContainer cfg={cfg} accent={accent}>
+      <div className="px-5 pt-2 pb-8 flex items-stretch gap-4" style={{ fontFamily }}>
+        <div className="w-[42%] flex-shrink-0">
+          <PhotoShape shape={shape} src={content.coverImage} crop={content.coverImageCrop} fallbackAspect="3/4" />
+        </div>
+        <div className="flex-1 flex flex-col justify-center pl-1">
+          <div className="text-[10px] tracking-[0.45em] text-gray-400 mb-4">
+            {slotText(cfg, 'inviteLabel', 'INVITATION')}
+          </div>
+          <RichText
+            html={slotText(cfg, 'title', 'PRESTIGE\nLAUNCH')}
+            className="text-[20px] leading-tight whitespace-pre-line mb-5"
+            style={{ color: accent, fontFamily: titleFF, letterSpacing: '0.08em' }}
+          />
+          <div className="h-px w-7 mb-3" style={{ background: accent, opacity: 0.5 }} />
+          <RichText
+            html={slotText(cfg, 'bottomText', defaultBottomText(content))}
+            className="text-[11px] tracking-[0.1em] text-gray-700 leading-relaxed"
+          />
+          <RichText
+            html={slotText(cfg, 'subText', defaultSubText(content))}
+            className="text-[11px] text-gray-400 mt-1"
+          />
+        </div>
+      </div>
+    </MainContainer>
+  )
+}
+const SideBySideThumbnail: React.FC = () => (
+  <div className="flex gap-1 items-stretch py-1">
+    <div className="w-[42%] bg-gray-200 rounded-sm" style={{ aspectRatio: '3/4' }} />
+    <div className="flex-1 flex flex-col justify-center pl-0.5" style={{ fontFamily: 'Georgia, serif' }}>
+      <div className="text-[3px] tracking-widest text-gray-400">INVITATION</div>
+      <div className="text-[6px] tracking-widest text-gray-800 mt-1 leading-tight">PRESTIGE</div>
+      <div className="text-[6px] tracking-widest text-gray-800 leading-tight">LAUNCH</div>
+      <div className="h-px w-1.5 bg-gray-400 mt-1" />
+      <div className="h-0.5 w-3/4 bg-gray-200 mt-1" />
+    </div>
+  </div>
+)
+
+// ── 26. stamp-mark — 우상단 보더 스탬프 + 사진 + 하단 큰 캡션 ──
+const StampMarkRenderer: React.FC<RendererProps> = ({ content, module, accent, fontFamily }) => {
+  const cfg = (module?.config ?? {}) as MainModuleConfig
+  const titleFF = 'Georgia, "Times New Roman", serif'
+  const shape = (cfg.photoShape as PhotoShapeId | undefined) ?? 'square'
+  return (
+    <MainContainer cfg={cfg} accent={accent}>
+      <div className="relative">
+        {/* 우상단 보더 스탬프 마크 */}
+        <div
+          className="absolute z-10 px-3 py-2 text-center"
+          style={{
+            top: 14, right: 14,
+            border: `1px solid ${accent}`,
+            color: accent,
+            fontFamily: titleFF,
+            background: 'rgba(255,255,255,0.85)',
+          }}
+        >
+          <div className="text-[9px] tracking-[0.4em]">{slotText(cfg, 'stamp', '2026')}</div>
+          <div className="my-1 h-px w-full" style={{ background: accent, opacity: 0.45 }} />
+          <div className="text-[8px] tracking-[0.3em]">{slotText(cfg, 'stampSub', 'OPEN')}</div>
+        </div>
+        <div className="mx-3.5">
+          <PhotoShape shape={shape} src={content.coverImage} crop={content.coverImageCrop} fallbackAspect="1/1" />
+        </div>
+        <div className="px-7 pt-7 pb-8" style={{ fontFamily }}>
+          <RichText
+            html={slotText(cfg, 'title', 'OPEN TENNIS\nCUP 2026')}
+            className="text-[26px] leading-tight whitespace-pre-line mb-3 font-medium"
+            style={{ color: accent, fontFamily: titleFF, letterSpacing: '0.04em' }}
+          />
+          <div className="h-px w-12" style={{ background: accent, opacity: 0.4 }} />
+          <RichText
+            html={slotText(cfg, 'bottomText', defaultBottomText(content))}
+            className="text-[12px] text-gray-700 mt-3"
+          />
+          <RichText
+            html={slotText(cfg, 'subText', defaultSubText(content))}
+            className="text-[11px] text-gray-400 mt-0.5"
+          />
+        </div>
+      </div>
+    </MainContainer>
+  )
+}
+const StampMarkThumbnail: React.FC = () => (
+  <div className="relative pt-1" style={{ fontFamily: 'Georgia, serif' }}>
+    <div className="bg-gray-200 rounded-sm mx-1" style={{ aspectRatio: '1/1' }} />
+    <div
+      className="absolute border border-gray-700 px-0.5 py-0.5 bg-white text-center"
+      style={{ top: 2, right: 2 }}
+    >
+      <div className="text-[3px] leading-none text-gray-700">2026</div>
+      <div className="h-px w-full bg-gray-300 my-0.5" />
+      <div className="text-[3px] leading-none text-gray-700">OPEN</div>
+    </div>
+    <div className="mt-1 px-1 text-left">
+      <div className="text-[5px] tracking-widest text-gray-700 leading-tight">OPEN</div>
+      <div className="text-[5px] tracking-widest text-gray-700 leading-tight">TENNIS CUP</div>
+      <div className="h-px w-2.5 bg-gray-300 mt-1" />
+    </div>
+  </div>
+)
+
+// ── 27. accent-bar — 좌측 굵은 accent 컬러 세로 바 + 큰 영문 + 한글 ──
+const AccentBarRenderer: React.FC<RendererProps> = ({ content, module, accent, fontFamily }) => {
+  const cfg = (module?.config ?? {}) as MainModuleConfig
+  const titleFF = 'Georgia, "Times New Roman", serif'
+  return (
+    <MainContainer cfg={cfg} accent={accent}>
+      <div className="flex items-stretch min-h-[280px]" style={{ fontFamily }}>
+        <div className="w-[6px] flex-shrink-0" style={{ background: accent }} />
+        <div className="flex-1 px-6 py-9">
+          <div className="text-[10px] tracking-[0.5em] text-gray-400 mb-7">
+            {slotText(cfg, 'eyebrow', 'INVITATION')}
+          </div>
+          <RichText
+            html={slotText(cfg, 'englishTitle', 'OPEN\nTENNIS CUP\n2026')}
+            className="text-[36px] leading-[1.05] whitespace-pre-line mb-7 font-light tracking-[0.04em]"
+            style={{ color: accent, fontFamily: titleFF }}
+          />
+          <RichText
+            html={slotText(cfg, 'koreanTitle', '함께 즐기는 코트 위의 시간')}
+            className="text-[14px] text-gray-700 leading-relaxed mb-7 whitespace-pre-line"
+          />
+          <div className="text-[11px] text-gray-500 leading-relaxed">
+            <RichText html={slotText(cfg, 'bottomText', defaultBottomText(content))} />
+            <RichText html={slotText(cfg, 'subText', defaultSubText(content))} className="text-gray-400" />
+          </div>
+        </div>
+      </div>
+    </MainContainer>
+  )
+}
+const AccentBarThumbnail: React.FC = () => (
+  <div className="flex items-stretch h-full pt-1">
+    <div className="w-1 bg-gray-700 flex-shrink-0" />
+    <div className="flex-1 pl-1.5" style={{ fontFamily: 'Georgia, serif' }}>
+      <div className="text-[3px] tracking-widest text-gray-400">INVITATION</div>
+      <div className="text-[8px] leading-tight text-gray-800 mt-1.5 font-light">OPEN</div>
+      <div className="text-[8px] leading-tight text-gray-800 font-light">CUP</div>
+      <div className="h-0.5 w-2/3 bg-gray-200 mt-1" />
+      <div className="h-0.5 w-1/2 bg-gray-200 mt-0.5" />
+    </div>
+  </div>
+)
+
 // ── 카탈로그 ────────────────────────────────────────────────
 // inputs[]는 시각 옵션 (coverImage/secondImage/photoShape/decorations/backgroundPattern).
 // 텍스트는 textSlots로, 폰트는 디자이너가 Renderer 내부에 고정 지정.
@@ -813,14 +1324,162 @@ export const MAIN_SCREEN_VARIANTS: MainScreenVariant[] = [
       { key: 'subText', label: '장소', getDefault: (c) => defaultSubText(c) },
     ],
   },
+  // ── itscard 분석 기반 + 추가 다양화 — 카테고리별로 다르게 노출 ──
+  {
+    // MInvite03 풍 — 사진 없음, 우측 웨이브 데코, INVITATION 큰 영문 + 행사명 + 큰 날짜
+    id: 'corp-headline', label: '코퍼레이트 (사진 없음)', categories: ['business'],
+    Thumbnail: CorpHeadlineThumbnail, Renderer: CorpHeadlineRenderer,
+    inputs: [],
+    defaultConfig: {},
+    textSlots: [
+      { key: 'inviteLabel', label: '상단 라벨', getDefault: () => 'INVITATION' },
+      { key: 'title', label: '행사 제목 (한글)', getDefault: () => '㈜ OpenDay 창립기념행사', multiline: true },
+      { key: 'dateBig', label: '큰 영문 날짜', getDefault: (c) => {
+        const { yyyy, mm, dd } = formatDateParts(c)
+        return `${yyyy}.${mm}.${dd}`
+      } },
+      { key: 'bottomText', label: '한글 일시', getDefault: (c) => defaultBottomText(c) },
+      { key: 'subText', label: '장소', getDefault: (c) => defaultSubText(c) },
+    ],
+  },
+  {
+    // MInvite02 풍 — 큰 MM.DD 숫자 + 작은 정사각 사진 + serif
+    id: 'prestige-product', label: '프레스티지 (큰 날짜)', categories: ['business', 'seasonal'],
+    Thumbnail: PrestigeProductThumbnail, Renderer: PrestigeProductRenderer,
+    inputs: ['coverImage', 'photoShape'],
+    defaultConfig: { photoShape: 'square' },
+    textSlots: [
+      { key: 'monthDay', label: '큰 날짜 (예: 06.15)', getDefault: (c) => {
+        const { mm, dd } = formatDateParts(c)
+        return `${mm}.${dd}`
+      } },
+      { key: 'inviteLabel', label: '중앙 라벨', getDefault: () => 'INVITATION' },
+      { key: 'title', label: '행사 제목 (영문)', getDefault: () => 'PRESTIGE COLLECTION LAUNCH' },
+      { key: 'bottomText', label: '하단 캡션', getDefault: (c) => defaultBottomText(c) },
+      { key: 'subText', label: '장소', getDefault: (c) => defaultSubText(c) },
+    ],
+  },
+  {
+    // MInvite09 풍 — 풀스크린 사진 fullBleed + 화이트 텍스트 오버레이
+    id: 'event-headline', label: '풀스크린 사진 (화이트 텍스트)', categories: ['sports', 'social'],
+    Thumbnail: EventHeadlineThumbnail, Renderer: EventHeadlineRenderer,
+    inputs: ['coverImage', 'photoShape'],
+    defaultConfig: { photoShape: 'square' },
+    textSlots: [
+      { key: 'inviteLabel', label: '상단 라벨', getDefault: () => 'INVITATION' },
+      { key: 'title', label: '메인 제목 (Enter로 줄바꿈)', getDefault: () => '2026 OPEN\nTENNIS CUP', multiline: true },
+      { key: 'dateLine', label: '날짜·시간', getDefault: (c) => {
+        const { dateObj, dd } = formatDateParts(c)
+        const wd = dateObj.toLocaleString('en', { weekday: 'short' })
+        return `${String(dateObj.getFullYear()).slice(2)}. ${formatDateParts(c).mm}. ${dd}. (${wd}) ${c.eventTime ?? ''}`
+      } },
+      { key: 'subText', label: '장소', getDefault: (c) => defaultSubText(c) },
+    ],
+  },
+  {
+    // MInvite08 풍 — 다크 풀스크린 사진 + 골드 serif INVITATION + 브랜드 타이틀
+    id: 'dark-invitation', label: '다크 인비테이션 (골드)', categories: ['social'],
+    Thumbnail: DarkInvitationThumbnail, Renderer: DarkInvitationRenderer,
+    inputs: ['coverImage', 'photoShape'],
+    defaultConfig: { photoShape: 'square' },
+    textSlots: [
+      { key: 'inviteLabel', label: '상단 라벨', getDefault: () => 'INVITATION' },
+      { key: 'brandTitle', label: '브랜드 타이틀', getDefault: () => 'VIP NIGHT' },
+      { key: 'bottomText', label: '날짜·시간', getDefault: (c) => defaultBottomText(c) },
+      { key: 'subText', label: '장소', getDefault: (c) => defaultSubText(c) },
+    ],
+  },
+  {
+    // MInvite10 풍 — 분할 레이아웃: 텍스트 / 원형 봉인 / 라이트 박스 캡션
+    id: 'seal-emblem', label: '엠블렘 봉인 (원형 + 박스)', categories: ['seasonal'],
+    Thumbnail: SealEmblemThumbnail, Renderer: SealEmblemRenderer,
+    inputs: ['coverImage'],
+    defaultConfig: { photoShape: 'circle' },
+    textSlots: [
+      { key: 'englishTagline', label: '상단 영문 라벨', getDefault: () => 'SEASON FINALE' },
+      { key: 'title', label: '메인 한글 문구 (Enter로 줄바꿈)', getDefault: () => '한 해의 마지막,\n따뜻한 자리에 모십니다', multiline: true },
+      { key: 'bottomText', label: '박스 안 날짜', getDefault: (c) => defaultBottomText(c) },
+      { key: 'subText', label: '박스 안 장소', getDefault: (c) => defaultSubText(c) },
+    ],
+  },
+  // ── 추가 5종 (다양화) ──
+  {
+    id: 'typo-only', label: '타이포 온리 (사진 없음)', categories: ['business', 'social', 'seasonal'],
+    Thumbnail: TypoOnlyThumbnail, Renderer: TypoOnlyRenderer,
+    inputs: [],
+    defaultConfig: {},
+    textSlots: [
+      { key: 'eyebrow', label: '상단 라벨', getDefault: () => 'INVITATION' },
+      { key: 'englishTitle', label: '큰 영문 제목 (Enter로 줄바꿈)', getDefault: () => 'BUSINESS\nFORUM 2026', multiline: true },
+      { key: 'koreanTitle', label: '한글 부제', getDefault: () => '함께 그리는 내일', multiline: true },
+      { key: 'bottomText', label: '하단 일시', getDefault: (c) => defaultBottomText(c) },
+      { key: 'subText', label: '장소', getDefault: (c) => defaultSubText(c) },
+    ],
+  },
+  {
+    id: 'half-split', label: '하프 스플릿 (위 사진 / 아래 텍스트)', categories: ['business', 'sports', 'seasonal'],
+    Thumbnail: HalfSplitThumbnail, Renderer: HalfSplitRenderer,
+    inputs: ['coverImage', 'photoShape'],
+    defaultConfig: { photoShape: 'square' },
+    textSlots: [
+      { key: 'inviteLabel', label: '상단 라벨', getDefault: () => 'INVITATION' },
+      { key: 'title', label: '제목 (Enter로 줄바꿈)', getDefault: () => '2026 BUSINESS FORUM', multiline: true },
+      { key: 'bottomText', label: '하단 일시', getDefault: (c) => defaultBottomText(c) },
+      { key: 'subText', label: '장소', getDefault: (c) => defaultSubText(c) },
+    ],
+  },
+  {
+    id: 'side-by-side', label: '사이드 바이 사이드 (좌 사진 / 우 텍스트)', categories: ['business', 'seasonal'],
+    Thumbnail: SideBySideThumbnail, Renderer: SideBySideRenderer,
+    inputs: ['coverImage', 'photoShape'],
+    defaultConfig: { photoShape: 'square' },
+    textSlots: [
+      { key: 'inviteLabel', label: '상단 라벨', getDefault: () => 'INVITATION' },
+      { key: 'title', label: '제목 (Enter로 줄바꿈)', getDefault: () => 'PRESTIGE\nLAUNCH', multiline: true },
+      { key: 'bottomText', label: '날짜·시간', getDefault: (c) => defaultBottomText(c) },
+      { key: 'subText', label: '장소', getDefault: (c) => defaultSubText(c) },
+    ],
+  },
+  {
+    id: 'stamp-mark', label: '스탬프 마크 (우상단 보더 라벨)', categories: ['sports', 'social'],
+    Thumbnail: StampMarkThumbnail, Renderer: StampMarkRenderer,
+    inputs: ['coverImage', 'photoShape'],
+    defaultConfig: { photoShape: 'square' },
+    textSlots: [
+      { key: 'stamp', label: '스탬프 라인1', getDefault: (c) => formatDateParts(c).yyyy },
+      { key: 'stampSub', label: '스탬프 라인2', getDefault: () => 'OPEN' },
+      { key: 'title', label: '제목 (Enter로 줄바꿈)', getDefault: () => 'OPEN TENNIS\nCUP 2026', multiline: true },
+      { key: 'bottomText', label: '날짜·시간', getDefault: (c) => defaultBottomText(c) },
+      { key: 'subText', label: '장소', getDefault: (c) => defaultSubText(c) },
+    ],
+  },
+  {
+    id: 'accent-bar', label: '액센트 바 (좌측 컬러 바)', categories: ['business', 'sports'],
+    Thumbnail: AccentBarThumbnail, Renderer: AccentBarRenderer,
+    inputs: [],
+    defaultConfig: {},
+    textSlots: [
+      { key: 'eyebrow', label: '상단 라벨', getDefault: () => 'INVITATION' },
+      { key: 'englishTitle', label: '큰 영문 제목 (Enter로 줄바꿈)', getDefault: () => 'OPEN\nTENNIS CUP\n2026', multiline: true },
+      { key: 'koreanTitle', label: '한글 부제', getDefault: () => '함께 즐기는 코트 위의 시간', multiline: true },
+      { key: 'bottomText', label: '하단 일시', getDefault: (c) => defaultBottomText(c) },
+      { key: 'subText', label: '장소', getDefault: (c) => defaultSubText(c) },
+    ],
+  },
 ]
 
 // 카테고리 매핑 (slug → MainCategory)
+const SLUG_TO_MAIN_CATEGORY: Record<string, MainCategory> = {
+  wedding: 'wedding',
+  baby: 'baby',
+  business: 'business',
+  sports: 'sports',
+  social: 'social',
+  seasonal: 'seasonal',
+}
 function categoryOf(slug: string | null): MainCategory {
   if (!slug) return 'all'
-  if (slug === 'wedding') return 'wedding'
-  if (slug === 'baby') return 'baby'
-  return 'all'
+  return SLUG_TO_MAIN_CATEGORY[slug] ?? 'all'
 }
 
 export function getVariantsForCategory(slug: string | null): MainScreenVariant[] {

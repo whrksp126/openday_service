@@ -3,10 +3,9 @@
 import { useState, useCallback } from 'react'
 import Link from 'next/link'
 import { Image as ImageIcon, Link as LinkIcon, MessageCircleMore, QrCode, MoreHorizontal, Edit3 } from 'lucide-react'
-import QrModal from './QrModal'
+import QrModal from '@/components/shared/QrModal'
 import MoreMenuModal from './MoreMenuModal'
-import { getKakaoTemplateId, shareKakaoCustom, shareKakaoFeed } from '@/lib/kakao'
-import { toAbsoluteUrl } from '@/lib/share-fallback'
+import { copyShareLink, shareToKakao } from '@/lib/share-actions'
 
 export interface InvitationCardData {
   id: string
@@ -39,58 +38,14 @@ export default function InvitationCard({ data }: { data: InvitationCardData }) {
   }, [])
 
   const handleCopyLink = useCallback(async () => {
-    try {
-      await navigator.clipboard.writeText(shareUrl)
-      showToast('링크가 복사되었습니다')
-    } catch {
-      showToast('복사에 실패했습니다')
-    }
+    const ok = await copyShareLink(shareUrl)
+    showToast(ok ? '링크가 복사되었습니다' : '복사에 실패했습니다')
   }, [shareUrl, showToast])
 
   const handleKakao = useCallback(() => {
-    if (!data.isPublished) {
-      showToast('초대장을 먼저 발행해 주세요')
-      return
-    }
-    const title = data.kakaoShareTitle ?? data.linkShareTitle ?? data.fallbackTitle
-    const description = [
-      data.kakaoShareText ?? data.fallbackText ?? '',
-      data.kakaoShareExtra ?? data.fallbackExtra ?? '',
-    ].filter(Boolean).join('\n')
-    const imageUrl = toAbsoluteUrl(data.thumbnailUrl, origin) ?? ''
-
-    const templateId = getKakaoTemplateId()
-    try {
-      // 콘솔에 등록된 사용자 정의 메시지 템플릿이 있으면 sendCustom (큰 풀폭 버튼 카드).
-      // 없으면 sendDefault feed 로 폴백 (PC 카톡에서 버튼 안 보일 수 있음).
-      if (templateId) {
-        shareKakaoCustom({
-          templateId,
-          templateArgs: {
-            title,
-            description,
-            slug: data.slug,
-            THU: imageUrl,
-            // 빌더의 비율을 '사용자 인자(${SC})' 로 두었을 때 원본 비율 유지(1) 강제.
-            // 캡처 단계에서 이미 1:1 정사각으로 합성하므로 letterbox 없음.
-            SC: '1',
-          },
-        })
-      } else {
-        shareKakaoFeed({
-          objectType: 'feed',
-          content: {
-            title,
-            description,
-            imageUrl,
-            link: { mobileWebUrl: shareUrl, webUrl: shareUrl },
-          },
-          buttons: [{ title: '초대장 보기', link: { mobileWebUrl: shareUrl, webUrl: shareUrl } }],
-        })
-      }
-    } catch {
-      showToast('카카오톡 공유 설정이 필요합니다')
-    }
+    const result = shareToKakao(data, shareUrl, origin)
+    if (result.ok) return
+    showToast(result.reason === 'unpublished' ? '초대장을 먼저 발행해 주세요' : '카카오톡 공유 설정이 필요합니다')
   }, [data, shareUrl, showToast, origin])
 
   return (

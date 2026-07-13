@@ -7,6 +7,7 @@ services:
       args:
         NEXT_PUBLIC_KAKAO_JS_KEY: ${NEXT_PUBLIC_KAKAO_JS_KEY:-}
         NEXT_PUBLIC_KAKAO_TEMPLATE_ID: ${NEXT_PUBLIC_KAKAO_TEMPLATE_ID:-}
+        NEXT_PUBLIC_NAVER_MAP_CLIENT_ID: ${NEXT_PUBLIC_NAVER_MAP_CLIENT_ID:-}
     env_file: .env.dev
     environment:
       NODE_ENV: production
@@ -18,6 +19,11 @@ services:
       - openday_dev
       - nginx_proxy
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 768m
+          cpus: "0.75"
     depends_on:
       mysql:
         condition: service_healthy
@@ -32,6 +38,11 @@ services:
     networks:
       - openday_dev
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "0.5"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s

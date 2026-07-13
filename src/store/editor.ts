@@ -13,7 +13,18 @@ export interface ShareMeta {
   kakaoShareExtra: string | null
 }
 
+// BGM 재생 의도. 'auto'는 첫 진입 자동재생 시도, 'paused'는 사용자가 명시적으로 정지한 상태.
+// store에 두는 이유: PreviewPane이 그룹 전환 등으로 재마운트되어도 사용자 의도가 유지되어야 함.
+export type BgmIntent = 'auto' | 'playing' | 'paused'
+
+// 'invitation' = 일반 사용자가 자신의 초대장 편집(자동저장).
+// 'template' = 관리자가 Template 의 기본값 편집(명시적 저장 버튼만, /api/templates PATCH).
+// templateId 의미가 모드별로 다르다: invitation 모드에서는 "원본 템플릿 추적용",
+// template 모드에서는 "현재 편집 중인 Template ID".
+export type EditorMode = 'invitation' | 'template'
+
 interface EditorState {
+  mode: EditorMode
   invitationId: string | null
   templateId: string | null
   slug: string | null
@@ -32,8 +43,12 @@ interface EditorState {
   activeNav: string
   activeSection: string | null
   editingModuleId: string | null
+  bgmIntent: BgmIntent
+  bgmCaptureMuted: boolean
 
-  setInvitationId: (id: string) => void
+  setMode: (mode: EditorMode) => void
+  setInvitationId: (id: string | null) => void
+  setTemplateId: (id: string | null) => void
   setSlug: (slug: string | null) => void
   setIsPublished: (published: boolean) => void
   setContent: (partial: Partial<InvitationContent>) => void
@@ -52,6 +67,8 @@ interface EditorState {
   setIsCreating: (creating: boolean) => void
   setLastSavedAt: (ts: number | null) => void
   setSaveError: (msg: string | null) => void
+  setBgmIntent: (intent: BgmIntent) => void
+  setBgmCaptureMuted: (muted: boolean) => void
   markClean: () => void
 }
 
@@ -65,6 +82,7 @@ const EMPTY_SHARE: ShareMeta = {
 }
 
 export const useEditorStore = create<EditorState>((set) => ({
+  mode: 'invitation',
   invitationId: null,
   templateId: null,
   slug: null,
@@ -83,8 +101,12 @@ export const useEditorStore = create<EditorState>((set) => ({
   activeNav: 'settings',
   activeSection: null,
   editingModuleId: null,
+  bgmIntent: 'auto',
+  bgmCaptureMuted: false,
 
+  setMode: (mode) => set({ mode }),
   setInvitationId: (id) => set({ invitationId: id }),
+  setTemplateId: (id) => set({ templateId: id }),
   setSlug: (slug) => set({ slug }),
   setIsPublished: (published) => set({ isPublished: published }),
 
@@ -139,6 +161,9 @@ export const useEditorStore = create<EditorState>((set) => ({
   setIsCreating: (creating) => set({ isCreating: creating }),
   setLastSavedAt: (ts) => set({ lastSavedAt: ts }),
   setSaveError: (msg) => set({ saveError: msg }),
+
+  setBgmIntent: (intent) => set({ bgmIntent: intent }),
+  setBgmCaptureMuted: (muted) => set({ bgmCaptureMuted: muted }),
 
   markClean: () => set({ isDirty: false, saveError: null }),
 }))

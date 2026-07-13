@@ -2,6 +2,7 @@ import NextAuth from 'next-auth'
 import Google from 'next-auth/providers/google'
 import { PrismaAdapter } from '@auth/prisma-adapter'
 import { prisma } from './prisma'
+import { isAdminEmail } from './admin'
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
@@ -15,7 +16,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     session: ({ session, user }) => ({
       ...session,
-      user: { ...session.user, id: user.id },
+      user: {
+        ...session.user,
+        id: user.id,
+        isAdmin: isAdminEmail(user.email),
+      },
     }),
   },
   pages: {

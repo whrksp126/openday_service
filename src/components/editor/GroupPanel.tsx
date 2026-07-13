@@ -5,6 +5,9 @@ import { ChevronRight, Plus } from 'lucide-react'
 import { useEditorStore } from '@/store/editor'
 import { type NavGroup, type NavModuleItem } from './nav-config'
 import { ModuleSkeleton } from './ModuleSkeletons'
+import PublishToggle from './PublishToggle'
+import ThumbnailUpdater from './ThumbnailUpdater'
+import DomainChangeButton from './DomainChangeButton'
 
 interface Props {
   groupId: string
@@ -16,6 +19,8 @@ export default function GroupPanel({ groupId, navGroups, onSelectModule }: Props
   const { modules, addModule, setEditingModuleId } = useEditorStore()
   const group = navGroups.find(g => g.id === groupId)
   if (!group) return null
+  // template 모드의 'share' 그룹은 nav-config 가 admin 전용 '썸네일' 그룹으로 치환해 두었다 —
+  // 아래 share 분기에서 ThumbnailUpdater 만 렌더되며 PublishToggle/DomainChangeButton 은 자체 가드로 null.
 
   function handleAdd(item: NavModuleItem) {
     if (!item.moduleType) return
@@ -45,6 +50,14 @@ export default function GroupPanel({ groupId, navGroups, onSelectModule }: Props
       </div>
 
       <div className="flex-1 overflow-y-auto">
+        {group.id === 'share' && (
+          <div className="px-5 pt-4 pb-3 space-y-3 border-b border-gray-100">
+            <PublishToggle />
+            <ThumbnailUpdater />
+            <DomainChangeButton />
+          </div>
+        )}
+
         {/* content 기반 항목 (moduleType 없음) */}
         {contentItems.length > 0 && (
           <div>

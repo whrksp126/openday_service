@@ -17,20 +17,11 @@ if [ -z "$CLAUDE_SURFACE" ] || [ -z "$WS" ]; then
   echo "[ERROR] Claude 터미널 정보를 가져올 수 없습니다."
   exit 1
 fi
-echo "[0/5] Claude 터미널: $CLAUDE_SURFACE (pane: $CLAUDE_PANE, ws: $WS)"
+echo "[0/4] Claude 터미널: $CLAUDE_SURFACE (pane: $CLAUDE_PANE, ws: $WS)"
 
 # ─────────────────────────────────────────
-# 1. 내부 IP 확인
-# ─────────────────────────────────────────
-IP=$(ipconfig getifaddr en0)
-if [ -z "$IP" ]; then
-  echo "[ERROR] IP를 가져올 수 없습니다. Wi-Fi 연결을 확인하세요."
-  exit 1
-fi
-echo "[1/5] 내부 IP: $IP"
-
-# ─────────────────────────────────────────
-# 2. .env.local 파일 IP 업데이트
+# 1. .env.local 의 NEXTAUTH_URL / NEXT_PUBLIC_APP_URL 을 localhost 로 고정
+#    (OpenDay 는 웹 서비스 — 내부 IP 노출 불필요. Google OAuth 도 사설 IP 차단.)
 # ─────────────────────────────────────────
 update_env() {
   local file="$1" key="$2" value="$3"
@@ -41,24 +32,24 @@ update_env() {
   fi
 }
 
-update_env "$SERVICE_DIR/.env.local" "NEXTAUTH_URL"        "http://$IP:5410"
-update_env "$SERVICE_DIR/.env.local" "NEXT_PUBLIC_APP_URL" "http://$IP:5410"
+update_env "$SERVICE_DIR/.env.local" "NEXTAUTH_URL"        "http://localhost:5410"
+update_env "$SERVICE_DIR/.env.local" "NEXT_PUBLIC_APP_URL" "http://localhost:5410"
 
-echo "[2/5] .env.local 업데이트 완료 (NEXTAUTH_URL, NEXT_PUBLIC_APP_URL → http://$IP:5410)"
+echo "[1/4] .env.local 업데이트 완료 (NEXTAUTH_URL, NEXT_PUBLIC_APP_URL → http://localhost:5410)"
 
 # ─────────────────────────────────────────
-# 3. Docker Compose 재시작
+# 2. Docker Compose 재시작
 # ─────────────────────────────────────────
-echo "[3/5] Docker 컨테이너 재시작 중..."
+echo "[2/4] Docker 컨테이너 재시작 중..."
 cd "$SERVICE_DIR"
 docker compose -f docker-compose.local.yml down
 docker compose -f docker-compose.local.yml up --build -d
-echo "[3/5] Docker 컨테이너 시작 완료"
+echo "[2/4] Docker 컨테이너 시작 완료"
 
 # ─────────────────────────────────────────
-# 4. 기존 레이아웃 정리 (Claude pane 제외)
+# 3. 기존 레이아웃 정리 (Claude pane 제외)
 # ─────────────────────────────────────────
-echo "[4/5] 기존 레이아웃 정리 중..."
+echo "[3/4] 기존 레이아웃 정리 중..."
 PANE_REFS=$($CMUX list-panes --workspace $WS 2>/dev/null | grep -o 'pane:[0-9]*' || true)
 for pane in $PANE_REFS; do
   if [ "$pane" != "$CLAUDE_PANE" ]; then
@@ -71,7 +62,7 @@ done
 sleep 0.5
 
 # ─────────────────────────────────────────
-# 5. 분할 레이아웃 생성
+# 4. 분할 레이아웃 생성
 # ─────────────────────────────────────────
 # +──────────────── Claude Code ─────────────────+
 # +──── nextjs ────+──── mysql ────+──── nginx ──+
@@ -95,13 +86,13 @@ $CMUX rename-tab --surface $nginx_surface --workspace $WS "nginx" 2>/dev/null ||
 $CMUX send --surface $nginx_surface --workspace $WS "docker logs -f openday_nginx_local"
 $CMUX send-key --surface $nginx_surface --workspace $WS "Enter"
 
-echo "[5/5] 레이아웃 생성 완료"
+echo "[4/4] 레이아웃 생성 완료"
 
 # ─────────────────────────────────────────
-# 6. Claude 터미널로 포커스 복귀
+# 5. Claude 터미널로 포커스 복귀
 # ─────────────────────────────────────────
 $CMUX focus-pane --pane $CLAUDE_PANE --workspace $WS 2>/dev/null || true
 
 echo ""
-echo "OpenDay 로컬 개발환경 세팅 완료! (IP: $IP)"
-echo "접속: http://$IP:5410"
+echo "OpenDay 로컬 개발환경 세팅 완료!"
+echo "접속: http://localhost:5410"

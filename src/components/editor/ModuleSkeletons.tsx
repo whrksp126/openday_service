@@ -455,10 +455,72 @@ function BgmSkeleton() {
   )
 }
 
-function VideoSkeleton() {
+function VideoSingleCardSkeleton() {
   return (
     <SkWrap>
-      <div className="bg-gray-200 w-full aspect-video rounded-xl" />
+      <div className="bg-gray-200 w-full aspect-video rounded-2xl" />
+    </SkWrap>
+  )
+}
+
+function VideoCinemaSkeleton() {
+  return (
+    <div className="bg-black aspect-video w-full flex items-center justify-center">
+      <div className="w-12 h-12 rounded-full bg-white/90" />
+    </div>
+  )
+}
+
+function VideoPolaroidSkeleton() {
+  return (
+    <div className="px-4 py-3">
+      <div className="bg-white p-2 pb-6 border border-gray-100 -rotate-1">
+        <div className="bg-gray-200 w-full aspect-video" />
+      </div>
+    </div>
+  )
+}
+
+function VideoFloatingBorderedSkeleton() {
+  return (
+    <SkWrap>
+      <div className="bg-gray-50 p-2 rounded-3xl">
+        <div className="bg-gray-200 w-full aspect-video rounded-2xl border border-gray-100" />
+      </div>
+    </SkWrap>
+  )
+}
+
+function VideoFullbleedSkeleton() {
+  return (
+    <div>
+      <div className="bg-gray-200 w-full aspect-video" />
+    </div>
+  )
+}
+
+function VideoCarouselSkeleton() {
+  return (
+    <SkWrap>
+      <div className="bg-gray-200 w-full aspect-video rounded-2xl" />
+      <div className="mt-2 flex justify-center gap-1">
+        <span className="block w-1 h-1 rounded-full bg-gray-300" />
+        <span className="block w-1 h-1 rounded-full bg-gray-200" />
+        <span className="block w-1 h-1 rounded-full bg-gray-200" />
+      </div>
+    </SkWrap>
+  )
+}
+
+function VideoThumbnailRowSkeleton() {
+  return (
+    <SkWrap>
+      <div className="bg-gray-200 w-full aspect-video rounded-2xl" />
+      <div className="mt-1.5 grid grid-cols-3 gap-1">
+        {[0, 1, 2].map(i => (
+          <div key={i} className="bg-gray-100 aspect-video rounded-md border border-gray-100" />
+        ))}
+      </div>
     </SkWrap>
   )
 }
@@ -539,8 +601,14 @@ export function ModuleSkeleton({ type }: { type: string }) {
     case 'rsvp':       return <RsvpSkeleton />
     case 'dday':       return <DdaySkeleton />
     case 'bgm':        return <BgmSkeleton />
-    case 'video':      return <VideoSkeleton />
-    case 'guestalbum': return <GuestalbumSkeleton />
+    case 'video_single_card':       return <VideoSingleCardSkeleton />
+    case 'video_cinema':            return <VideoCinemaSkeleton />
+    case 'video_polaroid':          return <VideoPolaroidSkeleton />
+    case 'video_floating_bordered': return <VideoFloatingBorderedSkeleton />
+    case 'video_fullbleed':         return <VideoFullbleedSkeleton />
+    case 'video_carousel':          return <VideoCarouselSkeleton />
+    case 'video_thumbnail_row':     return <VideoThumbnailRowSkeleton />
+    case 'photo_share': return <GuestalbumSkeleton />
     default:           return <DefaultSkeleton />
   }
 }

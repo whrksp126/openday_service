@@ -102,3 +102,92 @@
 .bgm-eq-bar { transform-origin: bottom; animation: bgm-eq-bar 0.9s ease-in-out infinite; }
 .bgm-eq-bar:nth-child(2) { animation-duration: 1.2s; animation-delay: 0.15s; }
 .bgm-eq-bar:nth-child(3) { animation-duration: 0.8s; animation-delay: 0.35s; }
+
+/* ──────────────────────────────────────────────────────────────────
+ * 스크롤 등장 애니메이션 — 모듈 내부 각 텍스트·이미지 단위로 stagger 적용
+ * ScrollAnimateChildren 컴포넌트가 leaf 요소에 .anim-{preset}-prep 부여
+ * 후 IntersectionObserver 가 시야 진입 시 .anim-{preset}-in 추가
+ * 각 요소의 transition-delay 는 JS 에서 인라인으로 지정
+ * ────────────────────────────────────────────────────────────────── */
+
+/* fade — 단순 opacity */
+.anim-fade-prep {
+  opacity: 0;
+  transition: opacity 700ms ease-out;
+}
+.anim-fade-prep.anim-in { opacity: 1; }
+
+/* soft — fade + 살짝 위로 + 살짝 확대 */
+.anim-soft-prep {
+  opacity: 0;
+  transform: translateY(16px) scale(0.97);
+  transition: opacity 700ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.anim-soft-prep.anim-in { opacity: 1; transform: translateY(0) scale(1); }
+
+/* reveal — blur + 위로 슬라이드 (시네마틱) */
+.anim-reveal-prep {
+  opacity: 0;
+  transform: translateY(28px);
+  filter: blur(8px);
+  transition: opacity 900ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 900ms cubic-bezier(0.16, 1, 0.3, 1),
+              filter 900ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.anim-reveal-prep.anim-in { opacity: 1; transform: translateY(0); filter: blur(0); }
+
+/* blur — 흐림 풀림만 */
+.anim-blur-prep {
+  opacity: 0;
+  filter: blur(14px);
+  transition: opacity 800ms ease-out, filter 800ms ease-out;
+}
+.anim-blur-prep.anim-in { opacity: 1; filter: blur(0); }
+
+/* rise — 아래에서 위로 크게 떠오름 */
+.anim-rise-prep {
+  opacity: 0;
+  transform: translateY(48px);
+  transition: opacity 800ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 800ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.anim-rise-prep.anim-in { opacity: 1; transform: translateY(0); }
+
+/* zoom — 작게 시작해 커짐 */
+.anim-zoom-prep {
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 700ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.anim-zoom-prep.anim-in { opacity: 1; transform: scale(1); }
+
+/* pop — 탄력 있는 scale (overshoot back-out) */
+.anim-pop-prep {
+  opacity: 0;
+  transform: scale(0.85);
+  transition: opacity 450ms ease-out,
+              transform 550ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.anim-pop-prep.anim-in { opacity: 1; transform: scale(1); }
+
+/* flip — rotateX 기울기 */
+.anim-flip-prep {
+  opacity: 0;
+  transform: perspective(800px) rotateX(22deg) translateY(12px);
+  transform-origin: top center;
+  transition: opacity 700ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 800ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.anim-flip-prep.anim-in { opacity: 1; transform: perspective(800px) rotateX(0) translateY(0); }
+
+/* slide — 왼쪽에서 미끄러짐 */
+.anim-slide-prep {
+  opacity: 0;
+  transform: translateX(-40px);
+  transition: opacity 700ms cubic-bezier(0.16, 1, 0.3, 1),
+              transform 700ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.anim-slide-prep.anim-in { opacity: 1; transform: translateX(0); }
+

@@ -9,15 +9,20 @@ import {
   AlignLeft, MessageCircle, CalendarDays, MapPin, Images,
   BookOpen, CreditCard, CheckSquare, Timer, GalleryHorizontal,
   Camera, AlignCenter, Share2, UserRound, Pencil, Trash2,
-  X, ChevronDown, ChevronLeft, ChevronRight, Play,
+  X, ChevronDown, ChevronLeft, ChevronRight,
 } from 'lucide-react'
-import type { BgmConfig, ContactGroup, GuestbookEntry, GuestbookModuleConfig, ImageCropData, InvitationContent, InvitationModule, InvitationStyles, ModuleType, ProfilePerson, RsvpModuleConfig, SlideModuleConfig, TabModuleConfig, VenueModuleConfig } from '@/types/invitation'
+import type { ContactGroup, GuestbookEntry, GuestbookModuleConfig, ImageCropData, InvitationContent, InvitationModule, InvitationStyles, ModuleType, ProfilePerson, RsvpModuleConfig, SlideModuleConfig, TabModuleConfig, VenueModuleConfig } from '@/types/invitation'
 import NaverMap from '@/components/shared/NaverMap'
 import ClickableImage from './ClickableImage'
 import RsvpModal from './RsvpModal'
 import GuestbookModal from './GuestbookModal'
+import YouTubePlayer from './YouTubePlayer'
+import PhotoShareGuestView from '@/components/photo-share/PhotoShareGuestView'
 import { ImageLightboxProvider } from '@/components/shared/ImageLightboxProvider'
+import ScrollAnimateChildren from '@/components/shared/ScrollAnimateChildren'
+import { normalizeScrollAnimation } from '@/lib/scroll-animations'
 import { findVariant } from './main-screen-variants'
+import { systemAssetUrl } from '@/lib/asset-paths'
 
 const DEFAULT_ACCENT = '#bf8362'
 const DEFAULT_BG = '#f3f3f3'
@@ -40,7 +45,7 @@ const FONT_URLS: Record<string, string> = {
 }
 
 const SIMPLE_SECTIONS: Partial<Record<ModuleType, { label: string; englishLabel?: string }>> = {
-  guestalbum: { label: '하객 앨범', englishLabel: 'Guest Album' },
+  photo_share: { label: '사진 공유', englishLabel: 'Photo Share' },
   opening: { label: '오프닝' },
 }
 
@@ -67,8 +72,14 @@ const MODULE_META: Partial<Record<ModuleType | string, { icon: React.ElementType
   account: { icon: CreditCard, label: '계좌 정보' },
   rsvp: { icon: CheckSquare, label: 'RSVP' },
   dday: { icon: Timer, label: 'D+Day' },
-  video: { icon: Film, label: '동영상' },
-  guestalbum: { icon: Camera, label: '하객 앨범' },
+  video_single_card: { icon: Film, label: '단일 카드' },
+  video_cinema: { icon: Film, label: '시네마' },
+  video_polaroid: { icon: Camera, label: '폴라로이드' },
+  video_floating_bordered: { icon: LayoutGrid, label: '카드 인 카드' },
+  video_fullbleed: { icon: ImageIcon, label: '풀 블리드' },
+  video_carousel: { icon: GalleryHorizontal, label: '캐러셀' },
+  video_thumbnail_row: { icon: Images, label: '썸네일 로우' },
+  photo_share: { icon: Camera, label: '사진 공유' },
   ending: { icon: AlignCenter, label: '엔딩 사진' },
   share: { icon: Share2, label: '공유하기' },
   basic: { icon: Heart, label: '기본 정보' },
@@ -201,10 +212,9 @@ function RichText({ html, className, style }: { html: string; className?: string
 // ── 메인 커버 섹션 ───────────────────────────────────────────────────────────
 // variant dispatcher — 실제 렌더링은 main-screen-variants.tsx의 각 Renderer가 담당.
 // showNames는 classic/two-photo 등 일부 variant에서 module.config.showNames로 옮겨가기 전 호환을 위해 유지.
-function MainSection({ content, accent, fontFamily, showNames, showEnglish, module }: {
-  content: InvitationContent; accent: string; fontFamily: string; showNames: boolean; showEnglish: boolean; module?: InvitationModule
+function MainSection({ content, accent, fontFamily, showNames, showEnglish, module, bgColor }: {
+  content: InvitationContent; accent: string; fontFamily: string; showNames: boolean; showEnglish: boolean; module?: InvitationModule; bgColor: string
 }) {
-  const captureBgColor = useEditorStore((s) => s.styles.bgColor) ?? '#ffffff'
   if (!module) return null
   const variantId = (module.config?.variant as string | undefined) ?? 'classic'
   const variant = findVariant(variantId) ?? findVariant('classic')!
@@ -214,7 +224,7 @@ function MainSection({ content, accent, fontFamily, showNames, showEnglish, modu
     ? { ...module, config: { ...module.config, showNames: false } }
     : module
   return (
-    <div data-capture-target="main" style={{ backgroundColor: captureBgColor }}>
+    <div data-capture-target="main" style={{ backgroundColor: bgColor }}>
       <Renderer content={content} module={moduleWithFallback} accent={accent} fontFamily={fontFamily} showEnglish={showEnglish} />
     </div>
   )
@@ -298,7 +308,7 @@ function DatetimeSection({ accent, content, showEnglish }: { accent: string; con
     textAlign: (content.datetimeLabelAlign as React.CSSProperties['textAlign']) ?? 'center',
     whiteSpace: 'pre-line',
   }
-  const datetimeKoreanLabel = content.datetimeKoreanTitle ?? '예식 일시'
+  const datetimeKoreanLabel = content.datetimeKoreanTitle ?? '행사 일시'
   const datetimeKoreanLabelVisible = content.datetimeKoreanLabelVisible !== false
   const datetimeKoreanLabelStyle: React.CSSProperties = {
     fontWeight: content.datetimeKoreanLabelBold ? 'bold' : undefined,
@@ -325,7 +335,7 @@ function DatetimeSection({ accent, content, showEnglish }: { accent: string; con
   return (
     <section className="py-10 mx-4 border-t border-gray-200 text-center">
       {datetimeKoreanLabelVisible && <p className="text-sm mb-1" style={{ color: accent, ...datetimeKoreanLabelStyle }}>{datetimeKoreanLabel}</p>}
-      {showEnglish && datetimeLabelVisible && <p className="text-xs mb-1" style={{ color: accent, fontFamily: 'Georgia, serif', ...datetimeLabelStyle }}>{content.datetimeEnglishTitle ?? 'Wedding Day'}</p>}
+      {showEnglish && datetimeLabelVisible && <p className="text-xs mb-1" style={{ color: accent, fontFamily: 'Georgia, serif', ...datetimeLabelStyle }}>{content.datetimeEnglishTitle ?? 'Event Day'}</p>}
       {titleBigVisible && titleBigText && <div className="text-sm text-gray-800 mt-2 mb-1" style={titleBigStyle}>{titleBigText}</div>}
       {titleSmallVisible && titleSmallText && <div className="text-xs text-gray-500 mb-6" style={titleSmallStyle}>{titleSmallText}</div>}
       <div className="text-sm font-medium mb-4" style={{ color: '#333' }}>{month}월</div>
@@ -417,7 +427,7 @@ function VenueSection({ accent, content, showEnglish, module }: { accent: string
   const titleSmall = content.venueTitleSmall
   return (
     <section className="py-10 mx-4 border-t border-gray-200 text-center">
-      {venueKoreanLabelVisible && <p className="text-sm mb-1" style={{ color: accent, ...venueKoreanLabelStyle }}>{content.venueKoreanTitle ?? '예식 장소'}</p>}
+      {venueKoreanLabelVisible && <p className="text-sm mb-1" style={{ color: accent, ...venueKoreanLabelStyle }}>{content.venueKoreanTitle ?? '행사 장소'}</p>}
       {showEnglish && venueLabelVisible && <p className="text-xs mb-1" style={{ color: accent, fontFamily: 'Georgia, serif', ...venueLabelStyle }}>{content.venueEnglishTitle ?? 'Location'}</p>}
       {venueTitleBigVisible && titleBig && (
         <div className="text-sm text-gray-800 mb-1" style={venueTitleBigStyle}>{titleBig}</div>
@@ -438,7 +448,7 @@ function VenueSection({ accent, content, showEnglish, module }: { accent: string
         <div className="grid grid-cols-3 gap-2 mb-4">
           <NavButton
             label="네이버지도"
-            iconSrc="/images/v1/icon_image/icon_navermap_200.png"
+            iconSrc={systemAssetUrl('icons/icon_navermap_200.png')}
             onClick={() => openExternalApp(
               `nmap://search?query=${encodeURIComponent(venue.address ?? '')}&appname=openday.ghmate.com`,
               `https://map.naver.com/p/search/${encodeURIComponent(venue.address ?? '')}`,
@@ -446,7 +456,7 @@ function VenueSection({ accent, content, showEnglish, module }: { accent: string
           />
           <NavButton
             label="티맵"
-            iconSrc="/images/v1/icon_image/icon_tmap_200.png"
+            iconSrc={systemAssetUrl('icons/icon_tmap_200.png')}
             onClick={() => openExternalApp(
               `tmap://search?name=${encodeURIComponent(venue.address ?? '')}`,
               `https://tmap.life/route?goalname=${encodeURIComponent(venue.address ?? '')}`,
@@ -454,7 +464,7 @@ function VenueSection({ accent, content, showEnglish, module }: { accent: string
           />
           <NavButton
             label="카카오맵"
-            iconSrc="/images/v1/icon_image/icon_kakaomap_200.png"
+            iconSrc={systemAssetUrl('icons/icon_kakaomap_200.png')}
             onClick={() => {
               const { lat, lng, address } = venue
               const scheme = (lat != null && lng != null)
@@ -469,62 +479,23 @@ function VenueSection({ accent, content, showEnglish, module }: { accent: string
   )
 }
 
-// 공통: legacy(person1*/person2* 또는 단일 image/personName) → ProfilePerson[] 변환
 function readProfilePersons(cfg: Record<string, unknown>): ProfilePerson[] {
-  if (Array.isArray(cfg.persons)) return cfg.persons as ProfilePerson[]
-  if (cfg.person1Image || cfg.person1Label || cfg.person1Story || cfg.person2Image || cfg.person2Label || cfg.person2Story
-      || cfg.groomImage || cfg.groomRoleLabel || cfg.groomStory || cfg.brideImage || cfg.brideRoleLabel || cfg.brideStory) {
-    return [
-      {
-        image: (cfg.person1Image ?? cfg.groomImage) as string | undefined,
-        imageCrop: (cfg.person1ImageCrop ?? cfg.groomImageCrop) as ImageCropData | undefined,
-        name: (cfg.person1Label ?? cfg.groomRoleLabel) as string | undefined,
-        description: (cfg.person1Story ?? cfg.groomStory) as string | undefined,
-        descriptionVisible: (cfg.person1StoryVisible ?? cfg.groomStoryVisible) as boolean | undefined,
-      },
-      {
-        image: (cfg.person2Image ?? cfg.brideImage) as string | undefined,
-        imageCrop: (cfg.person2ImageCrop ?? cfg.brideImageCrop) as ImageCropData | undefined,
-        name: (cfg.person2Label ?? cfg.brideRoleLabel) as string | undefined,
-        description: (cfg.person2Story ?? cfg.brideStory) as string | undefined,
-        descriptionVisible: (cfg.person2StoryVisible ?? cfg.brideStoryVisible) as boolean | undefined,
-      },
-    ]
-  }
-  if (cfg.image || cfg.personName || cfg.birthDate || cfg.hashtags || cfg.description) {
-    return [{
-      image: cfg.image as string | undefined,
-      imageCrop: cfg.imageCrop as ImageCropData | undefined,
-      name: cfg.personName as string | undefined,
-      title: cfg.birthDate as string | undefined,
-      hashtags: cfg.hashtags as string[] | undefined,
-      description: cfg.description as string | undefined,
-      descriptionVisible: cfg.descriptionVisible as boolean | undefined,
-    }]
-  }
-  return []
+  return Array.isArray(cfg.persons) ? (cfg.persons as ProfilePerson[]) : []
 }
 
 // ── 세로형 프로필 (공통, 1명 이상) ────────────────────────────────────────────
 function SoloProfileSection({ accent, content, showEnglish, module }: { accent: string; content: InvitationContent; showEnglish: boolean; module: InvitationModule }) {
   const cfg = module.config as Record<string, unknown>
   const persons = readProfilePersons(cfg)
-  // 빈 데이터일 때 baby content 한 명을 fallback 으로 표시(시드 호환)
-  const fallbackBaby = content.baby
-  const display: ProfilePerson[] = persons.length > 0 ? persons : (fallbackBaby ? [{
-    name: fallbackBaby.name,
-    title: fallbackBaby.birthDate,
-    hashtags: fallbackBaby.hashtags,
-    description: fallbackBaby.description,
-  }] : [])
+  const display: ProfilePerson[] = persons
   const koreanTitle = cfg.koreanTitle as string | undefined
   const englishTitle = cfg.englishTitle as string | undefined
   const titleBig = cfg.titleBig as string | undefined
   const titleSmall = cfg.titleSmall as string | undefined
   return (
     <section className="py-10 mx-4 border-t border-gray-200 text-center">
-      {cfg.koreanLabelVisible !== false && <p className="text-sm mb-1" style={{ color: accent }}>{koreanTitle ?? '소개'}</p>}
-      {showEnglish && cfg.labelVisible !== false && <p className="text-xs mb-1" style={{ color: accent, fontFamily: 'Georgia, serif' }}>{englishTitle ?? 'About'}</p>}
+      {cfg.koreanLabelVisible !== false && <p className="text-sm mb-1" style={{ color: accent }}>{koreanTitle ?? '프로필'}</p>}
+      {showEnglish && cfg.labelVisible !== false && <p className="text-xs mb-1" style={{ color: accent, fontFamily: 'Georgia, serif' }}>{englishTitle ?? 'Profile'}</p>}
       {cfg.titleBigVisible !== false && titleBig && <div className="text-sm text-gray-800 mb-1">{titleBig}</div>}
       {cfg.titleSmallVisible !== false && titleSmall && <div className="text-xs text-gray-400 mb-4">{titleSmall}</div>}
       <div className="space-y-3 mt-2">
@@ -542,11 +513,14 @@ function SoloProfileSection({ accent, content, showEnglish, module }: { accent: 
                   placeholder={<ImageIcon size={28} className="text-gray-300" strokeWidth={1} />}
                 />
               </div>
-              {person.name && <div className="tracking-widest mb-1" style={{ color: accent, fontSize: '1.25rem' }}>{person.name}</div>}
-              {person.title && <div className="text-xs text-gray-500 mb-1">{person.title}</div>}
+              <div className="mb-2">
+                <span className="inline-block rounded-full px-3 py-0.5 text-[11px]" style={person.name ? { color: accent, backgroundColor: accent + '1A' } : { color: '#9ca3af', backgroundColor: '#f3f4f6' }}>{person.name || '이름 자리입니다.'}</span>
+              </div>
               {hashtags && <div className="text-xs mb-2" style={{ color: accent }}>{hashtags}</div>}
-              {person.description && descVisible && (
-                <RichText html={person.description} className="text-xs text-gray-500 leading-relaxed whitespace-pre-line" />
+              {descVisible && (
+                person.description
+                  ? <RichText html={person.description} className="text-xs text-gray-500 leading-relaxed whitespace-pre-line" />
+                  : <div className="text-xs text-gray-400 leading-relaxed">소개 자리입니다.</div>
               )}
             </div>
           )
@@ -612,8 +586,8 @@ function ProfileSection({ accent, content, showEnglish, module }: { accent: stri
   const titleSmallStyle: React.CSSProperties = { fontWeight: (cfg.titleSmallBold as boolean) ? 'bold' : undefined, fontStyle: (cfg.titleSmallItalic as boolean) ? 'italic' : undefined, textAlign: ((cfg.titleSmallAlign as React.CSSProperties['textAlign']) ?? 'center'), whiteSpace: 'pre-line' }
   return (
     <section className="py-10 mx-4 border-t border-gray-200">
-      {cfg.koreanLabelVisible !== false && <p className="text-sm mb-1 text-center" style={{ color: accent, ...koreanLabelStyle }}>{koreanTitle ?? '소개'}</p>}
-      {showEnglish && labelVisible && <p className="text-xs mb-1 text-center" style={{ color: accent, fontFamily: 'Georgia, serif', ...labelStyle }}>{englishTitle ?? 'About'}</p>}
+      {cfg.koreanLabelVisible !== false && <p className="text-sm mb-1 text-center" style={{ color: accent, ...koreanLabelStyle }}>{koreanTitle ?? '프로필'}</p>}
+      {showEnglish && labelVisible && <p className="text-xs mb-1 text-center" style={{ color: accent, fontFamily: 'Georgia, serif', ...labelStyle }}>{englishTitle ?? 'Profile'}</p>}
       {cfg.titleBigVisible !== false && titleBig && <div className="text-sm text-gray-800 mb-1 text-center" style={titleBigStyle}>{titleBig}</div>}
       {cfg.titleSmallVisible !== false && titleSmall && <div className="text-xs text-gray-400 mb-4 text-center" style={titleSmallStyle}>{titleSmall}</div>}
       <div className="space-y-3 mb-4">
@@ -647,10 +621,13 @@ function ProfileCard({ accent, person, imageSide }: { accent: string; person: Pr
   )
   const body = (
     <div className={`w-1/2 flex flex-col ${imageSide === 'left' ? 'items-start text-left' : 'items-end text-right'} gap-1.5 justify-start`}>
-      {person.name && <span className="inline-block rounded-full px-3 py-0.5 text-[11px]" style={{ color: accent, backgroundColor: accent + '1A' }}>{person.name}</span>}
-      {person.title && <span className="text-[10px] text-gray-500">{person.title}</span>}
+      <span className="inline-block rounded-full px-3 py-0.5 text-[11px]" style={person.name ? { color: accent, backgroundColor: accent + '1A' } : { color: '#9ca3af', backgroundColor: '#f3f4f6' }}>{person.name || '이름 자리입니다.'}</span>
       {hashtags && <span className="text-[10px]" style={{ color: accent }}>{hashtags}</span>}
-      {person.description && descVisible && <RichText html={person.description} className="text-xs text-gray-500 leading-relaxed [&_p]:m-0" />}
+      {descVisible && (
+        person.description
+          ? <RichText html={person.description} className="text-xs text-gray-500 leading-relaxed [&_p]:m-0" />
+          : <span className="text-xs text-gray-400 leading-relaxed">소개 자리입니다.</span>
+      )}
     </div>
   )
   return (
@@ -811,8 +788,8 @@ function InterviewSection({ accent, showEnglish, module }: { accent: string; sho
         <div className="space-y-3">
           {items.map((item, i) => (
             <div key={i} className="border border-gray-100 rounded-xl p-4 text-left">
-              {item.questionVisible !== false && <div className="text-xs font-medium text-gray-700 mb-1 flex gap-1"><span>Q.</span><RichText html={item.question} /></div>}
-              {item.answerVisible !== false && <div className="text-xs text-gray-500 leading-5 flex gap-1"><span>A.</span><RichText html={item.answer} /></div>}
+              {item.questionVisible !== false && <div className="text-xs font-medium text-gray-700 mb-1 flex gap-1"><span>Q.</span><RichText html={item.question || '질문 자리입니다.'} /></div>}
+              {item.answerVisible !== false && <div className="text-xs text-gray-500 leading-5 flex gap-1"><span>A.</span><RichText html={item.answer || '답변 자리입니다.'} /></div>}
             </div>
           ))}
         </div>
@@ -947,8 +924,14 @@ function TabSection({ accent, showEnglish, module }: { accent: string; showEngli
           </div>
           {active && (
             <div className="space-y-3">
-              {active.image && active.imageVisible !== false && (
-                <ClickableImage src={active.image} crop={active.imageCrop} fallbackAspect="4/3" />
+              {active.imageVisible !== false && (
+                <ClickableImage
+                  src={active.image}
+                  crop={active.imageCrop}
+                  fallbackAspect="4/3"
+                  rounded="rounded-xl"
+                  placeholder={<ImageIcon size={28} className="text-gray-300" strokeWidth={1} />}
+                />
               )}
               {active.contentVisible !== false && active.content && (
                 <RichText html={active.content} className="text-xs text-gray-500 text-center leading-6" />
@@ -1011,10 +994,10 @@ function SlideSection({ accent, showEnglish, module }: { accent: string; showEng
     if (activeIdx >= slides.length) setActiveIdx(0)
   }, [slides.length, activeIdx])
 
-  const koreanLabel = cfg.koreanTitle ?? '안내사항'
+  const koreanLabel = cfg.koreanTitle ?? '슬라이드'
   const koreanLabelVisible = cfg.koreanLabelVisible !== false
   const koreanLabelStyle: React.CSSProperties = { fontWeight: cfg.koreanLabelBold ? 'bold' : undefined, fontStyle: cfg.koreanLabelItalic ? 'italic' : undefined, textAlign: (cfg.koreanLabelAlign as React.CSSProperties['textAlign']) ?? 'center', whiteSpace: 'pre-line' }
-  const englishTitle = cfg.englishTitle ?? 'Information'
+  const englishTitle = cfg.englishTitle ?? 'Slide'
   const labelVisible = cfg.labelVisible !== false
   const labelStyle: React.CSSProperties = { fontWeight: cfg.labelBold ? 'bold' : undefined, fontStyle: cfg.labelItalic ? 'italic' : undefined, textAlign: (cfg.labelAlign as React.CSSProperties['textAlign']) ?? 'center', whiteSpace: 'pre-line' }
   const titleBigStyle: React.CSSProperties = { fontWeight: cfg.titleBigBold ? 'bold' : 'medium', fontStyle: cfg.titleBigItalic ? 'italic' : undefined, textAlign: (cfg.titleBigAlign as React.CSSProperties['textAlign']) ?? 'center', whiteSpace: 'pre-line' }
@@ -1086,9 +1069,15 @@ function SlideSection({ accent, showEnglish, module }: { accent: string; showEng
               >
                 {slides.map((slide, idx) => (
                   <div key={idx} className="flex-shrink-0 w-full space-y-4 px-1">
-                    {slide.image && slide.imageVisible !== false && (
+                    {slide.imageVisible !== false && (
                       <div draggable={false}>
-                        <ClickableImage src={slide.image} crop={slide.imageCrop} fallbackAspect="16/9" />
+                        <ClickableImage
+                          src={slide.image}
+                          crop={slide.imageCrop}
+                          fallbackAspect="16/9"
+                          rounded="rounded-xl"
+                          placeholder={<ImageIcon size={28} className="text-gray-300" strokeWidth={1} />}
+                        />
                       </div>
                     )}
                     {slide.titleVisible !== false && slide.title && (
@@ -1153,20 +1142,22 @@ type GuestbookSectionConfig = GuestbookModuleConfig & {
 }
 
 // 에디터 프리뷰에서만 보이는 샘플 데이터. 실제 초대장 뷰에서는 DB 데이터로 교체됨.
+// createdAt 은 정적 ISO 문자열로 고정 — Date.now() 사용 시 SSR/CSR 시간 차이로 hydration mismatch.
 const GUESTBOOK_SAMPLE_ENTRIES: GuestbookEntry[] = [
   {
     id: 'sample-1',
     name: '샘플 방명록',
     message: '이 방명록은 미리보기용 예시입니다.\n에디터에서는 실제 데이터 대신 이렇게 샘플로 표시됩니다.',
     password: '',
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
+    createdAt: '2026-01-01T00:00:00.000Z',
   },
 ]
 
+// UTC 기준으로 포맷 — 서버/클라이언트 타임존 차이로 인한 hydration mismatch 회피.
 function formatGuestbookDate(iso: string): string {
   const d = new Date(iso)
   const pad = (n: number) => String(n).padStart(2, '0')
-  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`
+  return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`
 }
 
 function GuestbookSection({ accent, showEnglish, module }: { accent: string; showEnglish: boolean; module: InvitationModule }) {
@@ -1492,22 +1483,18 @@ function DdaySection({ accent, content, showEnglish, module }: { accent: string;
   const today = new Date()
   const diff = Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
   const label = diff > 0 ? `D-${diff}` : diff === 0 ? 'D-Day' : `D+${Math.abs(diff)}`
-  const englishTitle = (module.config?.englishTitle as string | undefined) ?? 'D+Day'
+  const englishTitle = (module.config?.englishTitle as string | undefined) ?? 'D-Day'
   const ddayLabelVisible = (module.config?.labelVisible as boolean) !== false
   const koreanLabelStyle: React.CSSProperties = { fontWeight: (module.config?.koreanLabelBold as boolean) ? 'bold' : undefined, fontStyle: (module.config?.koreanLabelItalic as boolean) ? 'italic' : undefined, textAlign: ((module.config?.koreanLabelAlign as string | undefined) ?? 'center') as React.CSSProperties['textAlign'], whiteSpace: 'pre-line' }
   const ddayLabelStyle: React.CSSProperties = { fontWeight: (module.config?.labelBold as boolean) ? 'bold' : undefined, fontStyle: (module.config?.labelItalic as boolean) ? 'italic' : undefined, textAlign: (module.config?.labelAlign as React.CSSProperties['textAlign']) ?? 'center', whiteSpace: 'pre-line' }
   const titleBigStyle: React.CSSProperties = { fontWeight: (module.config?.titleBigBold as boolean) ? 'bold' : 'medium', fontStyle: (module.config?.titleBigItalic as boolean) ? 'italic' : undefined, textAlign: (module.config?.titleBigAlign as React.CSSProperties['textAlign']) ?? 'center', whiteSpace: 'pre-line' }
   const titleSmallStyle: React.CSSProperties = { fontWeight: (module.config?.titleSmallBold as boolean) ? 'bold' : undefined, fontStyle: (module.config?.titleSmallItalic as boolean) ? 'italic' : undefined, textAlign: (module.config?.titleSmallAlign as React.CSSProperties['textAlign']) ?? 'center', whiteSpace: 'pre-line' }
-  const captionVisible = (module.config?.captionVisible as boolean) !== false
-  const captionText = (module.config?.caption as string | undefined) ?? '결혼식까지'
-  const captionStyle: React.CSSProperties = { fontWeight: (module.config?.captionBold as boolean) ? 'bold' : undefined, fontStyle: (module.config?.captionItalic as boolean) ? 'italic' : undefined, textAlign: (module.config?.captionAlign as React.CSSProperties['textAlign']) ?? 'center', whiteSpace: 'pre-line' }
   return (
     <section className="py-10 mx-4 border-t border-gray-200 text-center">
-      {(module.config?.koreanLabelVisible as boolean) !== false && <p className="text-sm mb-1" style={{ color: accent, ...koreanLabelStyle }}>{(module.config?.koreanTitle as string | undefined) ?? 'D+Day'}</p>}
+      {(module.config?.koreanLabelVisible as boolean) !== false && <p className="text-sm mb-1" style={{ color: accent, ...koreanLabelStyle }}>{(module.config?.koreanTitle as string | undefined) ?? '남은 기한'}</p>}
       {showEnglish && ddayLabelVisible && <p className="text-xs mb-1" style={{ color: accent, fontFamily: 'Georgia, serif', ...ddayLabelStyle }}>{englishTitle}</p>}
       {(module.config?.titleBigVisible as boolean) !== false && (module.config?.titleBig as string | undefined) && <div className="text-sm text-gray-800 mb-1" style={titleBigStyle}>{module.config?.titleBig as string}</div>}
       {(module.config?.titleSmallVisible as boolean) !== false && (module.config?.titleSmall as string | undefined) && <div className="text-xs text-gray-400 mb-3" style={titleSmallStyle}>{module.config?.titleSmall as string}</div>}
-      {captionVisible && captionText && <div className="text-xs text-gray-400 mb-3" style={captionStyle}>{captionText}</div>}
       <div className="text-4xl font-light tracking-wider" style={{ color: accent }}>{label}</div>
     </section>
   )
@@ -1515,162 +1502,139 @@ function DdaySection({ accent, content, showEnglish, module }: { accent: string;
 
 // ── 동영상 ───────────────────────────────────────────────────────────────────
 function VideoSection({ accent, showEnglish, module }: { accent: string; showEnglish: boolean; module: InvitationModule }) {
-  const englishTitle = (module.config?.englishTitle as string | undefined) ?? 'Video'
-  const labelVisible = (module.config?.labelVisible as boolean) !== false
-  const koreanLabelStyle: React.CSSProperties = { fontWeight: (module.config?.koreanLabelBold as boolean) ? 'bold' : undefined, fontStyle: (module.config?.koreanLabelItalic as boolean) ? 'italic' : undefined, textAlign: ((module.config?.koreanLabelAlign as string | undefined) ?? 'center') as React.CSSProperties['textAlign'], whiteSpace: 'pre-line' }
-  const labelStyle: React.CSSProperties = { fontWeight: (module.config?.labelBold as boolean) ? 'bold' : undefined, fontStyle: (module.config?.labelItalic as boolean) ? 'italic' : undefined, textAlign: (module.config?.labelAlign as React.CSSProperties['textAlign']) ?? 'center', whiteSpace: 'pre-line' }
-  const titleBigStyle: React.CSSProperties = { fontWeight: (module.config?.titleBigBold as boolean) ? 'bold' : 'medium', fontStyle: (module.config?.titleBigItalic as boolean) ? 'italic' : undefined, textAlign: (module.config?.titleBigAlign as React.CSSProperties['textAlign']) ?? 'center', whiteSpace: 'pre-line' }
-  const titleSmallStyle: React.CSSProperties = { fontWeight: (module.config?.titleSmallBold as boolean) ? 'bold' : undefined, fontStyle: (module.config?.titleSmallItalic as boolean) ? 'italic' : undefined, textAlign: (module.config?.titleSmallAlign as React.CSSProperties['textAlign']) ?? 'center', whiteSpace: 'pre-line' }
+  const cfg = (module.config ?? {}) as Record<string, unknown>
+  const englishTitle = (cfg.englishTitle as string | undefined) ?? 'Video'
+  const koreanTitle = (cfg.koreanTitle as string | undefined) ?? '동영상'
+  const labelVisible = (cfg.labelVisible as boolean) !== false
+  const koreanLabelVisible = (cfg.koreanLabelVisible as boolean) !== false
+  const titleBig = cfg.titleBig as string | undefined
+  const titleBigVisible = (cfg.titleBigVisible as boolean) !== false
+  const titleSmall = cfg.titleSmall as string | undefined
+  const titleSmallVisible = (cfg.titleSmallVisible as boolean) !== false
+
+  const videoId = cfg.videoId as string | undefined
+  const posterUrl = cfg.posterUrl as string | undefined
+  const variant = module.type
+
+  const koreanLabelStyle: React.CSSProperties = { fontWeight: (cfg.koreanLabelBold as boolean) ? 'bold' : undefined, fontStyle: (cfg.koreanLabelItalic as boolean) ? 'italic' : undefined, textAlign: ((cfg.koreanLabelAlign as string | undefined) ?? 'center') as React.CSSProperties['textAlign'], whiteSpace: 'pre-line' }
+  const labelStyle: React.CSSProperties = { fontWeight: (cfg.labelBold as boolean) ? 'bold' : undefined, fontStyle: (cfg.labelItalic as boolean) ? 'italic' : undefined, textAlign: (cfg.labelAlign as React.CSSProperties['textAlign']) ?? 'center', whiteSpace: 'pre-line' }
+  const titleBigStyle: React.CSSProperties = { fontWeight: (cfg.titleBigBold as boolean) ? 'bold' : 'medium', fontStyle: (cfg.titleBigItalic as boolean) ? 'italic' : undefined, textAlign: (cfg.titleBigAlign as React.CSSProperties['textAlign']) ?? 'center', whiteSpace: 'pre-line' }
+  const titleSmallStyle: React.CSSProperties = { fontWeight: (cfg.titleSmallBold as boolean) ? 'bold' : undefined, fontStyle: (cfg.titleSmallItalic as boolean) ? 'italic' : undefined, textAlign: (cfg.titleSmallAlign as React.CSSProperties['textAlign']) ?? 'center', whiteSpace: 'pre-line' }
+
+  // 라벨 헤더 (cinema/fullbleed 외에 사용)
+  const labelHeader = (
+    <>
+      {koreanLabelVisible && <p className="text-sm mb-1" style={{ color: accent, ...koreanLabelStyle }}>{koreanTitle}</p>}
+      {showEnglish && labelVisible && <p className="text-xs mb-1" style={{ color: accent, fontFamily: 'Georgia, serif', ...labelStyle }}>{englishTitle}</p>}
+      {titleBigVisible && titleBig && <div className="text-sm text-gray-800 mb-1" style={titleBigStyle}>{titleBig}</div>}
+      {titleSmallVisible && titleSmall && <div className="text-xs text-gray-400 mb-4" style={titleSmallStyle}>{titleSmall}</div>}
+    </>
+  )
+
+  // videoId 없을 때 placeholder
+  if (!videoId) {
+    return (
+      <section className="py-10 mx-4 border-t border-gray-200 text-center">
+        {labelHeader}
+        <div className="w-full aspect-video bg-gray-100 rounded-xl border border-gray-100 flex flex-col items-center justify-center gap-2">
+          <Film size={28} className="text-gray-300" strokeWidth={1} />
+          <p className="text-xs text-gray-400">YouTube URL을 입력해 주세요</p>
+        </div>
+      </section>
+    )
+  }
+
+  const player = <YouTubePlayer videoId={videoId} posterUrl={posterUrl} />
+
+  if (variant === 'video_cinema') {
+    return (
+      <section className="border-t border-gray-200 bg-black relative">
+        {(koreanLabelVisible || (showEnglish && labelVisible)) && (
+          <div className="absolute top-3 left-0 right-0 z-10 px-4 text-center">
+            {koreanLabelVisible && <p className="text-sm" style={{ color: '#fff', ...koreanLabelStyle }}>{koreanTitle}</p>}
+            {showEnglish && labelVisible && <p className="text-xs" style={{ color: '#fff', fontFamily: 'Georgia, serif', opacity: 0.8, ...labelStyle }}>{englishTitle}</p>}
+          </div>
+        )}
+        {player}
+      </section>
+    )
+  }
+
+  if (variant === 'video_polaroid') {
+    return (
+      <section className="py-10 mx-6 border-t border-gray-200 text-center">
+        {labelHeader}
+        <div className="bg-white p-3 pb-10 rounded-md border border-gray-100 -rotate-1 mx-2">
+          <div className="rounded-sm overflow-hidden">{player}</div>
+        </div>
+      </section>
+    )
+  }
+
+  if (variant === 'video_floating_bordered') {
+    return (
+      <section className="py-10 mx-4 border-t border-gray-200 text-center">
+        {labelHeader}
+        <div className="bg-gray-50 p-3 rounded-3xl">
+          <div className="rounded-2xl overflow-hidden border border-gray-100">{player}</div>
+        </div>
+      </section>
+    )
+  }
+
+  if (variant === 'video_fullbleed') {
+    return (
+      <section className="border-t border-gray-200">
+        {(koreanLabelVisible || (showEnglish && labelVisible)) && (
+          <div className="pt-6 pb-3 text-center">
+            {koreanLabelVisible && <p className="text-sm" style={{ color: accent, ...koreanLabelStyle }}>{koreanTitle}</p>}
+            {showEnglish && labelVisible && <p className="text-xs mt-0.5" style={{ color: accent, fontFamily: 'Georgia, serif', ...labelStyle }}>{englishTitle}</p>}
+          </div>
+        )}
+        {player}
+      </section>
+    )
+  }
+
+  if (variant === 'video_carousel') {
+    return (
+      <section className="py-10 mx-4 border-t border-gray-200 text-center">
+        {labelHeader}
+        <div className="rounded-2xl overflow-hidden border border-gray-100">{player}</div>
+        <div className="mt-3 flex justify-center gap-1.5">
+          <span className="block w-1.5 h-1.5 rounded-full" style={{ backgroundColor: accent }} />
+          <span className="block w-1.5 h-1.5 rounded-full bg-gray-100" />
+          <span className="block w-1.5 h-1.5 rounded-full bg-gray-100" />
+        </div>
+      </section>
+    )
+  }
+
+  if (variant === 'video_thumbnail_row') {
+    return (
+      <section className="py-10 mx-4 border-t border-gray-200 text-center">
+        {labelHeader}
+        <div className="rounded-2xl overflow-hidden border border-gray-100">{player}</div>
+        <div className="mt-3 grid grid-cols-3 gap-1.5">
+          {[0, 1, 2].map(i => (
+            <div key={i} className="aspect-video bg-gray-100 rounded-md border border-gray-100" />
+          ))}
+        </div>
+      </section>
+    )
+  }
+
+  // video_single_card (default)
   return (
     <section className="py-10 mx-4 border-t border-gray-200 text-center">
-      {(module.config?.koreanLabelVisible as boolean) !== false && <p className="text-sm mb-1" style={{ color: accent, ...koreanLabelStyle }}>{(module.config?.koreanTitle as string | undefined) ?? '동영상'}</p>}
-      {showEnglish && labelVisible && <p className="text-xs mb-1" style={{ color: accent, fontFamily: 'Georgia, serif', ...labelStyle }}>{englishTitle}</p>}
-      {(module.config?.titleBigVisible as boolean) !== false && (module.config?.titleBig as string | undefined) && <div className="text-sm text-gray-800 mb-1" style={titleBigStyle}>{module.config?.titleBig as string}</div>}
-      {(module.config?.titleSmallVisible as boolean) !== false && (module.config?.titleSmall as string | undefined) && <div className="text-xs text-gray-400 mb-4" style={titleSmallStyle}>{module.config?.titleSmall as string}</div>}
-      <div className="w-full aspect-video bg-gray-200 rounded-xl flex items-center justify-center">
-        <Film size={32} className="text-gray-300" strokeWidth={1} />
-      </div>
+      {labelHeader}
+      <div className="rounded-2xl overflow-hidden border border-gray-100">{player}</div>
     </section>
   )
 }
 
 // ── 배경음악 ─────────────────────────────────────────────────────────────────
 // 단순 EQ 아이콘 — 재생 중일 때만 CSS 키프레임 애니메이션. 실제 음원과 무관한 시각적 표시.
-function BgmEqIcon({ playing }: { playing: boolean }) {
-  return (
-    <span className="flex items-end gap-[2px] h-3" aria-hidden>
-      {[0, 1, 2].map((i) => (
-        <span
-          key={i}
-          className={
-            playing
-              ? 'bgm-eq-bar block w-[2px] h-full bg-white rounded-sm'
-              : 'block w-[2px] h-1 bg-white rounded-sm'
-          }
-        />
-      ))}
-    </span>
-  )
-}
-
-function BgmFloatingPlayer({ cfg }: { cfg: BgmConfig }) {
-  const audioRef = useRef<HTMLAudioElement | null>(null)
-  const [playing, setPlaying] = useState(false)
-
-  // 자동 재생 시도. 브라우저 정책상 실패하면 사용자 인터랙션마다 재시도 (성공할 때까지).
-  useEffect(() => {
-    const audio = audioRef.current
-    if (!audio || !cfg.url) return
-
-    let attached = false
-    const detach = () => {
-      if (!attached) return
-      window.removeEventListener('pointerdown', tryPlay)
-      window.removeEventListener('click', tryPlay)
-      window.removeEventListener('touchend', tryPlay)
-      window.removeEventListener('keydown', tryPlay)
-      attached = false
-    }
-    const attach = () => {
-      if (attached) return
-      attached = true
-      window.addEventListener('pointerdown', tryPlay)
-      window.addEventListener('click', tryPlay)
-      window.addEventListener('touchend', tryPlay)
-      window.addEventListener('keydown', tryPlay)
-    }
-    const tryPlay = () => {
-      audio.play().then(() => {
-        setPlaying(true)
-        detach()
-      }).catch(() => {
-        // 아직도 실패 — 리스너를 유지해서 다음 인터랙션에서 재시도
-      })
-    }
-
-    // 즉시 시도. 실패하면 모든 인터랙션에 리스너 부착.
-    audio.play().then(() => setPlaying(true)).catch(() => attach())
-
-    // 데이터가 준비되면 다시 시도 (preload 타이밍에 따라 첫 시도가 너무 일렀을 수 있음)
-    const onCanPlay = () => {
-      if (audio.paused) {
-        audio.play().then(() => {
-          setPlaying(true)
-          detach()
-        }).catch(() => attach())
-      }
-    }
-    audio.addEventListener('canplay', onCanPlay)
-
-    return () => {
-      detach()
-      audio.removeEventListener('canplay', onCanPlay)
-      // 페이지 전환/cfg.url 변경 시 이전 audio 정지(GC 전 재생이 잠깐 살아있는 케이스 방지).
-      // src 까지 비우면 같은 페이지 내 effect 재실행 시 재생이 안 되므로 pause 만.
-      try { audio.pause() } catch { /* noop */ }
-    }
-  }, [cfg.url])
-
-  // 반복 구간 처리 (업로드 음원에서 loopEnabled일 때만 의미)
-  useEffect(() => {
-    const audio = audioRef.current
-    if (!audio) return
-    const onTimeUpdate = () => {
-      if (cfg.loopEnabled && cfg.loopEnd != null && cfg.loopEnd > (cfg.loopStart ?? 0) && audio.currentTime >= cfg.loopEnd) {
-        audio.currentTime = cfg.loopStart ?? 0
-      }
-    }
-    const onLoadedMetadata = () => {
-      if (cfg.loopEnabled && cfg.loopStart != null && cfg.loopStart > 0) {
-        audio.currentTime = cfg.loopStart
-      }
-    }
-    audio.addEventListener('timeupdate', onTimeUpdate)
-    audio.addEventListener('loadedmetadata', onLoadedMetadata)
-    return () => {
-      audio.removeEventListener('timeupdate', onTimeUpdate)
-      audio.removeEventListener('loadedmetadata', onLoadedMetadata)
-    }
-  }, [cfg.loopEnabled, cfg.loopStart, cfg.loopEnd])
-
-  function toggle() {
-    const audio = audioRef.current
-    if (!audio) return
-    if (playing) {
-      audio.pause()
-      setPlaying(false)
-    } else {
-      audio.play().then(() => setPlaying(true)).catch(() => setPlaying(false))
-    }
-  }
-
-  if (!cfg.url) return null
-
-  return (
-    <>
-      <audio
-        ref={audioRef}
-        src={cfg.url}
-        loop={!cfg.loopEnabled}
-        preload="auto"
-        autoPlay
-        playsInline
-        onPlay={() => setPlaying(true)}
-        onPause={() => setPlaying(false)}
-      />
-      {/* 카드(375px) 우측 상단 — PreviewPane 의 outer wrapper(relative) 기준 절대 위치. */}
-      <button
-        type="button"
-        onClick={toggle}
-        className="absolute top-2 right-2 z-40 w-7 h-7 rounded-full bg-black/60 backdrop-blur text-white flex items-center justify-center hover:bg-black/80 transition-colors"
-        aria-label={playing ? '배경음악 정지' : '배경음악 재생'}
-      >
-        {playing ? <BgmEqIcon playing /> : <Play size={12} className="ml-0.5 fill-white" />}
-      </button>
-    </>
-  )
-}
-
 // ── 엔딩 사진 ────────────────────────────────────────────────────────────────
 function EndingSection({ module }: { module: InvitationModule }) {
   const cfg = module.config as { image?: string; imageCrop?: ImageCropData; message?: string }
@@ -1714,10 +1678,13 @@ function renderModule(
   showEnglish: boolean,
   fontFamily: string,
   hasCoupleNames: boolean,
+  bgColor: string,
+  invitationId?: string,
+  readOnly?: boolean,
 ) {
   switch (module.type) {
     case 'couple_names': return <CoupleNamesSection accent={accent} content={content} fontFamily={fontFamily} module={module} showEnglish={showEnglish} />
-    case 'main': return <MainSection content={content} accent={accent} fontFamily={fontFamily} showNames={!hasCoupleNames} showEnglish={showEnglish} module={module} />
+    case 'main': return <MainSection content={content} accent={accent} fontFamily={fontFamily} showNames={!hasCoupleNames} showEnglish={showEnglish} module={module} bgColor={bgColor} />
     case 'photo_frame': return <PhotoFrameSection accent={accent} fontFamily={fontFamily} showEnglish={showEnglish} module={module} />
     case 'greeting': return <GreetingSection accent={accent} content={content} showEnglish={showEnglish} />
     case 'datetime': return <DatetimeSection accent={accent} content={content} showEnglish={showEnglish} />
@@ -1732,12 +1699,48 @@ function renderModule(
     case 'slide': return <SlideSection accent={accent} showEnglish={showEnglish} module={module} />
     case 'gallery': return <GallerySection accent={accent} showEnglish={showEnglish} module={module} />
     case 'guestbook': return <GuestbookSection accent={accent} showEnglish={showEnglish} module={module} />
-    case 'guestalbum': return <GuestAlbumSection accent={accent} showEnglish={showEnglish} module={module} />
+    case 'photo_share': {
+      // 에디터/발행 뷰 모두 동일한 그리드를 보여준다. 단 에디터에서는 업로드 버튼을
+      // '발행 후 사용 가능' 안내로 대체한다 (upload-token 라우트가 isPublished=true 만 허용).
+      if (invitationId) {
+        const cfg = module.config as Record<string, unknown>
+        return (
+          <PhotoShareGuestView
+            invitationId={invitationId}
+            moduleId={module.id}
+            accent={accent}
+            showEnglish={showEnglish}
+            editorMode={!readOnly}
+            config={{
+              koreanTitle: cfg.koreanTitle as string | undefined,
+              koreanLabelVisible: cfg.koreanLabelVisible as boolean | undefined,
+              englishTitle: cfg.englishTitle as string | undefined,
+              labelVisible: cfg.labelVisible as boolean | undefined,
+              titleBig: cfg.titleBig as string | undefined,
+              titleBigVisible: cfg.titleBigVisible as boolean | undefined,
+              titleSmall: cfg.titleSmall as string | undefined,
+              titleSmallVisible: cfg.titleSmallVisible as boolean | undefined,
+              previewPublic: cfg.previewPublic as boolean | undefined,
+              variant: cfg.variant as 'grid' | 'masonry' | 'feed' | undefined,
+            }}
+          />
+        )
+      }
+      // invitation 미저장 상태(템플릿 미리보기 등) — placeholder
+      return <GuestAlbumSection accent={accent} showEnglish={showEnglish} module={module} />
+    }
     case 'account': return <AccountSection accent={accent} showEnglish={showEnglish} module={module} />
     case 'contact': return <ContactSection accent={accent} content={content} showEnglish={showEnglish} module={module} />
     case 'rsvp': return <RsvpSection accent={accent} showEnglish={showEnglish} module={module} />
     case 'dday': return <DdaySection accent={accent} content={content} showEnglish={showEnglish} module={module} />
-    case 'video': return <VideoSection accent={accent} showEnglish={showEnglish} module={module} />
+    case 'video_single_card':
+    case 'video_cinema':
+    case 'video_polaroid':
+    case 'video_floating_bordered':
+    case 'video_fullbleed':
+    case 'video_carousel':
+    case 'video_thumbnail_row':
+      return <VideoSection accent={accent} showEnglish={showEnglish} module={module} />
     case 'ending': return <EndingSection module={module} />
     default: {
       const cfg = SIMPLE_SECTIONS[module.type]
@@ -1782,13 +1785,17 @@ interface PreviewPaneProps {
   modulesOverride?: InvitationModule[]
   stylesOverride?: InvitationStyles
   readOnly?: boolean
+  /** 발행 뷰에서 photo_share 모듈이 본인 invitation 컨텍스트를 알 수 있게 전달.
+   * 에디터에서는 store.invitationId 가 사용된다. */
+  invitationId?: string
 }
 
-export default function PreviewPane({ panelRef, contentOverride, modulesOverride, stylesOverride, readOnly }: PreviewPaneProps) {
+export default function PreviewPane({ panelRef, contentOverride, modulesOverride, stylesOverride, readOnly, invitationId }: PreviewPaneProps) {
   const store = useEditorStore()
   const content = contentOverride ?? store.content
   const modules = modulesOverride ?? store.modules
   const styles = stylesOverride ?? store.styles
+  const effectiveInvitationId = invitationId ?? store.invitationId
   const setActiveNav = store.setActiveNav
   const setEditingModuleId = store.setEditingModuleId
   const linkRef = useRef<HTMLLinkElement | null>(null)
@@ -1825,7 +1832,6 @@ export default function PreviewPane({ panelRef, contentOverride, modulesOverride
 
   const hasMainModule = sortedModules.some(m => m.type === 'main')
   const hasCoupleNames = sortedModules.some(m => m.type === 'couple_names')
-  const bgmCfg = styles.bgm
 
   // 레거시 커버 섹션 (main 모듈 없는 기존 초대장 호환)
   const groom = content.groom ?? {}
@@ -1901,17 +1907,23 @@ export default function PreviewPane({ panelRef, contentOverride, modulesOverride
         </section>
       )}
 
-      {/* 모듈 렌더링 */}
-      {sortedModules.map((module) => {
-        const el = renderModule(module, accent, content, showEnglish, fontFamily, hasCoupleNames)
-        if (!el) return null
-        return (
-          <div key={module.id} data-module-id={module.id} className="relative group">
-            {el}
-            {!readOnly && <ModuleHoverControls module={module} onEdit={() => handleModuleClick(module)} />}
-          </div>
-        )
-      })}
+      {/* 모듈 렌더링 — 모듈 내부 텍스트·이미지 단위로 stagger 등장 */}
+      {(() => {
+        const preset = normalizeScrollAnimation(styles.scrollAnimation)
+        return sortedModules.map((module) => {
+          const el = renderModule(module, accent, content, showEnglish, fontFamily, hasCoupleNames, bgColor, effectiveInvitationId ?? undefined, readOnly)
+          if (!el) return null
+          // key 에 preset 포함 → 프리셋 변경 시 wrapper remount 로 새 효과 즉시 적용
+          return (
+            <div key={`${module.id}:${preset}`} data-module-id={module.id} className="relative group">
+              <ScrollAnimateChildren preset={preset}>
+                {el}
+              </ScrollAnimateChildren>
+              {!readOnly && <ModuleHoverControls module={module} onEdit={() => handleModuleClick(module)} />}
+            </div>
+          )
+        })
+      })()}
 
       <footer className="py-8 border-t border-gray-200">
         <div className="space-y-2 mx-4">
@@ -1925,7 +1937,6 @@ export default function PreviewPane({ panelRef, contentOverride, modulesOverride
         <div className="mt-6 text-xs text-gray-300">Copyright 2025. OPENDAY. All rights reserved.</div>
       </footer>
     </div>
-    {bgmCfg?.url && <BgmFloatingPlayer cfg={bgmCfg} />}
     </div>
     </ImageLightboxProvider>
   )

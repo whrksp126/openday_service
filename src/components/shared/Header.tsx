@@ -23,6 +23,14 @@ export default function Header() {
             </Link>
             {session ? (
               <>
+                {session.user?.isAdmin && (
+                  <Link
+                    href="/admin/templates"
+                    className="text-sm font-medium text-primary hover:opacity-80 transition-opacity"
+                  >
+                    관리자
+                  </Link>
+                )}
                 <Link
                   href="/my"
                   className="text-sm text-gray-600 hover:text-gray-900 transition-colors"

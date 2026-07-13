@@ -1,6 +1,6 @@
 services:
   nextjs:
-    container_name: openday_nextjs_prod
+    container_name: openday_service_prod
     image: whrksp126/openday_service:main
     build:
       context: .
@@ -8,15 +8,24 @@ services:
       args:
         NEXT_PUBLIC_KAKAO_JS_KEY: ${NEXT_PUBLIC_KAKAO_JS_KEY:-}
         NEXT_PUBLIC_KAKAO_TEMPLATE_ID: ${NEXT_PUBLIC_KAKAO_TEMPLATE_ID:-}
+        NEXT_PUBLIC_NAVER_MAP_CLIENT_ID: ${NEXT_PUBLIC_NAVER_MAP_CLIENT_ID:-}
     env_file: .env
     environment:
       NODE_ENV: production
+    expose:
+      - "5000"
     volumes:
       - uploads_data:/app/public/uploads
     networks:
       - openday_prod
       - nginx_proxy
     restart: always
+    # 공용 13GB/8코어 서버 — 한 프로젝트가 자원을 독점해 옆 프로젝트를 OOM 시키지 않게 상한.
+    deploy:
+      resources:
+        limits:
+          memory: 1g
+          cpus: "1.0"
     depends_on:
       mysql:
         condition: service_healthy
@@ -30,6 +39,11 @@ services:
     networks:
       - openday_prod
     restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512m
+          cpus: "0.5"
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s

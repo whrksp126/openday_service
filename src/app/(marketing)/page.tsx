@@ -1,11 +1,32 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
+import { prisma } from '@/lib/prisma'
 
 export const metadata: Metadata = {
   title: 'OpenDay — 세상의 모든 초대장',
 }
 
-export default function HomePage() {
+export const dynamic = 'force-dynamic'
+
+const FEATURED_BOXES = [
+  { label: '결혼식',     slug: 'wedding'   },
+  { label: '생일 잔치', slug: 'birthday'  },
+  { label: '돌잔치',    slug: 'baby'      },
+  { label: '입학식',    slug: 'education' },
+] as const
+
+export default async function HomePage() {
+  const slugs = FEATURED_BOXES.map((b) => b.slug)
+  const featured = await prisma.template.findMany({
+    where: { isPublic: true, category: { slug: { in: [...slugs] } } },
+    include: { category: true },
+    orderBy: { createdAt: 'desc' },
+  })
+  const bySlug = new Map<string, typeof featured[number]>()
+  for (const t of featured) {
+    if (!bySlug.has(t.category.slug)) bySlug.set(t.category.slug, t)
+  }
+
   return (
     <div>
       {/* Hero Section */}
@@ -42,14 +63,22 @@ export default function HomePage() {
             모든 템플릿이 한 곳에
           </h2>
           <div className="mt-10 grid grid-cols-2 md:grid-cols-4 gap-4">
-            {['결혼식', '생일 잔치', '돌잔치', '입학식'].map((category) => (
-              <Link key={category} href="/templates" className="group">
-                <div className="aspect-[3/4] bg-gray-200 rounded-2xl overflow-hidden group-hover:opacity-90 transition-opacity" />
-                <p className="mt-2 text-sm font-medium text-gray-900">{category}</p>
-                <p className="text-xs text-gray-400">가장 소중한 사람을 빛나게</p>
-                <span className="text-xs text-primary">템플릿 보러 가기 →</span>
-              </Link>
-            ))}
+            {FEATURED_BOXES.map(({ label, slug }) => {
+              const tpl = bySlug.get(slug)
+              return (
+                <Link key={slug} href={`/templates?category=${slug}`} className="group">
+                  <div className="aspect-[3/4] bg-gray-100 rounded-2xl overflow-hidden border border-gray-100 group-hover:opacity-90 transition-opacity">
+                    {tpl?.thumbnail ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={tpl.thumbnail} alt={tpl.name} className="w-full h-full object-cover" />
+                    ) : null}
+                  </div>
+                  <p className="mt-2 text-sm font-medium text-gray-900">{label}</p>
+                  <p className="text-xs text-gray-400">가장 소중한 사람을 빛나게</p>
+                  <span className="text-xs text-primary">템플릿 보러 가기 →</span>
+                </Link>
+              )
+            })}
           </div>
           <div className="text-center mt-8">
             <Link

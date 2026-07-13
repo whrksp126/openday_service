@@ -1,6 +1,7 @@
 'use client'
 
 import PreviewPane from '@/components/editor/PreviewPane'
+import BgmFloatingPlayer from '@/components/editor/BgmFloatingPlayer'
 import type { InvitationContent, InvitationModule, InvitationStyles } from '@/types/invitation'
 
 interface Props {
@@ -12,12 +13,17 @@ interface Props {
 export default function TemplatePreviewClient({ content, modules, styles }: Props) {
   return (
     <div className="flex justify-center">
-      <PreviewPane
-        readOnly
-        contentOverride={content}
-        modulesOverride={modules}
-        stylesOverride={styles}
-      />
+      <div className="relative w-[375px]">
+        {styles.bgm?.url && (
+          <BgmFloatingPlayer cfg={styles.bgm} mode="standalone" />
+        )}
+        <PreviewPane
+          readOnly
+          contentOverride={content}
+          modulesOverride={modules}
+          stylesOverride={styles}
+        />
+      </div>
     </div>
   )
 }

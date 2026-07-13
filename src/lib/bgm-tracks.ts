@@ -1,3 +1,5 @@
+import { presetBgmUrl } from '@/lib/asset-paths'
+
 export interface BgmTrack {
   id: string
   title: string
@@ -9,18 +11,18 @@ export interface BgmTrack {
 }
 
 export const BGM_TRACKS: BgmTrack[] = [
-  { id: 'wedding-white-petals',     title: 'White Petals',         category: 'wedding', url: '/music/wedding/white-petals.mp3',     artist: 'Keys of Moon',           license: 'CC BY 4.0', source: 'https://www.chosic.com/download-audio/27279/' },
-  { id: 'wedding-warm-memories',    title: 'Warm Memories',        category: 'wedding', url: '/music/wedding/warm-memories.mp3',    artist: 'Keys of Moon',           license: 'CC BY 4.0', source: 'https://www.chosic.com/download-audio/27281/' },
-  { id: 'wedding-sweet',            title: 'Sweet',                category: 'wedding', url: '/music/wedding/sweet.mp3',            artist: 'LiQWYD',                 license: 'CC BY 3.0', source: 'https://www.chosic.com/download-audio/28074/' },
-  { id: 'wedding-beloved',          title: 'Beloved',              category: 'wedding', url: '/music/wedding/beloved.mp3',          artist: 'Roa',                    license: 'CC BY 3.0', source: 'https://www.chosic.com/download-audio/60850/' },
-  { id: 'wedding-fall-in-love',     title: 'Fall In Love',         category: 'wedding', url: '/music/wedding/fall-in-love.mp3',     artist: 'Alex-Productions',       license: 'CC BY 3.0', source: 'https://www.chosic.com/download-audio/59374/' },
-  { id: 'wedding-magic-valentines', title: "Magic Valentine's",    category: 'wedding', url: '/music/wedding/magic-valentines.mp3', artist: 'Alex-Productions',       license: 'CC BY 3.0', source: 'https://www.chosic.com/download-audio/60849/' },
-  { id: 'baby-happy-clappy-ukulele',title: 'Happy Clappy Ukulele', category: 'baby',    url: '/music/baby/happy-clappy-ukulele.mp3',artist: 'Shane Ivers',            license: 'CC BY 4.0', source: 'https://www.chosic.com/download-audio/27306/' },
-  { id: 'baby-happy-joyful-children',title: 'Happy & Joyful',      category: 'baby',    url: '/music/baby/happy-joyful-children.mp3',artist: 'FM Free Music',         license: 'CC BY 3.0', source: 'https://www.chosic.com/download-audio/29781/' },
-  { id: 'baby-its-your-birthday',   title: "It's Your Birthday!",  category: 'baby',    url: '/music/baby/its-your-birthday.mp3',   artist: 'Monk Turner + Fascinoma',license: 'CC BY 3.0', source: 'https://www.chosic.com/download-audio/28031/' },
-  { id: 'baby-tiny-paws',           title: 'Tiny Paws',            category: 'baby',    url: '/music/baby/tiny-paws.mp3',           artist: 'Sakura Girl',            license: 'CC BY 3.0', source: 'https://www.chosic.com/download-audio/60856/' },
-  { id: 'baby-cheerful-whistling',  title: 'Cheerful Whistling',   category: 'baby',    url: '/music/baby/cheerful-whistling.mp3', artist: 'FM Free Music',          license: 'CC BY 3.0', source: 'https://www.chosic.com/download-audio/29782/' },
-  { id: 'baby-cheer-up',            title: 'Cheer Up',             category: 'baby',    url: '/music/baby/cheer-up.mp3',            artist: 'Sakura Girl',            license: 'CC BY 3.0', source: 'https://www.chosic.com/download-audio/60570/' },
+  { id: 'wedding-white-petals',     title: 'White Petals',         category: 'wedding', url: presetBgmUrl('wedding', 'white-petals.mp3'),     artist: 'Keys of Moon',           license: 'CC BY 4.0', source: 'https://www.chosic.com/download-audio/27279/' },
+  { id: 'wedding-warm-memories',    title: 'Warm Memories',        category: 'wedding', url: presetBgmUrl('wedding', 'warm-memories.mp3'),    artist: 'Keys of Moon',           license: 'CC BY 4.0', source: 'https://www.chosic.com/download-audio/27281/' },
+  { id: 'wedding-sweet',            title: 'Sweet',                category: 'wedding', url: presetBgmUrl('wedding', 'sweet.mp3'),            artist: 'LiQWYD',                 license: 'CC BY 3.0', source: 'https://www.chosic.com/download-audio/28074/' },
+  { id: 'wedding-beloved',          title: 'Beloved',              category: 'wedding', url: presetBgmUrl('wedding', 'beloved.mp3'),          artist: 'Roa',                    license: 'CC BY 3.0', source: 'https://www.chosic.com/download-audio/60850/' },
+  { id: 'wedding-fall-in-love',     title: 'Fall In Love',         category: 'wedding', url: presetBgmUrl('wedding', 'fall-in-love.mp3'),     artist: 'Alex-Productions',       license: 'CC BY 3.0', source: 'https://www.chosic.com/download-audio/59374/' },
+  { id: 'wedding-magic-valentines', title: "Magic Valentine's",    category: 'wedding', url: presetBgmUrl('wedding', 'magic-valentines.mp3'), artist: 'Alex-Productions',       license: 'CC BY 3.0', source: 'https://www.chosic.com/download-audio/60849/' },
+  { id: 'baby-happy-clappy-ukulele',title: 'Happy Clappy Ukulele', category: 'baby',    url: presetBgmUrl('baby', 'happy-clappy-ukulele.mp3'),artist: 'Shane Ivers',            license: 'CC BY 4.0', source: 'https://www.chosic.com/download-audio/27306/' },
+  { id: 'baby-happy-joyful-children',title: 'Happy & Joyful',      category: 'baby',    url: presetBgmUrl('baby', 'happy-joyful-children.mp3'),artist: 'FM Free Music',         license: 'CC BY 3.0', source: 'https://www.chosic.com/download-audio/29781/' },
+  { id: 'baby-its-your-birthday',   title: "It's Your Birthday!",  category: 'baby',    url: presetBgmUrl('baby', 'its-your-birthday.mp3'),   artist: 'Monk Turner + Fascinoma',license: 'CC BY 3.0', source: 'https://www.chosic.com/download-audio/28031/' },
+  { id: 'baby-tiny-paws',           title: 'Tiny Paws',            category: 'baby',    url: presetBgmUrl('baby', 'tiny-paws.mp3'),           artist: 'Sakura Girl',            license: 'CC BY 3.0', source: 'https://www.chosic.com/download-audio/60856/' },
+  { id: 'baby-cheerful-whistling',  title: 'Cheerful Whistling',   category: 'baby',    url: presetBgmUrl('baby', 'cheerful-whistling.mp3'), artist: 'FM Free Music',          license: 'CC BY 3.0', source: 'https://www.chosic.com/download-audio/29782/' },
+  { id: 'baby-cheer-up',            title: 'Cheer Up',             category: 'baby',    url: presetBgmUrl('baby', 'cheer-up.mp3'),            artist: 'Sakura Girl',            license: 'CC BY 3.0', source: 'https://www.chosic.com/download-audio/60570/' },
 ]
 
 export function getTrackById(id: string | undefined): BgmTrack | undefined {

@@ -2,17 +2,23 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Cropper, { type Area } from 'react-easy-crop'
-import { GripVertical, Upload, Link as LinkIcon, X, AlignLeft, AlignCenter, AlignRight, Crop, Check, Copy, ExternalLink, Play, Pause, Repeat, RefreshCw, ChevronUp, MessageCircleMore } from 'lucide-react'
-import { captureAndUploadThumbnail } from '@/lib/capture-thumbnail'
+import { GripVertical, Upload, Link as LinkIcon, X, AlignLeft, AlignCenter, AlignRight, Crop, Check, Copy, ExternalLink, Play, Pause, Repeat, ChevronUp, MessageCircleMore, QrCode, Download } from 'lucide-react'
+import QRCode from 'qrcode'
 import { buildFallbackTitle, formatEventDateText as fallbackFormatEventDateText, buildFallbackVenueText } from '@/lib/share-fallback'
+import { copyShareLink, shareToKakao } from '@/lib/share-actions'
+import SharedQrModal from '@/components/shared/QrModal'
 import { nanoid } from 'nanoid'
 import { useEditorStore } from '@/store/editor'
 import type { BabyPerson, ContactGroup, GuestbookModuleConfig, ImageCropData, ModuleType, ParentPerson, ProfilePerson, RsvpModuleConfig, RsvpQuestion, RsvpQuestionType, SlideItem, TabItem, VenueModuleConfig, WeddingPerson } from '@/types/invitation'
 import RichTextEditor from './RichTextEditor'
 import CroppedImage from './CroppedImage'
 import AspectRatioPicker from './AspectRatioPicker'
+import ThumbnailUpdater from './ThumbnailUpdater'
+import PublishToggle from './PublishToggle'
 import { getTracksForCategory, type BgmTrack } from '@/lib/bgm-tracks'
 import type { BgmConfig } from '@/types/invitation'
+import { SCROLL_ANIMATION_PRESETS, normalizeScrollAnimation } from '@/lib/scroll-animations'
+import { parseYouTubeId } from '@/lib/youtube'
 import dynamic from 'next/dynamic'
 
 const LoopRegionEditor = dynamic(() => import('./LoopRegionEditor'), { ssr: false })
@@ -49,7 +55,7 @@ const LABELS: Partial<Record<string, string>> = {
   tab: '탭', slide: '슬라이드', gallery: '갤러리', notice: '안내사항',
   photo_frame: '액자',
   guestbook: '방명록', account: '계좌 정보', rsvp: 'RSVP · 참석 의사',
-  dday: 'D+Day', floral: '화환', video: '동영상', guestalbum: '하객 앨범',
+  dday: 'D+Day', floral: '화환', video: '동영상', photo_share: '사진 공유',
   ending: '엔딩 사진, 문구', opening: '오프닝 애니메이션', bgm: '배경음악',
   share: '공유하기', linkshare: '링크 공유 설정', kakaoshare: '카카오톡 공유 설정',
   order: '순서 변경',
@@ -157,6 +163,11 @@ function ImageUploader({ label, value, onChange, crop, onCropChange, fallbackAsp
   onCropChange?: (c: ImageCropData | undefined) => void
   fallbackAspect?: string
 }) {
+  // 업로드 시 어떤 컨텍스트(소유자 사용자 vs 템플릿 어드민)인지 store에서 결정한다.
+  const editorMode = useEditorStore((s) => s.mode)
+  const invitationId = useEditorStore((s) => s.invitationId)
+  const templateId = useEditorStore((s) => s.templateId)
+
   const [mode, setMode] = useState<'upload' | 'url'>('upload')
   const [uploading, setUploading] = useState(false)
   const [dragOver, setDragOver] = useState(false)
@@ -195,7 +206,12 @@ function ImageUploader({ label, value, onChange, crop, onCropChange, fallbackAsp
     try {
       const fd = new FormData()
       fd.append('file', file)
-      const res = await fetch('/api/upload', { method: 'POST', body: fd })
+      const isTpl = editorMode === 'template'
+      const params = new URLSearchParams()
+      if (isTpl && templateId) params.set('templateId', templateId)
+      else if (!isTpl && invitationId) params.set('invitationId', invitationId)
+      const qs = params.toString()
+      const res = await fetch(qs ? `/api/upload?${qs}` : '/api/upload', { method: 'POST', body: fd })
       const { url } = await res.json()
       if (url) {
         onChange(url)
@@ -206,7 +222,7 @@ function ImageUploader({ label, value, onChange, crop, onCropChange, fallbackAsp
     } finally {
       setUploading(false)
     }
-  }, [onChange, onCropChange])
+  }, [onChange, onCropChange, editorMode, invitationId, templateId])
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0]
@@ -634,22 +650,46 @@ function LabelField({ modId, config, defaultKorean, defaultEnglish, defaultTitle
 // ── 패널들 ─────────────────────────────────────────────────────────────────
 
 function SettingsPanel() {
-  const { styles, setStyles, content, setContent } = useEditorStore()
-  const opts: Array<{ key: 'zoomDisabled' | 'scrollAnimation' | 'showEnglishTitle'; label: string }> = [
-    { key: 'zoomDisabled',     label: '확대 방지 기능 사용' },
-    { key: 'scrollAnimation',  label: '스크롤 등장 애니메이션 사용' },
-    { key: 'showEnglishTitle', label: '소제목 위 영문 디자인 노출' },
-  ]
+  const { styles, setStyles } = useEditorStore()
+  const currentPreset = normalizeScrollAnimation(styles.scrollAnimation)
   return (
     <div className="p-5 space-y-5">
       <SectionHeader title="설정" />
       <div className="space-y-3">
-        {opts.map(({ key, label }) => (
-          <div key={key} className="flex items-center justify-between gap-3">
-            <span className="text-xs text-gray-700">{label}</span>
-            <Toggle checked={styles[key] ?? true} onChange={(v) => setStyles({ [key]: v })} />
-          </div>
-        ))}
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-xs text-gray-700">확대 방지 기능 사용</span>
+          <Toggle
+            checked={styles.zoomDisabled ?? true}
+            onChange={(v) => setStyles({ zoomDisabled: v })}
+          />
+        </div>
+      </div>
+      <div className="space-y-2">
+        <div className="text-xs text-gray-700">스크롤 등장 애니메이션</div>
+        <div className="space-y-1">
+          {SCROLL_ANIMATION_PRESETS.map(({ id, label, description }) => {
+            const checked = currentPreset === id
+            return (
+              <label
+                key={id}
+                className={`flex items-center gap-3 px-3 py-2 rounded-xl border cursor-pointer transition-colors ${checked ? 'border-[#5B4FCF] bg-[#5B4FCF]/5' : 'border-gray-100 hover:bg-gray-50'}`}
+              >
+                <input
+                  type="radio"
+                  name="scrollAnimation"
+                  value={id}
+                  checked={checked}
+                  onChange={() => setStyles({ scrollAnimation: id })}
+                  className="accent-[#5B4FCF]"
+                />
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs text-gray-900">{label}</div>
+                  <div className="text-[10px] text-gray-400 truncate">{description}</div>
+                </div>
+              </label>
+            )
+          })}
+        </div>
       </div>
     </div>
   )
@@ -693,7 +733,7 @@ function ThemeBgmTrackRow({ track, selected, playing, onSelect, onTogglePreview 
 }
 
 function ThemeBgmSection() {
-  const { styles, setStyles, categorySlug } = useEditorStore()
+  const { styles, setStyles, categorySlug, invitationId, templateId, mode } = useEditorStore()
   const cfg = (styles.bgm ?? {}) as BgmConfig
   const tracks = useMemo(() => getTracksForCategory(categorySlug), [categorySlug])
 
@@ -759,7 +799,12 @@ function ThemeBgmSection() {
     try {
       const fd = new FormData()
       fd.append('file', file)
-      const res = await fetch('/api/upload', { method: 'POST', body: fd })
+      const isTpl = mode === 'template'
+      const params = new URLSearchParams()
+      if (isTpl && templateId) params.set('templateId', templateId)
+      else if (!isTpl && invitationId) params.set('invitationId', invitationId)
+      const qs = params.toString()
+      const res = await fetch(qs ? `/api/upload?${qs}` : '/api/upload', { method: 'POST', body: fd })
       const data = await res.json()
       if (!res.ok) {
         setUploadError(data?.error ?? '업로드에 실패했습니다.')
@@ -1289,7 +1334,7 @@ function ContactPanel() {
             <span className="text-xs font-medium text-gray-700">그룹 {gi + 1}</span>
             <button onClick={() => save(groups.filter((_, i) => i !== gi))} className="text-xs text-gray-400 hover:text-red-400">그룹 삭제</button>
           </div>
-          <Input label="그룹명" value={group.label} onChange={(v) => updateGroup(gi, { label: v })} placeholder="예: 신랑 측" />
+          <Input label="그룹명" value={group.label} onChange={(v) => updateGroup(gi, { label: v })} placeholder="예: 가족 측" />
           <Input label="영문 보조 라벨 (선택)" value={group.englishLabel ?? ''} onChange={(v) => updateGroup(gi, { englishLabel: v })} placeholder="예: GROOM" />
           {group.contacts.map((c, ci) => (
             <div key={ci} className="border border-dashed border-gray-200 rounded-lg p-2.5 space-y-2">
@@ -1297,12 +1342,12 @@ function ContactPanel() {
                 <span className="text-[11px] text-gray-500">연락처 {ci + 1}</span>
                 <button onClick={() => removeContact(gi, ci)} className="text-[11px] text-gray-400 hover:text-red-400">삭제</button>
               </div>
-              <Input label="이름" value={c.name} onChange={(v) => updateContact(gi, ci, { name: v })} placeholder="예: 신랑, 아버님" />
+              <Input label="이름" value={c.name} onChange={(v) => updateContact(gi, ci, { name: v })} placeholder="예: 이름 또는 관계" />
               {c.bindTo ? (
                 <div>
                   <label className="block text-xs text-gray-500 mb-1.5">전화번호</label>
                   <div className="text-[11px] text-gray-400 px-3 py-2 border border-gray-100 rounded-xl bg-gray-50">
-                    {c.bindTo === 'groomPhone' ? '혼주 > 신랑 연락처' : '혼주 > 신부 연락처'}에 연결됨
+                    {c.bindTo === 'groomPhone' ? '혼주 1 연락처' : '혼주 2 연락처'}에 연결됨
                   </div>
                 </div>
               ) : (
@@ -1318,7 +1363,7 @@ function ContactPanel() {
           </button>
         </div>
       ))}
-      <AddButton onClick={() => save([...groups, { label: `그룹 ${groups.length + 1}`, englishLabel: '', contacts: [{ name: '', phone: '' }] }])} label="+ 그룹 추가" />
+      <AddButton onClick={() => save([...groups, { label: '그룹명 자리입니다.', englishLabel: '', contacts: [{ name: '이름 자리입니다.', phone: '010-0000-0000' }] }])} label="+ 그룹 추가" />
     </div>
   )
 }
@@ -1402,13 +1447,14 @@ function GreetingPanel() {
   )
 }
 
-// 프로필(가로형/세로형) 공통 인물 입력 — 이미지/이름/생년월일/해시태그/설명
+// 프로필(가로형/세로형) 공통 인물 입력 — 이미지/이름/해시태그/설명
 function PersonItemEditor({ person, onChange, descriptionAlign }: {
   person: ProfilePerson
   onChange: (next: ProfilePerson) => void
   descriptionAlign?: 'left' | 'center' | 'right'
 }) {
-  const hashtagsText = (person.hashtags ?? []).join(', ')
+  // 해시태그는 입력 도중 콤마가 split 되어 사라지지 않도록 raw 텍스트를 로컬에 보관한다.
+  const [hashtagsRaw, setHashtagsRaw] = useState(() => (person.hashtags ?? []).join(', '))
   return (
     <div className="space-y-2">
       <ImageUploader
@@ -1420,11 +1466,13 @@ function PersonItemEditor({ person, onChange, descriptionAlign }: {
         fallbackAspect="1/1"
       />
       <Input label="이름" value={person.name ?? ''} onChange={(v) => onChange({ ...person, name: v })} placeholder="이름" />
-      <Input label="제목" value={person.title ?? ''} onChange={(v) => onChange({ ...person, title: v })} placeholder="예: 1990. 12. 10." />
       <Input
         label="해시태그 (쉼표로 구분)"
-        value={hashtagsText}
-        onChange={(v) => onChange({ ...person, hashtags: v.split(',').map(s => s.trim()).filter(Boolean) })}
+        value={hashtagsRaw}
+        onChange={(v) => {
+          setHashtagsRaw(v)
+          onChange({ ...person, hashtags: v.split(',').map(s => s.trim()).filter(Boolean) })
+        }}
         placeholder="웃음요정, 잠꾸러기"
       />
       <ToggleWrapper
@@ -1445,41 +1493,8 @@ function PersonItemEditor({ person, onChange, descriptionAlign }: {
   )
 }
 
-// legacy(person1*/person2* 또는 단일 image/personName) → ProfilePerson[] 변환.
-// EditorLayout 마이그레이션이 실패한 데이터에 대한 읽기 측 안전망.
 function readPersons(cfg: Record<string, unknown>): ProfilePerson[] {
-  if (Array.isArray(cfg.persons)) return cfg.persons as ProfilePerson[]
-  // 가로형 legacy
-  if (cfg.person1Image || cfg.person1Label || cfg.person1Story || cfg.person2Image || cfg.person2Label || cfg.person2Story) {
-    const p1: ProfilePerson = {
-      image: cfg.person1Image as string | undefined,
-      imageCrop: cfg.person1ImageCrop as ImageCropData | undefined,
-      name: cfg.person1Label as string | undefined,
-      description: cfg.person1Story as string | undefined,
-      descriptionVisible: cfg.person1StoryVisible as boolean | undefined,
-    }
-    const p2: ProfilePerson = {
-      image: cfg.person2Image as string | undefined,
-      imageCrop: cfg.person2ImageCrop as ImageCropData | undefined,
-      name: cfg.person2Label as string | undefined,
-      description: cfg.person2Story as string | undefined,
-      descriptionVisible: cfg.person2StoryVisible as boolean | undefined,
-    }
-    return [p1, p2]
-  }
-  // 세로형 legacy
-  if (cfg.image || cfg.personName || cfg.birthDate || cfg.hashtags || cfg.description) {
-    return [{
-      image: cfg.image as string | undefined,
-      imageCrop: cfg.imageCrop as ImageCropData | undefined,
-      name: cfg.personName as string | undefined,
-      title: cfg.birthDate as string | undefined,
-      hashtags: cfg.hashtags as string[] | undefined,
-      description: cfg.description as string | undefined,
-      descriptionVisible: cfg.descriptionVisible as boolean | undefined,
-    }]
-  }
-  return []
+  return Array.isArray(cfg.persons) ? (cfg.persons as ProfilePerson[]) : []
 }
 
 function ProfilePanel() {
@@ -1487,21 +1502,10 @@ function ProfilePanel() {
   const mod = useMemo(() => modules.find(m => editingModuleId ? (m.id === editingModuleId && m.type === 'profile') : m.type === 'profile'), [modules, editingModuleId])
   const cfg = (mod?.config ?? {}) as Record<string, unknown>
   const persons = readPersons(cfg)
-  const introText = (cfg.introText as string | undefined) ?? ''
-  const introTextVisible = cfg.introTextVisible !== false
 
   function savePersons(next: ProfilePerson[]) {
     if (!mod) return
-    // legacy 키는 더 이상 쓰지 않으므로 제거 후 persons 만 저장
-    const { person1Image, person1ImageCrop, person1Label, person1Story, person1StoryVisible,
-            person2Image, person2ImageCrop, person2Label, person2Story, person2StoryVisible,
-            ...rest } = cfg as Record<string, unknown>
-    void person1Image; void person1ImageCrop; void person1Label; void person1Story; void person1StoryVisible
-    void person2Image; void person2ImageCrop; void person2Label; void person2Story; void person2StoryVisible
-    updateModule(mod.id, { ...rest, persons: next })
-  }
-  function savePatch(patch: Record<string, unknown>) {
-    if (mod) updateModule(mod.id, { ...mod.config, ...patch })
+    updateModule(mod.id, { ...cfg, persons: next })
   }
 
   if (!mod) return <PendingPanel title="가로형 프로필" />
@@ -1509,7 +1513,7 @@ function ProfilePanel() {
   return (
     <div className="p-5 space-y-4">
       <SectionHeader title="가로형 프로필" />
-      <LabelField modId={mod.id} config={mod.config} defaultKorean="소개" defaultEnglish="About" defaultTitleBig="" defaultTitleSmall="" />
+      <LabelField modId={mod.id} config={mod.config} defaultKorean="프로필" defaultEnglish="Profile" defaultTitleBig="" defaultTitleSmall="" />
       {persons.map((person, i) => (
         <ItemCard key={i} index={i} label="인물" onDelete={() => savePersons(persons.filter((_, j) => j !== i))}>
           <PersonItemEditor
@@ -1519,10 +1523,7 @@ function ProfilePanel() {
           />
         </ItemCard>
       ))}
-      <AddButton onClick={() => savePersons([...persons, {}])} label="+ 인물 추가" />
-      <ToggleWrapper label="공통 소개글 (선택)" visible={introTextVisible} onToggle={(v) => savePatch({ introTextVisible: v })}>
-        <RichTextEditor label="" value={introText} onChange={(v) => savePatch({ introText: v })} placeholder="공통 소개글을 입력하세요" rows={4} defaultAlign="center" />
-      </ToggleWrapper>
+      <AddButton onClick={() => savePersons([...persons, { name: '이름 자리 입니다.', hashtags: ['해시태그자리입니다.'], description: '설명 자리 입니다.' }])} label="+ 인물 추가" />
     </div>
   )
 }
@@ -1545,7 +1546,7 @@ function SoloProfilePanel() {
   return (
     <div className="p-5 space-y-4">
       <SectionHeader title="세로형 프로필" />
-      <LabelField modId={mod.id} config={mod.config} defaultKorean="소개" defaultEnglish="About" defaultTitleBig="" defaultTitleSmall="" />
+      <LabelField modId={mod.id} config={mod.config} defaultKorean="프로필" defaultEnglish="Profile" defaultTitleBig="" defaultTitleSmall="" />
       {persons.map((person, i) => (
         <ItemCard key={i} index={i} label="인물" onDelete={() => savePersons(persons.filter((_, j) => j !== i))}>
           <PersonItemEditor
@@ -1555,7 +1556,7 @@ function SoloProfilePanel() {
           />
         </ItemCard>
       ))}
-      <AddButton onClick={() => savePersons([...persons, {}])} label="+ 인물 추가" />
+      <AddButton onClick={() => savePersons([...persons, { name: '이름 자리 입니다.', hashtags: ['해시태그자리입니다.'], description: '설명 자리 입니다.' }])} label="+ 인물 추가" />
     </div>
   )
 }
@@ -1603,7 +1604,7 @@ function TimelineItemsEditor({ moduleType, title, defaultKorean, defaultEnglish 
           </ItemCard>
         )
       })}
-      <AddButton onClick={() => save([...items, { title: '', content: '', image: '' }])} label="+ 항목 추가" />
+      <AddButton onClick={() => save([...items, { title: '제목 자리입니다.', content: '내용 자리입니다.', image: '' }])} label="+ 항목 추가" />
     </div>
   )
 }
@@ -1634,14 +1635,14 @@ function InterviewPanel() {
       {items.map((item, i) => (
         <ItemCard key={i} index={i} label="Q&A" onDelete={() => save(items.filter((_, j) => j !== i))}>
           <ToggleWrapper label="질문" visible={(item as Record<string, unknown>).questionVisible !== false} onToggle={(v) => { const n = [...items]; (n[i] as Record<string, unknown>).questionVisible = v; save(n) }}>
-            <RichTextEditor label="" value={item.question} onChange={(v) => { const n = [...items]; n[i] = { ...n[i], question: v }; save(n) }} placeholder="두 분의 첫 인상은?" singleLine />
+            <RichTextEditor label="" value={item.question} onChange={(v) => { const n = [...items]; n[i] = { ...n[i], question: v }; save(n) }} placeholder="두 분의 첫 인상은?" singleLine defaultAlign="left" />
           </ToggleWrapper>
           <ToggleWrapper label="답변" visible={(item as Record<string, unknown>).answerVisible !== false} onToggle={(v) => { const n = [...items]; (n[i] as Record<string, unknown>).answerVisible = v; save(n) }}>
-            <RichTextEditor label="" value={item.answer} onChange={(v) => { const n = [...items]; n[i] = { ...n[i], answer: v }; save(n) }} rows={2} placeholder="답변을 입력하세요" />
+            <RichTextEditor label="" value={item.answer} onChange={(v) => { const n = [...items]; n[i] = { ...n[i], answer: v }; save(n) }} rows={2} placeholder="답변을 입력하세요" defaultAlign="left" />
           </ToggleWrapper>
         </ItemCard>
       ))}
-      <AddButton onClick={() => save([...items, { question: '', answer: '' }])} label="+ Q&A 추가" />
+      <AddButton onClick={() => save([...items, { question: '질문 자리입니다.', answer: '답변 자리입니다.' }])} label="+ Q&A 추가" />
     </div>
   )
 }
@@ -1684,32 +1685,48 @@ function DatetimePanel() {
   const weekdays = ['일', '월', '화', '수', '목', '금', '토']
   const autoDateStr = `${dateObj.getFullYear()}. ${dateObj.getMonth() + 1}. ${dateObj.getDate()}. ${weekdays[dateObj.getDay()]}요일`
   const autoTimeStr = content.eventTime ?? '낮 12시 00분'
+
+  // 큰 글씨에 시간(오전/오후/낮/저녁/아침/시)이 합쳐져 박힌 invitation은
+  // 첫 진입 시 한 번만 큰=날짜+요일 / 작은=시간으로 분리한다.
+  useEffect(() => {
+    const big = content.datetimeTitleBig
+    if (!big) return
+    const m = big.match(/^(.*요일)\s+(.+)$/)
+    if (m && /(시|오전|오후|낮|저녁|아침)/.test(m[2])) {
+      setContent({
+        datetimeTitleBig: m[1].trim(),
+        datetimeTitleSmall: content.datetimeTitleSmall || m[2].trim(),
+        datetimeTitleSmallVisible: true,
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
   return (
     <div className="p-5 space-y-4">
       <SectionHeader title="달력 표현" />
       <div className="space-y-3">
         <ToggleWrapper label="레이블 큰 글씨" visible={content.datetimeKoreanLabelVisible !== false} onToggle={(v) => setContent({ datetimeKoreanLabelVisible: v })}>
           <StyledInput multiline
-            value={content.datetimeKoreanTitle ?? '예식 일시'}
+            value={content.datetimeKoreanTitle ?? '행사 일시'}
             onChange={(v) => setContent({ datetimeKoreanTitle: v })}
             bold={content.datetimeKoreanLabelBold} italic={content.datetimeKoreanLabelItalic}
             align={(content.datetimeKoreanLabelAlign as 'left' | 'center' | 'right' | undefined) ?? 'center'}
             onBoldChange={(v) => setContent({ datetimeKoreanLabelBold: v })}
             onItalicChange={(v) => setContent({ datetimeKoreanLabelItalic: v })}
             onAlignChange={(v) => setContent({ datetimeKoreanLabelAlign: v })}
-            placeholder="예식 일시"
+            placeholder="행사 일시"
           />
         </ToggleWrapper>
         <ToggleWrapper label="레이블 작은 글씨" visible={content.datetimeLabelVisible !== false} onToggle={(v) => setContent({ datetimeLabelVisible: v })}>
           <StyledInput multiline
-            value={content.datetimeEnglishTitle ?? 'Wedding Day'}
+            value={content.datetimeEnglishTitle ?? 'Event Day'}
             onChange={(v) => setContent({ datetimeEnglishTitle: v })}
             bold={content.datetimeLabelBold} italic={content.datetimeLabelItalic}
             align={(content.datetimeLabelAlign as 'left' | 'center' | 'right' | undefined) ?? 'center'}
             onBoldChange={(v) => setContent({ datetimeLabelBold: v })}
             onItalicChange={(v) => setContent({ datetimeLabelItalic: v })}
             onAlignChange={(v) => setContent({ datetimeLabelAlign: v })}
-            placeholder="Wedding Day"
+            placeholder="Event Day"
           />
         </ToggleWrapper>
         <ToggleWrapper label="제목 큰 글씨" visible={content.datetimeTitleBigVisible !== false} onToggle={(v) => setContent({ datetimeTitleBigVisible: v })}>
@@ -1824,14 +1841,14 @@ function VenuePanel() {
       <div className="space-y-3">
         <ToggleWrapper label="레이블 큰 글씨" visible={content.venueKoreanLabelVisible !== false} onToggle={(val) => setContent({ venueKoreanLabelVisible: val })}>
           <StyledInput multiline
-            value={content.venueKoreanTitle ?? '예식 장소'}
+            value={content.venueKoreanTitle ?? '행사 장소'}
             onChange={(val) => setContent({ venueKoreanTitle: val })}
             bold={content.venueKoreanLabelBold} italic={content.venueKoreanLabelItalic}
             align={(content.venueKoreanLabelAlign as 'left' | 'center' | 'right' | undefined) ?? 'center'}
             onBoldChange={(val) => setContent({ venueKoreanLabelBold: val })}
             onItalicChange={(val) => setContent({ venueKoreanLabelItalic: val })}
             onAlignChange={(val) => setContent({ venueKoreanLabelAlign: val })}
-            placeholder="예식 장소"
+            placeholder="행사 장소"
           />
         </ToggleWrapper>
         <ToggleWrapper label="레이블 작은 글씨" visible={content.venueLabelVisible !== false} onToggle={(val) => setContent({ venueLabelVisible: val })}>
@@ -1855,7 +1872,7 @@ function VenuePanel() {
             onBoldChange={(val) => setContent({ venueTitleBigBold: val })}
             onItalicChange={(val) => setContent({ venueTitleBigItalic: val })}
             onAlignChange={(val) => setContent({ venueTitleBigAlign: val })}
-            placeholder="예: 서울 그랜드 웨딩홀 2층 그레이스홀"
+            placeholder="예: 장소명 + 층 + 홀"
           />
         </ToggleWrapper>
         <ToggleWrapper label="제목 작은 글씨" visible={content.venueTitleSmallVisible !== false} onToggle={(val) => setContent({ venueTitleSmallVisible: val })}>
@@ -1919,7 +1936,7 @@ function TabPanel() {
             label="탭 이름"
             value={tab.label ?? ''}
             onChange={(v) => patchTab(i, { label: v })}
-            placeholder="예: 지하철"
+            placeholder="탭 이름 자리 입니다"
           />
           <ToggleWrapper label="이미지" visible={tab.imageVisible !== false} onToggle={(v) => patchTab(i, { imageVisible: v })}>
             <ImageUploader
@@ -1932,11 +1949,14 @@ function TabPanel() {
             />
           </ToggleWrapper>
           <ToggleWrapper label="내용" visible={tab.contentVisible !== false} onToggle={(v) => patchTab(i, { contentVisible: v })}>
-            <RichTextEditor label="" value={tab.content ?? ''} onChange={(v) => patchTab(i, { content: v })} rows={3} placeholder="탭 내용을 입력하세요" defaultAlign="center" />
+            <RichTextEditor label="" value={tab.content ?? ''} onChange={(v) => patchTab(i, { content: v })} rows={3} placeholder="탭 내용 자리 입니다" defaultAlign="center" />
           </ToggleWrapper>
         </ItemCard>
       ))}
-      <AddButton onClick={() => replaceTabs([...tabs, { label: `탭 ${tabs.length + 1}`, content: '' }])} label="+ 탭 추가" />
+      <AddButton onClick={() => {
+        const n = tabs.length + 1
+        replaceTabs([...tabs, { label: `탭${n} 이름 자리입니다.`, content: `탭${n} 내용 자리입니다.`, imageVisible: true }])
+      }} label="+ 탭 추가" />
     </div>
   )
 }
@@ -1966,7 +1986,7 @@ function SlidePanel() {
   return (
     <div className="p-5 space-y-4">
       <SectionHeader title="슬라이드" />
-      <LabelField modId={mod.id} config={mod.config} defaultKorean="안내사항" defaultEnglish="Information" defaultTitleBig="" defaultTitleSmall="" />
+      <LabelField modId={mod.id} config={mod.config} defaultKorean="슬라이드" defaultEnglish="Slide" defaultTitleBig="" defaultTitleSmall="" />
       {slides.map((slide, i) => (
         <ItemCard key={i} index={i} label="슬라이드" onDelete={() => replaceSlides(slides.filter((_, j) => j !== i))}>
           <ToggleWrapper label="이미지" visible={slide.imageVisible !== false} onToggle={(v) => patchSlide(i, { imageVisible: v })}>
@@ -1980,14 +2000,17 @@ function SlidePanel() {
             />
           </ToggleWrapper>
           <ToggleWrapper label="제목" visible={slide.titleVisible !== false} onToggle={(v) => patchSlide(i, { titleVisible: v })}>
-            <RichTextEditor label="" value={slide.title ?? ''} onChange={(v) => patchSlide(i, { title: v })} placeholder="슬라이드 제목" singleLine defaultAlign="center" />
+            <RichTextEditor label="" value={slide.title ?? ''} onChange={(v) => patchSlide(i, { title: v })} placeholder="슬라이드 제목 자리 입니다" singleLine defaultAlign="center" />
           </ToggleWrapper>
           <ToggleWrapper label="내용" visible={slide.contentVisible !== false} onToggle={(v) => patchSlide(i, { contentVisible: v })}>
-            <RichTextEditor label="" value={slide.content ?? ''} onChange={(v) => patchSlide(i, { content: v })} rows={3} placeholder="슬라이드 내용을 입력하세요" defaultAlign="center" />
+            <RichTextEditor label="" value={slide.content ?? ''} onChange={(v) => patchSlide(i, { content: v })} rows={3} placeholder="슬라이드 내용 자리 입니다" defaultAlign="center" />
           </ToggleWrapper>
         </ItemCard>
       ))}
-      <AddButton onClick={() => replaceSlides([...slides, { title: '', content: '', imageVisible: false }])} label="+ 슬라이드 추가" />
+      <AddButton onClick={() => {
+        const n = slides.length + 1
+        replaceSlides([...slides, { title: `슬라이드${n} 제목 자리입니다.`, content: `슬라이드${n} 내용 자리입니다.`, imageVisible: true }])
+      }} label="+ 슬라이드 추가" />
     </div>
   )
 }
@@ -2170,7 +2193,7 @@ function AccountPanel() {
             <span className="text-xs font-medium text-gray-700">그룹 {gi + 1}</span>
             <button onClick={() => saveGroups(groups.filter((_, i) => i !== gi))} className="text-xs text-gray-400 hover:text-red-400">그룹 삭제</button>
           </div>
-          <Input label="그룹명 (토글 버튼 텍스트)" value={group.label} onChange={(v) => updateGroup(gi, { label: v })} placeholder="예: 신랑측 계좌번호" />
+          <Input label="그룹명 (토글 버튼 텍스트)" value={group.label} onChange={(v) => updateGroup(gi, { label: v })} placeholder="예: 가족 측 계좌번호" />
           {group.accounts.map((acc, ai) => (
             <div key={ai} className="border border-dashed border-gray-200 rounded-lg p-2.5 space-y-2">
               <div className="flex justify-between items-center">
@@ -2190,7 +2213,7 @@ function AccountPanel() {
           </button>
         </div>
       ))}
-      <AddButton onClick={() => saveGroups([...groups, { label: '신랑측 계좌번호', accounts: [{ bank: '', number: '', name: '' }] }])} label="+ 그룹 추가" />
+      <AddButton onClick={() => saveGroups([...groups, { label: '그룹명 자리 입니다.', accounts: [{ bank: '은행명', number: '000-000-000000', name: '예금주' }] }])} label="+ 그룹 추가" />
     </div>
   )
 }
@@ -2323,6 +2346,15 @@ function RsvpPanel() {
     if (cfg.buttonLabel === undefined) patch.buttonLabel = RSVP_DEFAULTS.buttonLabel
     if (cfg.modalTitle === undefined) patch.modalTitle = RSVP_DEFAULTS.modalTitle
     if (cfg.submitLabel === undefined) patch.submitLabel = RSVP_DEFAULTS.submitLabel
+    if (!cfg.questions || cfg.questions.length === 0) {
+      patch.questions = [{
+        id: nanoid(8),
+        type: 'single-choice',
+        label: '참석 여부',
+        required: true,
+        options: ['참석', '불참'],
+      }]
+    }
     if (Object.keys(patch).length > 0) {
       updateModule(mod.id, { ...mod.config, ...patch })
     }
@@ -2349,16 +2381,19 @@ function RsvpPanel() {
         label="버튼 이름"
         value={cfg.buttonLabel ?? ''}
         onChange={(v) => save({ buttonLabel: v })}
+        placeholder={RSVP_DEFAULTS.buttonLabel}
       />
       <Input
         label="모달 제목"
         value={cfg.modalTitle ?? ''}
         onChange={(v) => save({ modalTitle: v })}
+        placeholder={RSVP_DEFAULTS.modalTitle}
       />
       <Input
         label="제출 버튼 이름"
         value={cfg.submitLabel ?? ''}
         onChange={(v) => save({ submitLabel: v })}
+        placeholder={RSVP_DEFAULTS.submitLabel}
       />
       <div className="space-y-3">
         <div className="flex items-center justify-between">
@@ -2389,69 +2424,256 @@ function RsvpPanel() {
 }
 
 function DdayPanel() {
-  const { modules, updateModule, editingModuleId } = useEditorStore()
+  const { modules, editingModuleId } = useEditorStore()
   const mod = useMemo(() => modules.find(m => editingModuleId ? m.id === editingModuleId : m.type === 'dday'), [modules, editingModuleId])
-  const cfg = (mod?.config ?? {}) as Record<string, unknown>
-  const save = (patch: Record<string, unknown>) => { if (mod) updateModule(mod.id, { ...mod.config, ...patch }) }
   return (
     <div className="p-5 space-y-4">
       <SectionHeader title="D+Day" />
-      {mod && <LabelField modId={mod.id} config={mod.config} defaultKorean="D+Day" defaultEnglish="D+Day" defaultTitleBig="" defaultTitleSmall="" />}
-      {mod && (
-        <ToggleWrapper label="카운트다운 캡션" visible={(cfg.captionVisible as boolean) !== false} onToggle={(v) => save({ captionVisible: v })}>
-          <StyledInput multiline
-            value={(cfg.caption as string | undefined) ?? '결혼식까지'}
-            onChange={(v) => save({ caption: v })}
-            bold={cfg.captionBold as boolean | undefined}
-            italic={cfg.captionItalic as boolean | undefined}
-            align={(cfg.captionAlign as 'left' | 'center' | 'right' | undefined) ?? 'center'}
-            onBoldChange={(v) => save({ captionBold: v })}
-            onItalicChange={(v) => save({ captionItalic: v })}
-            onAlignChange={(v) => save({ captionAlign: v })}
-            placeholder="결혼식까지"
-          />
-        </ToggleWrapper>
-      )}
-      <p className="text-xs text-gray-500 leading-5">예식 일시를 기준으로 자동 계산됩니다. 날짜는 예식 일시 탭에서 변경할 수 있습니다.</p>
+      {mod && <LabelField modId={mod.id} config={mod.config} defaultKorean="남은 기한" defaultEnglish="D-Day" defaultTitleBig="" defaultTitleSmall="" />}
     </div>
   )
 }
 
+const VIDEO_MODULE_TYPES = new Set<ModuleType>([
+  'video_single_card',
+  'video_cinema',
+  'video_polaroid',
+  'video_floating_bordered',
+  'video_fullbleed',
+  'video_carousel',
+  'video_thumbnail_row',
+])
+
 function VideoPanel() {
   const { modules, updateModule, editingModuleId } = useEditorStore()
-  const mod = useMemo(() => modules.find(m => editingModuleId ? m.id === editingModuleId : m.type === 'video'), [modules, editingModuleId])
-  const cfg = (mod?.config ?? {}) as { url?: string }
+  const mod = useMemo(
+    () => modules.find(m =>
+      editingModuleId ? m.id === editingModuleId : VIDEO_MODULE_TYPES.has(m.type),
+    ),
+    [modules, editingModuleId],
+  )
+  const cfg = (mod?.config ?? {}) as {
+    youtubeUrl?: string
+    videoId?: string
+  }
+
+  const [urlInput, setUrlInput] = useState(cfg.youtubeUrl ?? '')
+
+  useEffect(() => {
+    setUrlInput(cfg.youtubeUrl ?? '')
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [mod?.id])
 
   if (!mod) return <PendingPanel title="동영상" />
+
+  function save(patch: Record<string, unknown>) {
+    if (mod) updateModule(mod.id, { ...mod.config, ...patch })
+  }
+
+  function commitUrl() {
+    const id = parseYouTubeId(urlInput)
+    save({ youtubeUrl: urlInput, videoId: id ?? undefined })
+  }
+
+  const videoId = cfg.videoId ?? parseYouTubeId(cfg.youtubeUrl ?? '')
+  const thumbUrl = videoId ? `https://img.youtube.com/vi/${videoId}/hqdefault.jpg` : null
 
   return (
     <div className="p-5 space-y-4">
       <SectionHeader title="동영상" />
       <LabelField modId={mod.id} config={mod.config} defaultKorean="동영상" defaultEnglish="Video" defaultTitleBig="" defaultTitleSmall="" />
-      <Input
-        label="동영상 URL"
-        value={cfg.url ?? ''}
-        onChange={(v) => { if (mod) updateModule(mod.id, { ...mod.config, url: v }) }}
-        placeholder="https://youtube.com/watch?v=..."
-      />
-      <p className="text-xs text-gray-400 flex items-start gap-1">
-        <span>①</span>유튜브, 비메오 등 동영상 URL을 입력하세요.
-      </p>
+
+      <div className="space-y-1.5">
+        <label className="text-xs text-gray-400">YouTube URL</label>
+        <input
+          type="text"
+          value={urlInput}
+          onChange={(e) => setUrlInput(e.target.value)}
+          onBlur={commitUrl}
+          placeholder="https://youtu.be/abc123 또는 https://www.youtube.com/watch?v=abc123"
+          className="w-full px-3 py-2 text-sm border border-gray-100 rounded-xl focus:outline-none focus:border-[#5B4FCF]"
+        />
+        {thumbUrl ? (
+          <div className="mt-2 rounded-xl overflow-hidden border border-gray-100">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={thumbUrl} alt="" className="w-full aspect-video object-cover" />
+          </div>
+        ) : (
+          urlInput && !videoId && <p className="text-xs text-rose-500">유효한 YouTube URL을 입력해 주세요</p>
+        )}
+      </div>
     </div>
   )
 }
 
 function GuestAlbumPanel() {
-  const { modules, editingModuleId } = useEditorStore()
-  const mod = useMemo(() => modules.find(m => editingModuleId ? m.id === editingModuleId : m.type === 'guestalbum'), [modules, editingModuleId])
+  const { modules, updateModule, editingModuleId, invitationId } = useEditorStore()
+  const mod = useMemo(() => modules.find(m => editingModuleId ? m.id === editingModuleId : m.type === 'photo_share'), [modules, editingModuleId])
+  const cfg = (mod?.config ?? {}) as { previewPublic?: boolean }
 
-  if (!mod) return <PendingPanel title="하객 앨범" />
+  type DriveStatus = 'loading' | 'connected' | 'needs_auth' | 'unsaved'
+  const [status, setStatus] = useState<DriveStatus>('loading')
+  const [folderUrl, setFolderUrl] = useState<string | null>(null)
+  const [authStartUrl, setAuthStartUrl] = useState<string | null>(null)
+  const [toast, setToast] = useState<string | null>(null)
+  const [busy, setBusy] = useState(false)
+
+  // Drive 연결 상태 조회 — invitationId + 모듈 인스턴스 id 가 있을 때만
+  const refresh = useCallback(async () => {
+    if (!invitationId || !mod) {
+      setStatus('unsaved')
+      return
+    }
+    setStatus('loading')
+    // returnTo 에 nav/moduleId 정보를 함께 실어 OAuth 복귀 후 같은 모듈 패널이 다시 열리게 한다.
+    const returnTo = (() => {
+      if (typeof window === 'undefined') return `/editor/${invitationId}?nav=photo_share&moduleId=${mod.id}`
+      const url = new URL(window.location.href)
+      url.searchParams.set('nav', 'photo_share')
+      url.searchParams.set('moduleId', mod.id)
+      return url.pathname + url.search
+    })()
+    try {
+      const res = await fetch(`/api/invitations/${invitationId}/photo-share/connect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ returnTo, moduleId: mod.id }),
+      })
+      if (!res.ok) {
+        setStatus('needs_auth')
+        return
+      }
+      const j = await res.json()
+      if (j.status === 'connected') {
+        setStatus('connected')
+        setFolderUrl(j.folderUrl ?? null)
+      } else {
+        setStatus('needs_auth')
+        setAuthStartUrl(j.authStartUrl ?? null)
+      }
+    } catch {
+      setStatus('needs_auth')
+    }
+  }, [invitationId, mod])
+
+  useEffect(() => { refresh() }, [refresh])
+
+  // OAuth 콜백 후 ?drive=connected 처리
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    if (params.get('drive') === 'connected') {
+      setToast('구글 드라이브에 연결됐어요')
+      params.delete('drive')
+      const next = window.location.pathname + (params.toString() ? `?${params.toString()}` : '')
+      window.history.replaceState({}, '', next)
+      refresh()
+      const t = setTimeout(() => setToast(null), 3000)
+      return () => clearTimeout(t)
+    } else if (params.get('drive') === 'failed') {
+      setToast('연결에 실패했어요')
+      params.delete('drive')
+      const next = window.location.pathname + (params.toString() ? `?${params.toString()}` : '')
+      window.history.replaceState({}, '', next)
+      const t = setTimeout(() => setToast(null), 3000)
+      return () => clearTimeout(t)
+    }
+  }, [refresh])
+
+  function save(patch: Record<string, unknown>) {
+    if (mod) updateModule(mod.id, { ...mod.config, ...patch })
+  }
+
+  async function disconnect() {
+    if (!invitationId || !mod) return
+    if (!window.confirm('연결을 해제할까요? Drive에 이미 저장된 사진은 그대로 유지돼요.')) return
+    setBusy(true)
+    try {
+      await fetch(`/api/invitations/${invitationId}/photo-share/connect`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ moduleId: mod.id }),
+      })
+      setToast('연결을 해제했어요')
+      setTimeout(() => setToast(null), 3000)
+      await refresh()
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  if (!mod) return <PendingPanel title="사진 공유" />
 
   return (
     <div className="p-5 space-y-4">
-      <SectionHeader title="하객 앨범" />
-      <LabelField modId={mod.id} config={mod.config} defaultKorean="하객 앨범" defaultEnglish="Guest Album" defaultTitleBig="" defaultTitleSmall="" />
-      <p className="text-xs text-gray-500 leading-5">하객들이 직접 사진을 올릴 수 있는 앨범입니다.</p>
+      <SectionHeader title="사진 공유" />
+      <LabelField modId={mod.id} config={mod.config} defaultKorean="사진 공유" defaultEnglish="Photo Share" defaultTitleBig="" defaultTitleSmall="" />
+
+      <div className="rounded-xl border border-gray-100 p-4 space-y-3">
+        <div>
+          <p className="text-sm font-medium text-gray-900">구글 드라이브 연결</p>
+          <p className="text-xs text-gray-400 leading-5 mt-1">
+            참석자들이 보낸 사진은 본인 Google Drive 폴더에 바로 저장돼요.
+            연결을 끊어도 폴더는 그대로 유지돼요.
+          </p>
+        </div>
+
+        {status === 'unsaved' && (
+          <p className="text-xs text-gray-400">먼저 초대장을 저장해 주세요.</p>
+        )}
+
+        {status === 'loading' && (
+          <p className="text-xs text-gray-400">상태 확인 중…</p>
+        )}
+
+        {status === 'needs_auth' && authStartUrl && (
+          <button
+            type="button"
+            onClick={() => { window.location.href = authStartUrl }}
+            className="w-full py-2.5 rounded-xl bg-[#5B4FCF] text-white text-xs font-medium"
+          >구글 드라이브 연결</button>
+        )}
+        {status === 'needs_auth' && !authStartUrl && (
+          <button
+            type="button"
+            onClick={refresh}
+            className="w-full py-2.5 rounded-xl border border-gray-100 text-gray-700 text-xs"
+          >다시 시도</button>
+        )}
+
+        {status === 'connected' && (
+          <div className="space-y-2">
+            {folderUrl && (
+              <a
+                href={folderUrl}
+                target="_blank"
+                rel="noreferrer noopener"
+                className="block text-xs text-[#5B4FCF] underline"
+              >Drive 폴더 열기</a>
+            )}
+            <button
+              type="button"
+              onClick={disconnect}
+              disabled={busy}
+              className="w-full py-2.5 rounded-xl border border-gray-100 text-gray-700 text-xs disabled:text-gray-400"
+            >연결 해제</button>
+          </div>
+        )}
+      </div>
+
+      <div className="rounded-xl border border-gray-100 p-4 flex items-center justify-between">
+        <div className="flex-1 pr-3">
+          <p className="text-sm text-gray-900">공유 사진 전체 공개</p>
+          <p className="text-xs text-gray-400 mt-0.5">OFF 시 드라이브 계정 본인만 확인 가능합니다.</p>
+        </div>
+        <Toggle checked={cfg.previewPublic !== false} onChange={(v) => save({ previewPublic: v })} />
+      </div>
+
+      {toast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2 bg-gray-900 text-white text-xs rounded-xl z-50">
+          {toast}
+        </div>
+      )}
     </div>
   )
 }
@@ -2489,82 +2711,9 @@ function formatEventDateText(dateStr?: string, timeStr?: string): string {
   return fallbackFormatEventDateText(dateStr ?? null, timeStr ?? null) ?? ''
 }
 
-function ThumbnailUpdater({ thumbnailUrl, onUpdated }: { thumbnailUrl: string | null; onUpdated: (url: string) => void }) {
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const handleClick = useCallback(async () => {
-    if (busy) return
-    setBusy(true)
-    setError(null)
-    try {
-      const url = await captureAndUploadThumbnail()
-      onUpdated(url)
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : '캡처에 실패했습니다.'
-      setError(msg)
-    } finally {
-      setBusy(false)
-    }
-  }, [busy, onUpdated])
-
-  return (
-    <div className="space-y-2">
-      <button
-        onClick={handleClick}
-        disabled={busy}
-        className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl text-xs font-medium border border-gray-200 text-gray-700 hover:border-primary hover:text-primary transition-colors disabled:opacity-50"
-      >
-        <RefreshCw size={12} className={busy ? 'animate-spin' : ''} />
-        {busy ? '캡처 중...' : (thumbnailUrl ? '썸네일 다시 캡처하기' : '메인 영역으로 썸네일 만들기')}
-      </button>
-      {error && <p className="text-xs text-red-500">{error}</p>}
-    </div>
-  )
-}
-
-function PublishToggle() {
-  const { invitationId, isPublished, setIsPublished } = useEditorStore()
-  const [busy, setBusy] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-
-  const toggle = useCallback(async () => {
-    if (!invitationId || busy) return
-    const next = !isPublished
-    setBusy(true)
-    setError(null)
-    try {
-      const r = await fetch(`/api/invitations/${invitationId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isPublished: next }),
-      })
-      if (!r.ok) throw new Error()
-      setIsPublished(next)
-    } catch {
-      setError(next ? '발행에 실패했습니다.' : '발행 취소에 실패했습니다.')
-    } finally {
-      setBusy(false)
-    }
-  }, [invitationId, isPublished, busy, setIsPublished])
-
-  return (
-    <div className="flex items-center justify-between gap-3 rounded-xl border border-gray-100 bg-white px-4 py-3">
-      <div className="min-w-0 flex-1">
-        <p className="text-sm font-medium text-gray-900">{isPublished ? '발행됨' : '미발행'}</p>
-        <p className="text-xs text-gray-400 mt-0.5">
-          {isPublished ? '링크로 누구나 볼 수 있어요.' : '발행해야 링크 공유가 가능해요.'}
-        </p>
-        {error && <p className="text-xs text-red-500 mt-1">{error}</p>}
-      </div>
-      <Toggle checked={isPublished} onChange={() => { if (!busy) toggle() }} />
-    </div>
-  )
-}
-
-function LinkSharePanel() {
-  const { invitationId, slug, content, share, setShare, categorySlug } = useEditorStore()
-  const [copied, setCopied] = useState(false)
+// 공유 텍스트 fallback 한 번만 계산해 inner 패널들에 공유.
+function useShareContext() {
+  const { invitationId, slug, content, share, setShare, categorySlug, isPublished } = useEditorStore()
 
   const shareUrl = useMemo(() => {
     if (!slug) return ''
@@ -2578,47 +2727,42 @@ function LinkSharePanel() {
     invitationTitle: '초대합니다',
   }), [content, categorySlug])
 
+  const fallbackText = useMemo(() => formatEventDateText(content.eventDate, content.eventTime), [content.eventDate, content.eventTime])
+  const fallbackExtra = useMemo(() => buildFallbackVenueText(content), [content])
+
+  return { invitationId, slug, content, share, setShare, categorySlug, isPublished, shareUrl, fallbackTitle, fallbackText, fallbackExtra }
+}
+
+interface InnerToastProps { showToast: (msg: string) => void }
+
+function LinkSharePanelInner({ showToast }: InnerToastProps) {
+  const { share, setShare, fallbackTitle, fallbackText, shareUrl, isPublished } = useShareContext()
+  const [copied, setCopied] = useState(false)
+
   const previewTitle = share.linkShareTitle ?? fallbackTitle
-  const previewDate = formatEventDateText(content.eventDate, content.eventTime)
 
   const handleCopy = useCallback(async () => {
     if (!shareUrl) return
-    try {
-      await navigator.clipboard.writeText(shareUrl)
+    if (!isPublished) {
+      showToast('초대장을 먼저 발행해 주세요')
+      return
+    }
+    const ok = await copyShareLink(shareUrl)
+    if (ok) {
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
-    } catch {
-      // ignore
+      showToast('링크가 복사되었습니다')
+    } else {
+      showToast('복사에 실패했습니다')
     }
-  }, [shareUrl])
-
-  const onThumbUpdated = useCallback(async (url: string) => {
-    setShare({ thumbnailUrl: url })
-    if (invitationId) {
-      try {
-        await fetch(`/api/invitations/${invitationId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ thumbnailUrl: url }),
-        })
-      } catch {
-        // 다음 자동저장 때 다시 시도됨
-      }
-    }
-  }, [invitationId, setShare])
-
-  if (!slug) {
-    return <div className="p-5"><p className="text-xs text-gray-400">초대장 정보를 불러오는 중입니다...</p></div>
-  }
+  }, [shareUrl, isPublished, showToast])
 
   return (
-    <div className="p-5 space-y-5">
+    <div className="space-y-5">
       <div className="flex items-center gap-2">
         <LinkIcon size={16} className="text-gray-700" />
         <h3 className="text-sm font-medium text-gray-900">링크 공유 설정</h3>
       </div>
-
-      <PublishToggle />
 
       <section className="space-y-2">
         <h4 className="text-xs font-medium text-gray-700">미리보기</h4>
@@ -2631,14 +2775,12 @@ function LinkSharePanel() {
             </div>
             <div className="p-3 space-y-1">
               <p className="text-sm text-gray-900 truncate">{previewTitle}</p>
-              {previewDate && <p className="text-xs text-gray-500">{previewDate}</p>}
+              {fallbackText && <p className="text-xs text-gray-500">{fallbackText}</p>}
               <p className="text-xs text-primary truncate">{shareUrl.replace(/^https?:\/\//, '')}</p>
             </div>
           </div>
         </div>
       </section>
-
-      <ThumbnailUpdater thumbnailUrl={share.thumbnailUrl} onUpdated={onThumbUpdated} />
 
       <section className="space-y-3">
         <h4 className="text-xs font-medium text-gray-700">텍스트 구성</h4>
@@ -2650,7 +2792,7 @@ function LinkSharePanel() {
         />
         <Input
           label="문구"
-          value={share.linkShareText ?? (previewDate || '')}
+          value={share.linkShareText ?? (fallbackText || '')}
           onChange={(v) => setShare({ linkShareText: v })}
           placeholder="URL 썸네일 문구를 입력하세요."
         />
@@ -2668,7 +2810,8 @@ function LinkSharePanel() {
           />
           <button
             onClick={handleCopy}
-            className={`flex items-center gap-1 px-3 rounded-xl text-xs font-medium border transition-colors ${
+            disabled={!isPublished}
+            className={`flex items-center gap-1 px-3 rounded-xl text-xs font-medium border transition-colors disabled:opacity-50 ${
               copied ? 'bg-primary text-white border-primary' : 'border-gray-200 text-gray-600 hover:border-primary hover:text-primary'
             }`}
           >
@@ -2685,45 +2828,49 @@ function LinkSharePanel() {
           <ExternalLink size={12} />
           새 창에서 열기
         </a>
+        <button
+          onClick={handleCopy}
+          disabled={!isPublished}
+          className="w-full py-2.5 rounded-xl text-xs font-medium bg-primary text-white disabled:opacity-50"
+        >
+          {isPublished ? '지금 링크 공유' : '발행해야 공유할 수 있어요'}
+        </button>
       </section>
     </div>
   )
 }
 
-function SharePanel() {
-  const { invitationId, content, share, setShare, categorySlug } = useEditorStore()
-  const fallbackTitle = useMemo(() => buildFallbackTitle({
-    content,
-    categorySlug,
-    invitationTitle: '초대합니다',
-  }), [content, categorySlug])
+function KakaoSharePanelInner({ showToast }: InnerToastProps) {
+  const { share, setShare, fallbackTitle, fallbackText, fallbackExtra, slug, shareUrl, isPublished } = useShareContext()
   const previewTitle = share.kakaoShareTitle ?? fallbackTitle
-  const previewText = share.kakaoShareText ?? formatEventDateText(content.eventDate, content.eventTime)
-  const previewExtra = share.kakaoShareExtra ?? (buildFallbackVenueText(content) ?? '')
+  const previewText = share.kakaoShareText ?? fallbackText
+  const previewExtra = share.kakaoShareExtra ?? (fallbackExtra ?? '')
 
-  const onThumbUpdated = useCallback(async (url: string) => {
-    setShare({ thumbnailUrl: url })
-    if (invitationId) {
-      try {
-        await fetch(`/api/invitations/${invitationId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ thumbnailUrl: url }),
-        })
-      } catch {
-        // 다음 자동저장 때 다시 시도됨
-      }
-    }
-  }, [invitationId, setShare])
+  const handleKakao = useCallback(() => {
+    if (!slug) return
+    const origin = typeof window !== 'undefined' ? window.location.origin : ''
+    const result = shareToKakao({
+      slug,
+      isPublished,
+      thumbnailUrl: share.thumbnailUrl,
+      linkShareTitle: share.linkShareTitle,
+      kakaoShareTitle: share.kakaoShareTitle,
+      kakaoShareText: share.kakaoShareText,
+      kakaoShareExtra: share.kakaoShareExtra,
+      fallbackTitle,
+      fallbackText,
+      fallbackExtra,
+    }, shareUrl, origin)
+    if (result.ok) return
+    showToast(result.reason === 'unpublished' ? '초대장을 먼저 발행해 주세요' : '카카오톡 공유 설정이 필요합니다')
+  }, [slug, isPublished, share, shareUrl, fallbackTitle, fallbackText, fallbackExtra, showToast])
 
   return (
-    <div className="p-5 space-y-5">
+    <div className="space-y-5">
       <div className="flex items-center gap-2">
         <MessageCircleMore size={16} className="text-gray-700" />
         <h3 className="text-sm font-medium text-gray-900">카카오톡 공유 설정</h3>
       </div>
-
-      <PublishToggle />
 
       <section className="space-y-2">
         <h4 className="text-xs font-medium text-gray-700">미리보기</h4>
@@ -2750,8 +2897,6 @@ function SharePanel() {
         </div>
       </section>
 
-      <ThumbnailUpdater thumbnailUrl={share.thumbnailUrl} onUpdated={onThumbUpdated} />
-
       <section className="space-y-3">
         <h4 className="text-xs font-medium text-gray-700">텍스트 구성</h4>
         <Input
@@ -2773,6 +2918,144 @@ function SharePanel() {
           placeholder="OOO예식장 1F, OOO홀"
         />
       </section>
+
+      <button
+        onClick={handleKakao}
+        disabled={!isPublished}
+        className="w-full py-2.5 rounded-xl text-xs font-medium disabled:opacity-50"
+        style={{ backgroundColor: isPublished ? '#FAE100' : '#e5e7eb', color: '#3A1D1D' }}
+      >
+        {isPublished ? '카카오톡으로 보내기' : '발행해야 공유할 수 있어요'}
+      </button>
+    </div>
+  )
+}
+
+function QrSharePanelInner({ showToast }: InnerToastProps) {
+  const { shareUrl, isPublished, slug } = useShareContext()
+  const [dataUrl, setDataUrl] = useState<string>('')
+  const [showModal, setShowModal] = useState(false)
+
+  useEffect(() => {
+    if (!shareUrl) return
+    let cancelled = false
+    QRCode.toDataURL(shareUrl, { width: 480, margin: 2 })
+      .then((u) => { if (!cancelled) setDataUrl(u) })
+      .catch(() => { /* noop */ })
+    return () => { cancelled = true }
+  }, [shareUrl])
+
+  const handleCopy = useCallback(async () => {
+    if (!isPublished) {
+      showToast('초대장을 먼저 발행해 주세요')
+      return
+    }
+    const ok = await copyShareLink(shareUrl)
+    showToast(ok ? '링크가 복사되었습니다' : '복사에 실패했습니다')
+  }, [shareUrl, isPublished, showToast])
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-center gap-2">
+        <QrCode size={16} className="text-gray-700" />
+        <h3 className="text-sm font-medium text-gray-900">QR 공유</h3>
+      </div>
+
+      <section className="space-y-2">
+        <h4 className="text-xs font-medium text-gray-700">미리보기</h4>
+        <div className="rounded-xl border border-gray-100 bg-gray-50 p-4 flex justify-center">
+          <div className="w-48 aspect-square bg-white border border-gray-100 rounded-lg flex items-center justify-center">
+            {dataUrl ? (
+              <img src={dataUrl} alt="QR" className="w-full h-full object-contain p-3" />
+            ) : (
+              <p className="text-xs text-gray-400">QR 만드는 중...</p>
+            )}
+          </div>
+        </div>
+        <p className="text-xs text-gray-500 truncate">{shareUrl}</p>
+      </section>
+
+      {dataUrl && (
+        <a
+          href={dataUrl}
+          download={`${slug ?? 'invitation'}-qr.png`}
+          className="flex items-center justify-center gap-1.5 w-full py-2.5 rounded-xl text-xs border border-gray-200 text-gray-600 hover:border-primary hover:text-primary transition-colors"
+        >
+          <Download size={12} />
+          QR 이미지 저장
+        </a>
+      )}
+      <button
+        onClick={handleCopy}
+        disabled={!isPublished}
+        className="w-full py-2.5 rounded-xl text-xs font-medium bg-primary text-white disabled:opacity-50"
+      >
+        {isPublished ? '링크 복사하기' : '발행해야 공유할 수 있어요'}
+      </button>
+      <button
+        onClick={() => setShowModal(true)}
+        className="w-full py-2.5 rounded-xl text-xs border border-gray-200 text-gray-600 hover:border-primary hover:text-primary transition-colors"
+      >
+        QR 크게 보기
+      </button>
+
+      {showModal && (
+        <SharedQrModal
+          url={shareUrl}
+          filename={`${slug ?? 'invitation'}-qr.png`}
+          onClose={() => setShowModal(false)}
+        />
+      )}
+    </div>
+  )
+}
+
+function useShareToast() {
+  const [toast, setToast] = useState<string | null>(null)
+  const showToast = useCallback((msg: string) => {
+    setToast(msg)
+    setTimeout(() => setToast(null), 1800)
+  }, [])
+  const toastEl = toast ? (
+    <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 bg-gray-900 text-white text-xs px-4 py-2.5 rounded-full">
+      {toast}
+    </div>
+  ) : null
+  return { showToast, toastEl }
+}
+
+function LinkSharePanelStandalone() {
+  const { slug } = useShareContext()
+  const { showToast, toastEl } = useShareToast()
+  if (!slug) return <div className="p-5"><p className="text-xs text-gray-400">초대장 정보를 불러오는 중입니다...</p></div>
+  return (
+    <div className="p-5 space-y-5">
+      <LinkSharePanelInner showToast={showToast} />
+      {toastEl}
+    </div>
+  )
+}
+
+function KakaoSharePanelStandalone() {
+  const { slug } = useShareContext()
+  const { showToast, toastEl } = useShareToast()
+  if (!slug) return <div className="p-5"><p className="text-xs text-gray-400">초대장 정보를 불러오는 중입니다...</p></div>
+  return (
+    <div className="p-5 space-y-5">
+      <KakaoSharePanelInner showToast={showToast} />
+      {toastEl}
+    </div>
+  )
+}
+
+function QrSharePanelStandalone() {
+  const { slug } = useShareContext()
+  const { showToast, toastEl } = useShareToast()
+  if (!slug) return <div className="p-5"><p className="text-xs text-gray-400">초대장 정보를 불러오는 중입니다...</p></div>
+  return (
+    <div className="p-5 space-y-5">
+      <QrSharePanelInner showToast={showToast} />
+      {toastEl}
     </div>
   )
 }
@@ -2829,7 +3112,7 @@ function RequiredDatetimePanel() {
   const { content, setContent } = useEditorStore()
   return (
     <div className="p-5 space-y-4">
-      <SectionHeader title="예식 일시" />
+      <SectionHeader title="행사 일시" />
       <Input label="날짜" type="date" value={content.eventDate ?? ''} onChange={(v) => setContent({ eventDate: v })} />
       <Input label="시간" value={content.eventTime ?? ''} onChange={(v) => setContent({ eventTime: v })} placeholder="예: 낮 12시 00분" />
     </div>
@@ -2844,7 +3127,7 @@ function RequiredVenuePanel() {
   }
   return (
     <div className="p-5 space-y-4">
-      <SectionHeader title="예식 장소" />
+      <SectionHeader title="행사 장소" />
       <Input label="장소명" value={v?.name ?? ''} onChange={(val) => update({ name: val })} placeholder="서울 그랜드 웨딩홀" />
       <Input label="홀명"   value={v?.hall ?? ''} onChange={(val) => update({ hall: val })} placeholder="2층 그레이스홀" />
       <Input label="주소"   value={v?.address ?? ''} onChange={(val) => update({ address: val })} placeholder="서울특별시 강남구 테헤란로 123" />
@@ -2864,7 +3147,7 @@ function RequiredDatetimeVenuePanel() {
       <Input label="날짜" type="date" value={content.eventDate ?? ''} onChange={(val) => setContent({ eventDate: val })} />
       <Input label="시간" value={content.eventTime ?? ''} onChange={(val) => setContent({ eventTime: val })} placeholder="예: 낮 12시 00분" />
       <div className="border-t border-gray-100 pt-4 space-y-3">
-        <p className="text-xs font-medium text-gray-500">예식 장소</p>
+        <p className="text-xs font-medium text-gray-500">행사 장소</p>
         <Input label="장소명" value={v?.name ?? ''} onChange={(val) => update({ name: val })} placeholder="서울 그랜드 웨딩홀" />
         <Input label="홀명"   value={v?.hall ?? ''} onChange={(val) => update({ hall: val })} placeholder="2층 그레이스홀" />
         <Input label="주소"   value={v?.address ?? ''} onChange={(val) => update({ address: val })} placeholder="서울특별시 강남구 테헤란로 123" />
@@ -2908,18 +3191,6 @@ function MainScreenPanel() {
   function saveConfig(patch: Record<string, unknown>) {
     if (mainMod) updateModule(mainMod.id, patch)
   }
-
-  // legacy 데이터 보강 — variant 의 textSlots 중 현재 cfg 에 비어있는 것을 content 기반으로 채움
-  useEffect(() => {
-    if (!mainMod || !variant?.textSlots?.length) return
-    const slots = (cfg.textSlots as Record<string, string> | undefined) ?? {}
-    const need = variant.textSlots.filter(s => !slots[s.key])
-    if (need.length === 0) return
-    const filled: Record<string, string> = { ...slots }
-    for (const s of need) filled[s.key] = s.getDefault(content as never)
-    updateModule(mainMod.id, { textSlots: filled })
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [variant?.id, mainMod?.id])
 
   if (!mainMod) return <PendingPanel title="메인 화면" />
 
@@ -3154,14 +3425,24 @@ export default function ModulePanel({ section, navGroups }: Props) {
   if (section === 'slide')         return <SlidePanel />
   if (section === 'gallery')       return <GalleryPanel />
   if (section === 'guestbook')     return <GuestbookPanel />
-  if (section === 'guestalbum')    return <GuestAlbumPanel />
+  if (section === 'photo_share')   return <GuestAlbumPanel />
   if (section === 'account')       return <AccountPanel />
   if (section === 'rsvp')          return <RsvpPanel />
   if (section === 'dday')          return <DdayPanel />
-  if (section === 'video')         return <VideoPanel />
+  if (
+    section === 'video_single_card' ||
+    section === 'video_cinema' ||
+    section === 'video_polaroid' ||
+    section === 'video_floating_bordered' ||
+    section === 'video_fullbleed' ||
+    section === 'video_carousel' ||
+    section === 'video_thumbnail_row'
+  ) return <VideoPanel />
   if (section === 'ending')        return <EndingPanel />
-  if (section === 'linkshare') return <LinkSharePanel />
-  if (section === 'share' || section === 'kakaoshare') return <SharePanel />
+  if (section === 'linkshare')  return <LinkSharePanelStandalone />
+  if (section === 'kakaoshare') return <KakaoSharePanelStandalone />
+  if (section === 'qrshare')    return <QrSharePanelStandalone />
+  if (section === 'share')      return <LinkSharePanelStandalone />
   if (section === 'order')         return <OrderPanel />
   return <PendingPanel title={LABELS[section] ?? section} />
 }

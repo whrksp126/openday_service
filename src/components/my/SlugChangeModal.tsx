@@ -9,11 +9,13 @@ interface Props {
   currentSlug: string
   onClose: () => void
   onChanged?: (slug: string) => void
+  // 변경 성공 시 router.refresh 호출 여부. 에디터에서는 dirty state 손실 방지를 위해 false 권장.
+  refreshOnSuccess?: boolean
 }
 
 const SLUG_RE = /^[a-zA-Z0-9-]{3,50}$/
 
-export default function SlugChangeModal({ invitationId, currentSlug, onClose, onChanged }: Props) {
+export default function SlugChangeModal({ invitationId, currentSlug, onClose, onChanged, refreshOnSuccess = true }: Props) {
   const router = useRouter()
   const [value, setValue] = useState(currentSlug)
   const [busy, setBusy] = useState(false)
@@ -44,7 +46,7 @@ export default function SlugChangeModal({ invitationId, currentSlug, onClose, on
       }
       if (!r.ok) throw new Error()
       onChanged?.(value)
-      router.refresh()
+      if (refreshOnSuccess) router.refresh()
       onClose()
     } catch {
       setError('도메인 변경에 실패했습니다. 잠시 후 다시 시도해주세요.')

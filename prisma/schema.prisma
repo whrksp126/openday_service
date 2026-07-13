@@ -127,10 +127,52 @@ model Invitation {
   user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   template           Template? @relation(fields: [templateId], references: [id])
 
-  guestbookEntries GuestbookEntry[]
-  rsvpResponses    RsvpResponse[]
-  visitLogs        VisitLog[]
-  coupleInvites    CoupleInvite[]
+  guestbookEntries      GuestbookEntry[]
+  rsvpResponses         RsvpResponse[]
+  visitLogs             VisitLog[]
+  coupleInvites         CoupleInvite[]
+  driveLinks            InvitationDriveLink[]
+  photoShareSubmissions PhotoShareSubmission[]
+}
+
+model InvitationDriveLink {
+  id              String     @id @default(cuid())
+  invitationId    String
+  moduleId        String     // photo_share 모듈 인스턴스 id (modulesJson 의 nanoid)
+  ownerUserId     String
+  googleAccountId String      // providerAccountId. Account 와는 FK 미연결 (NextAuth 토큰 덮어쓰기 영향 회피)
+  scope           String     @db.Text
+  refreshToken    String     @db.Text
+  accessToken     String?    @db.Text
+  accessExpiresAt DateTime?
+  driveFolderId   String
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  invitation      Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+
+  @@unique([invitationId, moduleId])
+  @@index([invitationId])
+}
+
+model PhotoShareSubmission {
+  id               String     @id @default(cuid())
+  invitationId     String
+  moduleId         String     // photo_share 모듈 인스턴스 id
+  authorName       String
+  relation         String
+  driveFileId      String
+  driveThumbnailUrl String?   @db.Text
+  driveDirectUrl   String?    @db.Text
+  mimeType         String
+  sizeBytes        Int
+  width            Int?
+  height           Int?
+  deleteTokenHash  String      // sha256(rawToken). raw 는 발급 시 한 번만 응답
+  isHidden         Boolean    @default(false)
+  createdAt        DateTime   @default(now())
+  invitation       Invitation @relation(fields: [invitationId], references: [id], onDelete: Cascade)
+
+  @@index([invitationId, moduleId, createdAt])
 }
 
 model GuestbookEntry {

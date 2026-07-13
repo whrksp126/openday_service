@@ -21,8 +21,14 @@ export type ModuleType =
   | 'account'       // 계좌 정보
   | 'rsvp'          // RSVP · 참석 의사
   | 'dday'          // D+Day
-  | 'video'         // 동영상
-  | 'guestalbum'    // 하객 앨범
+  | 'video_single_card'       // 동영상 — 단일 카드
+  | 'video_cinema'            // 동영상 — 시네마 (풀폭, 검정)
+  | 'video_polaroid'          // 동영상 — 폴라로이드
+  | 'video_floating_bordered' // 동영상 — 카드 인 카드
+  | 'video_fullbleed'         // 동영상 — 풀 블리드
+  | 'video_carousel'          // 동영상 — 캐러셀
+  | 'video_thumbnail_row'     // 동영상 — 썸네일 로우
+  | 'photo_share'   // 사진 공유 (참석자가 제작자 Drive 폴더에 사진 업로드)
   | 'ending'        // 엔딩 사진, 문구
   | 'opening'       // 오프닝 애니메이션
   | 'bgm'           // 배경음악
@@ -32,7 +38,7 @@ export type ModuleType =
   | 'poll' | 'qna' | 'payment' | 'seal'
   | 'parking' | 'weather' | 'map'
   | 'dresscode' | 'attachment' | 'lucky_draw' | 'quiz'
-  | 'photo_feed' | 'privacy' | 'refund'
+  | 'privacy' | 'refund'
 
 export interface InvitationModule {
   id: string
@@ -367,6 +373,19 @@ export interface BgmConfig {
   loopEnd?: number
 }
 
+// 스크롤 등장 애니메이션 프리셋. 과거 boolean 값(true=soft, false=off)도 호환을 위해 허용
+export type ScrollAnimationPreset =
+  | 'off'
+  | 'fade'    // 단순 fade
+  | 'soft'    // fade + 살짝 위로 + 살짝 확대 (기본값)
+  | 'reveal'  // 위로 슬라이드 + blur 풀림
+  | 'blur'    // 흐림 풀림
+  | 'rise'    // 아래에서 크게 떠오름
+  | 'zoom'    // 작게 시작해서 커짐
+  | 'pop'     // 탄력 있는 scale
+  | 'flip'    // rotateX 기울기
+  | 'slide'   // 왼쪽에서 슬라이드
+
 export interface InvitationStyles {
   font?: string
   fontSize?: 'normal' | 'large' | 'xlarge'
@@ -376,7 +395,7 @@ export interface InvitationStyles {
   spacingColor?: string
   bgEffect?: 'none' | 'paper' | 'grid' | 'cloud' | 'hanji' | 'dot'
   zoomDisabled?: boolean
-  scrollAnimation?: boolean
+  scrollAnimation?: ScrollAnimationPreset | boolean
   showEnglishTitle?: boolean
   bgm?: BgmConfig
 }
@@ -468,4 +487,72 @@ export interface GuestbookModuleConfig {
   passwordPlaceholder?: string
   pageSize?: number             // 더보기 단위 (기본 3)
   // LabelField 필드 (koreanTitle, englishTitle, titleBig, titleSmall ...)는 그대로 유지됨
+}
+
+// ── 사진 공유 모듈 ────────────────────────────────────────
+// 참석자가 제작자의 Google Drive 폴더(drive.file 스코프)에 사진을 업로드한다.
+// 실제 사진은 PhotoShareSubmission 테이블에서 invitationId로 조회 — config에는 저장하지 않는다.
+export interface PhotoShareModuleConfig {
+  previewPublic?: boolean       // default true. 다른 하객에게 그리드 노출 여부
+  variant?: 'grid' | 'masonry' | 'feed'  // 미리보기 레이아웃
+  // 표준 라벨 필드 (다른 모듈과 동일 패턴)
+  koreanTitle?: string
+  koreanLabelVisible?: boolean
+  koreanLabelBold?: boolean
+  koreanLabelItalic?: boolean
+  koreanLabelAlign?: string
+  englishTitle?: string
+  labelVisible?: boolean
+  labelBold?: boolean
+  labelItalic?: boolean
+  labelAlign?: string
+  titleBig?: string
+  titleBigVisible?: boolean
+  titleBigBold?: boolean
+  titleBigItalic?: boolean
+  titleBigAlign?: string
+  titleSmall?: string
+  titleSmallVisible?: boolean
+  titleSmallBold?: boolean
+  titleSmallItalic?: boolean
+  titleSmallAlign?: string
+}
+
+// ── 동영상 모듈 ───────────────────────────────────────────
+// YouTube 임베드 전용. 레이아웃은 ModuleType('video_single_card' 등)으로 표현한다.
+// 영상 종료 시 BGM이 재생 중이었으면 자동으로 다시 켜진다(설정 없음).
+export type VideoModuleType =
+  | 'video_single_card'
+  | 'video_cinema'
+  | 'video_polaroid'
+  | 'video_floating_bordered'
+  | 'video_fullbleed'
+  | 'video_carousel'
+  | 'video_thumbnail_row'
+
+export interface VideoModuleConfig {
+  youtubeUrl?: string
+  videoId?: string              // 입력 시 자동 파싱
+  posterUrl?: string            // 미설정 시 youtube hqdefault
+  // 표준 라벨 필드
+  koreanTitle?: string
+  koreanLabelVisible?: boolean
+  koreanLabelBold?: boolean
+  koreanLabelItalic?: boolean
+  koreanLabelAlign?: string
+  englishTitle?: string
+  labelVisible?: boolean
+  labelBold?: boolean
+  labelItalic?: boolean
+  labelAlign?: string
+  titleBig?: string
+  titleBigVisible?: boolean
+  titleBigBold?: boolean
+  titleBigItalic?: boolean
+  titleBigAlign?: string
+  titleSmall?: string
+  titleSmallVisible?: boolean
+  titleSmallBold?: boolean
+  titleSmallItalic?: boolean
+  titleSmallAlign?: string
 }
