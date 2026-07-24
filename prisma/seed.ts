@@ -1685,7 +1685,7 @@ async function main() {
   if (birthdayCategory) {
     await prisma.template.upsert({
       where: { id: BIRTHDAY_TEMPLATE_ID },
-      update: { categoryId: birthdayCategory.id, subcategoryId: birthdaySub?.id ?? null },
+      update: { ...BIRTHDAY_TEMPLATE, categoryId: birthdayCategory.id, subcategoryId: birthdaySub?.id ?? null },
       create: { id: BIRTHDAY_TEMPLATE_ID, ...BIRTHDAY_TEMPLATE, categoryId: birthdayCategory.id, subcategoryId: birthdaySub?.id ?? null },
     })
   }
@@ -1693,7 +1693,7 @@ async function main() {
   if (educationCategory) {
     await prisma.template.upsert({
       where: { id: GRADUATION_TEMPLATE_ID },
-      update: { categoryId: educationCategory.id, subcategoryId: graduationSub?.id ?? null },
+      update: { ...GRADUATION_TEMPLATE, categoryId: educationCategory.id, subcategoryId: graduationSub?.id ?? null },
       create: { id: GRADUATION_TEMPLATE_ID, ...GRADUATION_TEMPLATE, categoryId: educationCategory.id, subcategoryId: graduationSub?.id ?? null },
     })
   }
@@ -1701,7 +1701,7 @@ async function main() {
   if (cultureCategory) {
     await prisma.template.upsert({
       where: { id: EXHIBITION_TEMPLATE_ID },
-      update: { categoryId: cultureCategory.id, subcategoryId: exhibitionSub?.id ?? null },
+      update: { ...EXHIBITION_TEMPLATE, categoryId: cultureCategory.id, subcategoryId: exhibitionSub?.id ?? null },
       create: { id: EXHIBITION_TEMPLATE_ID, ...EXHIBITION_TEMPLATE, categoryId: cultureCategory.id, subcategoryId: exhibitionSub?.id ?? null },
     })
   }
@@ -1709,7 +1709,7 @@ async function main() {
   if (memorialCategory) {
     await prisma.template.upsert({
       where: { id: MEMORIAL_TEMPLATE_ID },
-      update: { categoryId: memorialCategory.id, subcategoryId: obituarySub?.id ?? null },
+      update: { ...MEMORIAL_TEMPLATE, categoryId: memorialCategory.id, subcategoryId: obituarySub?.id ?? null },
       create: { id: MEMORIAL_TEMPLATE_ID, ...MEMORIAL_TEMPLATE, categoryId: memorialCategory.id, subcategoryId: obituarySub?.id ?? null },
     })
   }
