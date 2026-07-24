@@ -241,6 +241,17 @@ const GALLERY_IMAGES = Array.from({ length: 9 }, (_, i) =>
   templateAssetUrl(WEDDING_TEMPLATE_ID, `gallery/${String(i + 1).padStart(3, '0')}.jpg`)
 )
 
+// 카테고리별 갤러리(각 4장, objectstore templates/{id}/gallery/0N.jpg)
+const BIRTHDAY_GALLERY_IMAGES = Array.from({ length: 4 }, (_, i) =>
+  templateAssetUrl(BIRTHDAY_TEMPLATE_ID, `gallery/${String(i + 1).padStart(2, '0')}.jpg`)
+)
+const GRADUATION_GALLERY_IMAGES = Array.from({ length: 4 }, (_, i) =>
+  templateAssetUrl(GRADUATION_TEMPLATE_ID, `gallery/${String(i + 1).padStart(2, '0')}.jpg`)
+)
+const EXHIBITION_GALLERY_IMAGES = Array.from({ length: 4 }, (_, i) =>
+  templateAssetUrl(EXHIBITION_TEMPLATE_ID, `gallery/${String(i + 1).padStart(2, '0')}.jpg`)
+)
+
 const WEDDING_TEMPLATE = {
   name: '클래식 웨딩 청첩장',
   description: '따뜻한 감성의 클래식 웨딩 청첩장. 커버 사진, 인사말, 캘린더, 갤러리, 오시는 길, 계좌번호, 방명록 포함.',
@@ -1187,7 +1198,13 @@ const BIRTHDAY_TEMPLATE = {
         { question: '<p>오늘 와주신 분들께 한마디!</p>', answer: '<p>바쁜 하루 중에 와주셔서 정말 고마워요. 오늘 실컷 즐겨요!</p>', questionVisible: true, answerVisible: true },
       ],
     }},
-    { id: 'bir-account-1', type: 'account', order: 8, required: false, config: {
+    { id: 'bir-gallery-1', type: 'gallery', order: 8, required: false, config: {
+      koreanTitle: '갤러리', koreanLabelVisible: true,
+      englishTitle: 'Gallery', labelVisible: true,
+      images: BIRTHDAY_GALLERY_IMAGES,
+      layout: 'grid',
+    }},
+    { id: 'bir-account-1', type: 'account', order: 9, required: false, config: {
       koreanTitle: '마음 전하실 곳', koreanLabelVisible: true,
       englishTitle: 'Gift', labelVisible: true,
       titleBig: '마음 전하실 곳', titleBigVisible: true,
@@ -1197,7 +1214,7 @@ const BIRTHDAY_TEMPLATE = {
         ]},
       ],
     }},
-    { id: 'bir-guestbook-1', type: 'guestbook', order: 9, required: false, config: {
+    { id: 'bir-guestbook-1', type: 'guestbook', order: 10, required: false, config: {
       koreanTitle: '축하 한마디', koreanLabelVisible: true,
       englishTitle: 'Guestbook', labelVisible: true,
     }},
@@ -1274,7 +1291,13 @@ const GRADUATION_TEMPLATE = {
         { label: '오시는 길',   content: '<p style="text-align: center">6호선 안암역 1번 출구 도보 10분</p>' },
       ],
     }},
-    { id: 'grad-rsvp-1', type: 'rsvp', order: 7, required: false, config: {
+    { id: 'grad-gallery-1', type: 'gallery', order: 7, required: false, config: {
+      koreanTitle: '갤러리', koreanLabelVisible: true,
+      englishTitle: 'Gallery', labelVisible: true,
+      images: GRADUATION_GALLERY_IMAGES,
+      layout: 'grid',
+    }},
+    { id: 'grad-rsvp-1', type: 'rsvp', order: 8, required: false, config: {
       koreanTitle: '참석 회신', koreanLabelVisible: true,
       englishTitle: 'RSVP', labelVisible: true,
       buttonLabel: '참석 여부 알리기',
@@ -1286,7 +1309,7 @@ const GRADUATION_TEMPLATE = {
         { id: 'grad-rsvp-name',   type: 'text-short',    label: '성함',                 required: true, placeholder: '성함을 입력하세요.' },
       ],
     }},
-    { id: 'grad-contact-1', type: 'contact', order: 8, required: false, config: {
+    { id: 'grad-contact-1', type: 'contact', order: 9, required: false, config: {
       koreanTitle: '문의', koreanLabelVisible: true,
       englishTitle: 'Contact', labelVisible: true,
       titleBig: '', titleBigVisible: false,
@@ -1296,7 +1319,7 @@ const GRADUATION_TEMPLATE = {
         ]},
       ],
     }},
-    { id: 'grad-guestbook-1', type: 'guestbook', order: 9, required: false, config: {
+    { id: 'grad-guestbook-1', type: 'guestbook', order: 10, required: false, config: {
       koreanTitle: '축하 방명록', koreanLabelVisible: true,
       englishTitle: 'Guestbook', labelVisible: true,
     }},
@@ -1380,7 +1403,13 @@ const EXHIBITION_TEMPLATE = {
         { label: '오시는 길',   content: '<p style="text-align: center">3호선 안국역 1번 출구 도보 8분</p>' },
       ],
     }},
-    { id: 'exh-contact-1', type: 'contact', order: 8, required: false, config: {
+    { id: 'exh-gallery-1', type: 'gallery', order: 8, required: false, config: {
+      koreanTitle: '전시 미리보기', koreanLabelVisible: true,
+      englishTitle: 'Gallery', labelVisible: true,
+      images: EXHIBITION_GALLERY_IMAGES,
+      layout: 'grid',
+    }},
+    { id: 'exh-contact-1', type: 'contact', order: 9, required: false, config: {
       koreanTitle: '문의', koreanLabelVisible: true,
       englishTitle: 'Contact', labelVisible: true,
       titleBig: '', titleBigVisible: false,
@@ -1390,7 +1419,7 @@ const EXHIBITION_TEMPLATE = {
         ]},
       ],
     }},
-    { id: 'exh-guestbook-1', type: 'guestbook', order: 9, required: false, config: {
+    { id: 'exh-guestbook-1', type: 'guestbook', order: 10, required: false, config: {
       koreanTitle: '방명록', koreanLabelVisible: true,
       englishTitle: 'Guestbook', labelVisible: true,
     }},
