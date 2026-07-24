@@ -39,6 +39,9 @@ COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 # Prisma CLI + schema/migrations for runtime migrate deploy
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder --chown=nextjs:nodejs /app/node_modules ./node_modules
+# prisma/seed.ts 가 참조하는 src/lib(asset-paths 등) — standalone 엔 src 가 없어 seed 시 필요
+COPY --from=builder /app/src/lib ./src/lib
+COPY --from=builder /app/tsconfig.json ./tsconfig.json
 
 # 업로드 디렉토리: docker named volume 이 처음 마운트될 때 이 디렉토리의 소유권/권한이 복사된다
 RUN mkdir -p /app/public/uploads && chown -R nextjs:nodejs /app/public/uploads
