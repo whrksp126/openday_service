@@ -1165,17 +1165,29 @@ const BIRTHDAY_TEMPLATE = {
       koreanTitle: '디데이', koreanLabelVisible: true,
       englishTitle: 'D-day', labelVisible: true,
     }},
-    { id: 'bir-tab-1', type: 'tab', order: 6, required: false, config: {
-      koreanTitle: '안내', koreanLabelVisible: true,
-      englishTitle: 'Information', labelVisible: true,
-      titleBigVisible: false,
-      tabs: [
-        { label: '드레스 코드', content: '<p style="text-align: center">편안하고 화사한 차림으로 와주세요.</p>' },
-        { label: '주차',       content: '<p style="text-align: center">건물 지하주차장 2시간 무료</p>' },
-        { label: '오시는 길',   content: '<p style="text-align: center">2·6호선 합정역 3번 출구 도보 5분</p>' },
+    { id: 'bir-rsvp-1', type: 'rsvp', order: 6, required: false, config: {
+      koreanTitle: '참석 여부', koreanLabelVisible: true,
+      englishTitle: 'RSVP', labelVisible: true,
+      buttonLabel: '참석 여부 알리기',
+      modalTitle: '참석 여부 전달',
+      submitLabel: '전달하기',
+      questions: [
+        { id: 'bir-rsvp-attend', type: 'single-choice', label: '참석하시나요?',       required: true, options: ['참석', '불참석'] },
+        { id: 'bir-rsvp-count',  type: 'number',        label: '함께 오는 인원(본인 포함)', required: false, placeholder: '예: 2' },
+        { id: 'bir-rsvp-name',   type: 'text-short',    label: '성함',                required: true, placeholder: '성함을 입력하세요.' },
       ],
     }},
-    { id: 'bir-account-1', type: 'account', order: 7, required: false, config: {
+    { id: 'bir-interview-1', type: 'interview', order: 7, required: false, config: {
+      koreanTitle: '주인공 인터뷰', koreanLabelVisible: true,
+      englishTitle: 'Interview', labelVisible: true,
+      titleBigVisible: false, titleSmallVisible: false,
+      items: [
+        { question: '<p>올 한 해 가장 기억에 남는 순간은?</p>', answer: '<p>좋아하는 사람들과 함께한 모든 날들이요.</p>', questionVisible: true, answerVisible: true },
+        { question: '<p>다가올 한 해 이루고 싶은 것이 있다면?</p>', answer: '<p>더 자주 웃고, 더 자주 모이는 한 해가 되었으면 해요.</p>', questionVisible: true, answerVisible: true },
+        { question: '<p>오늘 와주신 분들께 한마디!</p>', answer: '<p>바쁜 하루 중에 와주셔서 정말 고마워요. 오늘 실컷 즐겨요!</p>', questionVisible: true, answerVisible: true },
+      ],
+    }},
+    { id: 'bir-account-1', type: 'account', order: 8, required: false, config: {
       koreanTitle: '마음 전하실 곳', koreanLabelVisible: true,
       englishTitle: 'Gift', labelVisible: true,
       titleBig: '마음 전하실 곳', titleBigVisible: true,
@@ -1185,8 +1197,8 @@ const BIRTHDAY_TEMPLATE = {
         ]},
       ],
     }},
-    { id: 'bir-guestbook-1', type: 'guestbook', order: 8, required: false, config: {
-      koreanTitle: '방명록', koreanLabelVisible: true,
+    { id: 'bir-guestbook-1', type: 'guestbook', order: 9, required: false, config: {
+      koreanTitle: '축하 한마디', koreanLabelVisible: true,
       englishTitle: 'Guestbook', labelVisible: true,
     }},
   ],
@@ -1253,17 +1265,39 @@ const GRADUATION_TEMPLATE = {
       englishTitle: 'D-day', labelVisible: true,
     }},
     { id: 'grad-tab-1', type: 'tab', order: 6, required: false, config: {
-      koreanTitle: '안내', koreanLabelVisible: true,
-      englishTitle: 'Information', labelVisible: true,
+      koreanTitle: '식순 · 안내', koreanLabelVisible: true,
+      englishTitle: 'Program', labelVisible: true,
       titleBigVisible: false,
       tabs: [
-        { label: '식순',       content: '<p style="text-align: center">개식 · 학위수여 · 축사 · 폐식</p>' },
+        { label: '식순',       content: '<p style="text-align: center">개식 · 국민의례 · 학위수여 · 축사 · 학위기 수여 · 폐식</p>' },
         { label: '주차',       content: '<p style="text-align: center">교내 주차장 이용 · 행사 당일 무료</p>' },
         { label: '오시는 길',   content: '<p style="text-align: center">6호선 안암역 1번 출구 도보 10분</p>' },
       ],
     }},
-    { id: 'grad-guestbook-1', type: 'guestbook', order: 7, required: false, config: {
-      koreanTitle: '방명록', koreanLabelVisible: true,
+    { id: 'grad-rsvp-1', type: 'rsvp', order: 7, required: false, config: {
+      koreanTitle: '참석 회신', koreanLabelVisible: true,
+      englishTitle: 'RSVP', labelVisible: true,
+      buttonLabel: '참석 여부 알리기',
+      modalTitle: '참석 여부 전달',
+      submitLabel: '전달하기',
+      questions: [
+        { id: 'grad-rsvp-attend', type: 'single-choice', label: '참석하시나요?',        required: true, options: ['참석', '불참석'] },
+        { id: 'grad-rsvp-count',  type: 'number',        label: '동반 인원(본인 포함)', required: false, placeholder: '예: 2' },
+        { id: 'grad-rsvp-name',   type: 'text-short',    label: '성함',                 required: true, placeholder: '성함을 입력하세요.' },
+      ],
+    }},
+    { id: 'grad-contact-1', type: 'contact', order: 8, required: false, config: {
+      koreanTitle: '문의', koreanLabelVisible: true,
+      englishTitle: 'Contact', labelVisible: true,
+      titleBig: '', titleBigVisible: false,
+      groups: [
+        { label: '행사 문의', englishLabel: 'OFFICE', contacts: [
+          { name: '학사 지원팀', phone: '' },
+        ]},
+      ],
+    }},
+    { id: 'grad-guestbook-1', type: 'guestbook', order: 9, required: false, config: {
+      koreanTitle: '축하 방명록', koreanLabelVisible: true,
       englishTitle: 'Guestbook', labelVisible: true,
     }},
   ],
@@ -1321,13 +1355,22 @@ const EXHIBITION_TEMPLATE = {
       },
     }},
     { id: 'exh-greeting-1', type: 'greeting', order: 2, required: false, config: {} },
-    { id: 'exh-datetime-1', type: 'datetime', order: 3, required: false, config: {} },
-    { id: 'exh-venue-1',    type: 'venue',    order: 4, required: false, config: { showMap: true } },
-    { id: 'exh-dday-1',     type: 'dday',     order: 5, required: false, config: {
-      koreanTitle: '디데이', koreanLabelVisible: true,
+    { id: 'exh-interview-1', type: 'interview', order: 3, required: false, config: {
+      koreanTitle: '작가의 말', koreanLabelVisible: true,
+      englishTitle: 'Artist Note', labelVisible: true,
+      titleBigVisible: false, titleSmallVisible: false,
+      items: [
+        { question: '<p>이번 전시는 어떤 이야기를 담고 있나요?</p>', answer: '<p>매일의 고요한 시간들, 그 안에 머무는 감정의 결을 담았습니다.</p>', questionVisible: true, answerVisible: true },
+        { question: '<p>관람객이 어떻게 봐주었으면 하나요?</p>', answer: '<p>정답을 찾기보다, 각자의 속도로 천천히 머물다 가시길 바랍니다.</p>', questionVisible: true, answerVisible: true },
+      ],
+    }},
+    { id: 'exh-datetime-1', type: 'datetime', order: 4, required: false, config: {} },
+    { id: 'exh-venue-1',    type: 'venue',    order: 5, required: false, config: { showMap: true } },
+    { id: 'exh-dday-1',     type: 'dday',     order: 6, required: false, config: {
+      koreanTitle: '오프닝까지', koreanLabelVisible: true,
       englishTitle: 'D-day', labelVisible: true,
     }},
-    { id: 'exh-tab-1', type: 'tab', order: 6, required: false, config: {
+    { id: 'exh-tab-1', type: 'tab', order: 7, required: false, config: {
       koreanTitle: '관람 안내', koreanLabelVisible: true,
       englishTitle: 'Visit', labelVisible: true,
       titleBigVisible: false,
@@ -1337,7 +1380,17 @@ const EXHIBITION_TEMPLATE = {
         { label: '오시는 길',   content: '<p style="text-align: center">3호선 안국역 1번 출구 도보 8분</p>' },
       ],
     }},
-    { id: 'exh-guestbook-1', type: 'guestbook', order: 7, required: false, config: {
+    { id: 'exh-contact-1', type: 'contact', order: 8, required: false, config: {
+      koreanTitle: '문의', koreanLabelVisible: true,
+      englishTitle: 'Contact', labelVisible: true,
+      titleBig: '', titleBigVisible: false,
+      groups: [
+        { label: '갤러리 문의', englishLabel: 'GALLERY', contacts: [
+          { name: '더 화이트 갤러리', phone: '' },
+        ]},
+      ],
+    }},
+    { id: 'exh-guestbook-1', type: 'guestbook', order: 9, required: false, config: {
       koreanTitle: '방명록', koreanLabelVisible: true,
       englishTitle: 'Guestbook', labelVisible: true,
     }},
@@ -1403,7 +1456,18 @@ const MEMORIAL_TEMPLATE = {
     { id: 'mem-greeting-1', type: 'greeting', order: 2, required: false, config: {} },
     { id: 'mem-datetime-1', type: 'datetime', order: 3, required: false, config: {} },
     { id: 'mem-venue-1',    type: 'venue',    order: 4, required: false, config: { showMap: true } },
-    { id: 'mem-tab-1', type: 'tab', order: 5, required: false, config: {
+    { id: 'mem-contact-1', type: 'contact', order: 5, required: false, config: {
+      koreanTitle: '상주', koreanLabelVisible: true,
+      englishTitle: 'Family', labelVisible: true,
+      titleBig: '', titleBigVisible: false,
+      groups: [
+        { label: '상주', englishLabel: 'CHIEF MOURNER', contacts: [
+          { name: '장남 홍길동', phone: '' },
+          { name: '차남 홍길서', phone: '' },
+        ]},
+      ],
+    }},
+    { id: 'mem-tab-1', type: 'tab', order: 6, required: false, config: {
       koreanTitle: '안내', koreanLabelVisible: true,
       englishTitle: 'Information', labelVisible: true,
       titleBigVisible: false,
@@ -1413,7 +1477,7 @@ const MEMORIAL_TEMPLATE = {
         { label: '오시는 길', content: '<p style="text-align: center">2호선 신촌역 2번 출구 · 장례식장 지하주차장 이용</p>' },
       ],
     }},
-    { id: 'mem-account-1', type: 'account', order: 6, required: false, config: {
+    { id: 'mem-account-1', type: 'account', order: 7, required: false, config: {
       koreanTitle: '마음 전하실 곳', koreanLabelVisible: true,
       englishTitle: 'Condolence', labelVisible: true,
       titleBig: '마음 전하실 곳', titleBigVisible: true,
@@ -1423,7 +1487,7 @@ const MEMORIAL_TEMPLATE = {
         ]},
       ],
     }},
-    { id: 'mem-guestbook-1', type: 'guestbook', order: 7, required: false, config: {
+    { id: 'mem-guestbook-1', type: 'guestbook', order: 8, required: false, config: {
       koreanTitle: '추모의 글', koreanLabelVisible: true,
       englishTitle: 'Tribute', labelVisible: true,
     }},
