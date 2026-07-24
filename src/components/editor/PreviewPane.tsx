@@ -885,7 +885,7 @@ function PhotoFrameSection({ accent, fontFamily, showEnglish, module }: { accent
 }
 
 // ── 교통 수단 ────────────────────────────────────────────────────────────────
-function TabSection({ accent, showEnglish, module }: { accent: string; showEnglish: boolean; module: InvitationModule }) {
+function TabSection({ accent, showEnglish, module, readOnly }: { accent: string; showEnglish: boolean; module: InvitationModule; readOnly?: boolean }) {
   const cfg = module.config as TabModuleConfig
   const tabs = cfg.tabs ?? []
   const [activeIdx, setActiveIdx] = useState(0)
@@ -924,7 +924,7 @@ function TabSection({ accent, showEnglish, module }: { accent: string; showEngli
           </div>
           {active && (
             <div className="space-y-3">
-              {active.imageVisible !== false && (
+              {active.imageVisible !== false && (active.image || !readOnly) && (
                 <ClickableImage
                   src={active.image}
                   crop={active.imageCrop}
@@ -945,6 +945,15 @@ function TabSection({ accent, showEnglish, module }: { accent: string; showEngli
 }
 
 // ── 갤러리 ───────────────────────────────────────────────────────────────────
+// 첨부된 이미지 개수에 따라 그리드 열 수를 정한다(빈 칸 최소화).
+//  1 → 1열, 2 → 2열, 4 → 2열(2×2), 3·5~9 → 3열
+function galleryColsClass(count: number): string {
+  if (count === 1) return 'grid-cols-1'
+  if (count === 2) return 'grid-cols-2'
+  if (count === 4) return 'grid-cols-2'
+  return 'grid-cols-3'
+}
+
 function GallerySection({ accent, showEnglish, module }: { accent: string; showEnglish: boolean; module: InvitationModule }) {
   const images = (module.config?.images as string[]) ?? []
   const imageCrops = (module.config?.imageCrops as Array<ImageCropData | undefined>) ?? []
@@ -960,23 +969,28 @@ function GallerySection({ accent, showEnglish, module }: { accent: string; showE
       {showEnglish && labelVisible && <p className="text-xs mb-1 mx-4" style={{ color: accent, fontFamily: 'Georgia, serif', ...labelStyle }}>{englishTitle}</p>}
       {(module.config?.titleBigVisible as boolean) !== false && (module.config?.titleBig as string | undefined) && <div className="text-sm text-gray-800 mb-1 mx-4" style={titleBigStyle}>{module.config?.titleBig as string}</div>}
       {(module.config?.titleSmallVisible as boolean) !== false && (module.config?.titleSmall as string | undefined) && <div className="text-xs text-gray-400 mb-4 mx-4" style={titleSmallStyle}>{module.config?.titleSmall as string}</div>}
-      <div className="grid grid-cols-3 gap-0.5 mx-4">
-        {images.length > 0
-          ? images.slice(0, 9).map((src, i) => (
+      {images.length > 0 ? (
+        // 첨부 개수에 맞춰 열 수를 정해 빈 칸 없이 영역을 채운다.
+        //  1장→1열, 2장→2열, 4장→2열(2×2), 그 외(3·5~9장)→3열
+        <div className={`grid ${galleryColsClass(images.length)} gap-0.5 mx-4`}>
+          {images.slice(0, 9).map((src, i) => (
             <ClickableImage
               key={i}
               src={src}
               crop={imageCrops[i]}
               fallbackAspect="1/1"
             />
-          ))
-          : Array.from({ length: 6 }).map((_, i) => (
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-3 gap-0.5 mx-4">
+          {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="aspect-square bg-gray-200 flex items-center justify-center">
               <ImageIcon size={20} className="text-gray-300" strokeWidth={1} />
             </div>
-          ))
-        }
-      </div>
+          ))}
+        </div>
+      )}
     </section>
   )
 }
@@ -1696,7 +1710,7 @@ function renderModule(
     case 'timeline_polaroid': return <TimelinePolaroidSection accent={accent} showEnglish={showEnglish} module={module} />
     case 'interview': return <InterviewSection accent={accent} showEnglish={showEnglish} module={module} />
     case 'midphoto': return <MidphotoSection accent={accent} showEnglish={showEnglish} module={module} />
-    case 'tab': return <TabSection accent={accent} showEnglish={showEnglish} module={module} />
+    case 'tab': return <TabSection accent={accent} showEnglish={showEnglish} module={module} readOnly={readOnly} />
     case 'slide': return <SlideSection accent={accent} showEnglish={showEnglish} module={module} />
     case 'gallery': return <GallerySection accent={accent} showEnglish={showEnglish} module={module} />
     case 'guestbook': return <GuestbookSection accent={accent} showEnglish={showEnglish} module={module} />
