@@ -11,12 +11,105 @@ interface Props {
   onClose: () => void
   config: RsvpModuleConfig
   accent: string
+  /** 발행된 초대장 컨텍스트. live && invitationId 일 때만 실제 API 로 제출된다. */
+  invitationId?: string
+  live?: boolean
 }
 
 type AnswerMap = Record<string, string | string[]>
+type SubmitState = 'idle' | 'submitting' | 'success' | 'error'
 
 function getDefaultAnswer(type: RsvpQuestion['type']): string | string[] {
   return type === 'multi-choice' ? [] : ''
+}
+
+// ── 동적 질문 응답 → 고정 RSVP 스키마 매핑 (데이터 무손실) ────────────────────
+const NAME_RE = /이름|성함|name/i
+const ATTEND_RE = /참석|attend/i
+const PARTY_RE = /인원|명|people|count/i
+const SIDE_RE = /측|신랑|신부|side/i
+
+function answerToString(v: string | string[] | undefined): string {
+  if (v === undefined) return ''
+  return Array.isArray(v) ? v.join(', ') : v
+}
+
+function mapSide(value: string): 'groom' | 'bride' | 'baby' | undefined {
+  if (value.includes('신랑')) return 'groom'
+  if (value.includes('신부')) return 'bride'
+  if (value.includes('아기') || value.includes('아이') || value.includes('돌') || /baby/i.test(value)) return 'baby'
+  return undefined
+}
+
+interface RsvpPayload {
+  guestName: string
+  attending: boolean
+  side?: 'groom' | 'bride' | 'baby'
+  partySize?: number
+  phone?: string
+  message?: string
+}
+
+function buildRsvpPayload(questions: RsvpQuestion[], answers: AnswerMap): RsvpPayload {
+  const consumed = new Set<string>()
+  const take = (q: RsvpQuestion) => { consumed.add(q.id); return answerToString(answers[q.id]) }
+
+  // guestName: 이름/성함/name 라벨의 단답 → 첫 단답 → '익명'
+  let guestName = ''
+  const nameQ = questions.find(q => q.type === 'text-short' && NAME_RE.test(q.label))
+  if (nameQ) guestName = take(nameQ).trim()
+  if (!guestName) {
+    const firstText = questions.find(q => q.type === 'text-short' && !consumed.has(q.id) && answerToString(answers[q.id]).trim())
+    if (firstText) guestName = take(firstText).trim()
+  }
+  if (!guestName) guestName = '익명'
+
+  // attending: 참석/attend 라벨의 단일선택/드롭다운
+  let attending = true
+  const attendQ = questions.find(q => (q.type === 'single-choice' || q.type === 'dropdown') && ATTEND_RE.test(q.label))
+  if (attendQ) {
+    const v = take(attendQ)
+    if (v.includes('참석') && !v.includes('불참')) attending = true
+    else if (v.includes('불참') || v.includes('안')) attending = false
+    else attending = true
+  }
+
+  // partySize: 인원/명/people/count 라벨의 숫자
+  let partySize: number | undefined
+  const partyQ = questions.find(q => q.type === 'number' && PARTY_RE.test(q.label))
+  if (partyQ) {
+    const n = parseInt(take(partyQ), 10)
+    partySize = Number.isNaN(n) ? 1 : Math.min(20, Math.max(1, n))
+  }
+
+  // phone
+  let phone: string | undefined
+  const phoneQ = questions.find(q => q.type === 'phone' && !consumed.has(q.id))
+  if (phoneQ) { const v = take(phoneQ).trim(); if (v) phone = v.slice(0, 40) }
+
+  // side: 측/신랑/신부/side 라벨 → enum 매핑 성공 시에만 소비, 실패 시 message 로 보존
+  let side: 'groom' | 'bride' | 'baby' | undefined
+  const sideQ = questions.find(q => (q.type === 'single-choice' || q.type === 'dropdown') && !consumed.has(q.id) && SIDE_RE.test(q.label))
+  if (sideQ) {
+    const mapped = mapSide(answerToString(answers[sideQ.id]))
+    if (mapped) { side = mapped; consumed.add(sideQ.id) }
+  }
+
+  // message: 장문형 답 + 매핑되지 않은 나머지 응답 전부 (무손실)
+  const lines: string[] = []
+  for (const q of questions) {
+    if (consumed.has(q.id) || q.type !== 'text-long') continue
+    const v = answerToString(answers[q.id]).trim()
+    if (v) { lines.push(v); consumed.add(q.id) }
+  }
+  for (const q of questions) {
+    if (consumed.has(q.id)) continue
+    const v = answerToString(answers[q.id]).trim()
+    if (v) lines.push(`${q.label || '질문'}: ${v}`)
+  }
+  const message = lines.join('\n').slice(0, 500) || undefined
+
+  return { guestName: guestName.slice(0, 40), attending, side, partySize, phone, message }
 }
 
 function isAnswered(question: RsvpQuestion, answer: string | string[] | undefined): boolean {
@@ -27,14 +120,20 @@ function isAnswered(question: RsvpQuestion, answer: string | string[] | undefine
   return typeof answer === 'string' && answer.trim().length > 0
 }
 
-export default function RsvpModal({ open, onClose, config, accent }: Props) {
+export default function RsvpModal({ open, onClose, config, accent, invitationId, live = false }: Props) {
   const [answers, setAnswers] = useState<AnswerMap>({})
   const [mounted, setMounted] = useState(false)
+  const [submitState, setSubmitState] = useState<SubmitState>('idle')
+  const [errorMsg, setErrorMsg] = useState('')
 
   useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
-    if (!open) setAnswers({})
+    if (!open) {
+      setAnswers({})
+      setSubmitState('idle')
+      setErrorMsg('')
+    }
   }, [open])
 
   useEffect(() => {
@@ -63,10 +162,31 @@ export default function RsvpModal({ open, onClose, config, accent }: Props) {
     setAnswer(id, next)
   }
 
-  const handleSubmit = () => {
-    if (!canSubmit) return
-    // TODO: 백엔드 연동(응답 저장/전달)은 후속 작업
-    onClose()
+  const handleSubmit = async () => {
+    if (!canSubmit || submitState === 'submitting') return
+    // 에디터 프리뷰(live=false) 또는 미저장 상태 → 제출 no-op
+    if (!live || !invitationId) {
+      onClose()
+      return
+    }
+    setSubmitState('submitting')
+    setErrorMsg('')
+    try {
+      const res = await fetch(`/api/invitations/${invitationId}/rsvp`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buildRsvpPayload(questions, answers)),
+      })
+      if (!res.ok) {
+        const data = await res.json().catch(() => null)
+        const msg = typeof data?.error === 'string' ? data.error : '전달에 실패했어요. 잠시 후 다시 시도해주세요.'
+        throw new Error(msg)
+      }
+      setSubmitState('success')
+    } catch (e) {
+      setSubmitState('error')
+      setErrorMsg(e instanceof Error ? e.message : '전달에 실패했어요. 잠시 후 다시 시도해주세요.')
+    }
   }
 
   if (!mounted) return null
@@ -197,7 +317,12 @@ export default function RsvpModal({ open, onClose, config, accent }: Props) {
             </div>
 
             <div className="bg-gray-50 px-6 py-5 space-y-5 overflow-y-auto">
-              {questions.length === 0 ? (
+              {submitState === 'success' ? (
+                <div className="py-8 text-center space-y-2">
+                  <p className="text-base font-medium" style={{ color: accent }}>참석 여부가 전달되었어요</p>
+                  <p className="text-sm text-gray-400">소중한 응답 감사합니다.</p>
+                </div>
+              ) : questions.length === 0 ? (
                 <p className="text-sm text-gray-400 text-center py-6">아직 설정된 질문이 없어요.</p>
               ) : (
                 questions.map(q => (
@@ -218,14 +343,28 @@ export default function RsvpModal({ open, onClose, config, accent }: Props) {
             </div>
 
             <div className="px-6 py-5">
-              <button type="button" onClick={handleSubmit} disabled={!canSubmit}
-                className="w-full py-3 rounded-lg text-sm font-medium transition-colors"
-                style={canSubmit
-                  ? { backgroundColor: accent, color: 'white' }
-                  : { backgroundColor: '#d1d5db', color: 'white' }}
-              >
-                {submitLabel}
-              </button>
+              {submitState === 'success' ? (
+                <button type="button" onClick={onClose}
+                  className="w-full py-3 rounded-lg text-sm font-medium transition-colors"
+                  style={{ backgroundColor: accent, color: 'white' }}
+                >
+                  닫기
+                </button>
+              ) : (
+                <>
+                  {submitState === 'error' && (
+                    <p className="text-sm text-red-500 mb-3 text-center">{errorMsg}</p>
+                  )}
+                  <button type="button" onClick={handleSubmit} disabled={!canSubmit || submitState === 'submitting'}
+                    className="w-full py-3 rounded-lg text-sm font-medium transition-colors"
+                    style={canSubmit && submitState !== 'submitting'
+                      ? { backgroundColor: accent, color: 'white' }
+                      : { backgroundColor: '#d1d5db', color: 'white' }}
+                  >
+                    {submitState === 'submitting' ? '전달 중…' : submitLabel}
+                  </button>
+                </>
+              )}
             </div>
           </motion.div>
         </motion.div>

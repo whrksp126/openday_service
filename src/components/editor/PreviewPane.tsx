@@ -1446,7 +1446,7 @@ type RsvpSectionConfig = RsvpModuleConfig & {
   titleSmall?: string; titleSmallVisible?: boolean; titleSmallBold?: boolean; titleSmallItalic?: boolean; titleSmallAlign?: string
 }
 
-function RsvpSection({ accent, showEnglish, module }: { accent: string; showEnglish: boolean; module: InvitationModule }) {
+function RsvpSection({ accent, showEnglish, module, invitationId, live }: { accent: string; showEnglish: boolean; module: InvitationModule; invitationId?: string; live?: boolean }) {
   const cfg = module.config as RsvpSectionConfig
   const [open, setOpen] = useState(false)
   const labelVisible = cfg.labelVisible !== false
@@ -1472,7 +1472,7 @@ function RsvpSection({ accent, showEnglish, module }: { accent: string; showEngl
           {buttonLabel}
         </button>
       </section>
-      <RsvpModal open={open} onClose={() => setOpen(false)} config={cfg} accent={accent} />
+      <RsvpModal open={open} onClose={() => setOpen(false)} config={cfg} accent={accent} invitationId={invitationId} live={live} />
     </>
   )
 }
@@ -1681,6 +1681,7 @@ function renderModule(
   bgColor: string,
   invitationId?: string,
   readOnly?: boolean,
+  live?: boolean,
 ) {
   switch (module.type) {
     case 'couple_names': return <CoupleNamesSection accent={accent} content={content} fontFamily={fontFamily} module={module} showEnglish={showEnglish} />
@@ -1731,7 +1732,7 @@ function renderModule(
     }
     case 'account': return <AccountSection accent={accent} showEnglish={showEnglish} module={module} />
     case 'contact': return <ContactSection accent={accent} content={content} showEnglish={showEnglish} module={module} />
-    case 'rsvp': return <RsvpSection accent={accent} showEnglish={showEnglish} module={module} />
+    case 'rsvp': return <RsvpSection accent={accent} showEnglish={showEnglish} module={module} invitationId={invitationId} live={live} />
     case 'dday': return <DdaySection accent={accent} content={content} showEnglish={showEnglish} module={module} />
     case 'video_single_card':
     case 'video_cinema':
@@ -1788,9 +1789,12 @@ interface PreviewPaneProps {
   /** 발행 뷰에서 photo_share 모듈이 본인 invitation 컨텍스트를 알 수 있게 전달.
    * 에디터에서는 store.invitationId 가 사용된다. */
   invitationId?: string
+  /** 실제 발행 하객 뷰인지 여부. true 일 때만 RSVP 제출이 API 로 전송된다.
+   * 에디터 프리뷰(기본 false)에서는 제출이 no-op 로 유지된다. */
+  live?: boolean
 }
 
-export default function PreviewPane({ panelRef, contentOverride, modulesOverride, stylesOverride, readOnly, invitationId }: PreviewPaneProps) {
+export default function PreviewPane({ panelRef, contentOverride, modulesOverride, stylesOverride, readOnly, invitationId, live = false }: PreviewPaneProps) {
   const store = useEditorStore()
   const content = contentOverride ?? store.content
   const modules = modulesOverride ?? store.modules
@@ -1911,7 +1915,7 @@ export default function PreviewPane({ panelRef, contentOverride, modulesOverride
       {(() => {
         const preset = normalizeScrollAnimation(styles.scrollAnimation)
         return sortedModules.map((module) => {
-          const el = renderModule(module, accent, content, showEnglish, fontFamily, hasCoupleNames, bgColor, effectiveInvitationId ?? undefined, readOnly)
+          const el = renderModule(module, accent, content, showEnglish, fontFamily, hasCoupleNames, bgColor, effectiveInvitationId ?? undefined, readOnly, live)
           if (!el) return null
           // key 에 preset 포함 → 프리셋 변경 시 wrapper remount 로 새 효과 즉시 적용
           return (

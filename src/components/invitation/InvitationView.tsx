@@ -74,6 +74,7 @@ export default function InvitationView({ invitation }: Props) {
             modulesOverride={modules}
             stylesOverride={styles}
             readOnly
+            live
             invitationId={invitation.id}
           />
         </div>
