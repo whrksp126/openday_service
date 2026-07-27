@@ -349,9 +349,9 @@ const WEDDING_SLIDE_IMAGES = Array.from({ length: 3 }, (_, i) =>
 )
 
 // C-7 — 절대 날짜 금지. 청첩장 권장 리드타임 85일(약 3개월 전 발송).
-const WEDDING_DAY = eventDay(85)
+const WEDDING_DAY = eventDayOn(85, 0)   // 예식은 주말 낮이 관례다 (일요일)
 // 참석 회신 마감은 예식 2주 전. 식사 인원 확정 시점과 맞춘다.
-const WEDDING_RSVP_DUE = eventDay(71)
+const WEDDING_RSVP_DUE = daysBefore(WEDDING_DAY, 14)
 
 const WEDDING_TEMPLATE = {
   name: '클래식 웨딩 청첩장',
@@ -931,7 +931,7 @@ const seminarSpeakerPhotos = [
 const SEMINAR_DAY = eventDayOn(60, 4)   // 목요일 개최 (평일 오후 포럼)
 const SEMINAR_YEAR = SEMINAR_DAY.iso.slice(0, 4)
 const SEMINAR_NEXT_YEAR = String(Number(SEMINAR_YEAR) + 1)
-const SEMINAR_RSVP_DEADLINE = eventDay(53)
+const SEMINAR_RSVP_DEADLINE = daysBefore(SEMINAR_DAY, 7)
 
 const BUSINESS_SEMINAR_TEMPLATE = {
   name: '비즈 세미나 초대장',
@@ -1121,8 +1121,8 @@ const launchGallery = [
 ]
 
 // 런칭쇼 권장 리드타임 40일. 회신 마감은 좌석·기프트 수량 확정을 위해 행사 7일 전.
-const LAUNCH_DAY = eventDay(40)
-const LAUNCH_RSVP_DUE = eventDay(33)
+const LAUNCH_DAY = eventDayOn(40, 4)    // 브랜드 런칭 행사는 평일 저녁 (목요일)
+const LAUNCH_RSVP_DUE = daysBefore(LAUNCH_DAY, 7)
 // 커버의 대형 세리프 숫자('06.15' 자리) — 반드시 행사일에서 파생시킨다
 const LAUNCH_MONTH_DAY = LAUNCH_DAY.iso.slice(5).replace('-', '.')
 
@@ -1280,8 +1280,8 @@ const tennisGallery = [
 
 // 대회일 · 접수 마감 · 우천 예비일을 모두 상대 날짜로 만든다.
 // 화면에 찍히는 날짜 문자열은 전부 이 세 상수에서 파생시킨다(하드코딩 금지).
-const TENNIS_DAY = eventDay(35)            // 대회 당일
-const TENNIS_ENTRY_DEADLINE = eventDay(21) // 접수 마감 — 대회 2주 전
+const TENNIS_DAY = eventDayOn(35, 6)       // 대회 당일 — 동호인 대회는 토요일
+const TENNIS_ENTRY_DEADLINE = daysBefore(TENNIS_DAY, 14) // 접수 마감 — 대회 2주 전
 const TENNIS_RAIN_DATE = eventDay(42)      // 우천 시 예비일 — 대회 1주 뒤
 const TENNIS_YEAR = TENNIS_DAY.iso.slice(0, 4)
 
@@ -1461,7 +1461,7 @@ const vipNightGallery = [
 ]
 
 // ── VIP 나이트 (선행 작업분 유지) ─────────────────────────────────────────────
-const VIP_NIGHT_DAY = eventDay(50)
+const VIP_NIGHT_DAY = eventDayOn(50, 6)  // 나이트 파티는 토요일 밤
 
 const SOCIAL_VIP_NIGHT_TEMPLATE = {
   name: 'VIP 나이트 초대장',
@@ -1780,9 +1780,9 @@ const BIRTHDAY_GALLERY_IMAGES = [
 ]
 
 // 생일은 리드타임이 짧다(초대장 받고 한 달 안쪽에 모이는 자리).
-const BIRTHDAY_DAY = eventDay(28)
+const BIRTHDAY_DAY = eventDayOn(28, 6)  // 홈파티는 토요일 저녁
 // 회신 마감은 파티 1주 전 — 음식/좌석 수량을 잡아야 한다.
-const BIRTHDAY_RSVP_DUE = eventDay(21)
+const BIRTHDAY_RSVP_DUE = daysBefore(BIRTHDAY_DAY, 7)
 
 // 커버(arch variant)의 연도/월일 표기는 행사일에서 파생시킨다. 문자열 하드코딩 금지.
 const BIRTHDAY_YEAR = BIRTHDAY_DAY.iso.slice(0, 4)          // '2026'
@@ -1950,7 +1950,7 @@ const BIRTHDAY_KIDS_GALLERY_IMAGES = Array.from({ length: 4 }, (_, i) =>
 // 아동 생일은 한 달 전쯤 돌리는 것이 자연스럽다(부모끼리 일정 조율 기간).
 const BIRTHDAY_KIDS_DAY = eventDayOn(30, 6) // 아이 생일파티는 토요일
 // 음식·답례품 수량 때문에 회신 마감이 실제로 필요하다. 행사 일주일 전.
-const BIRTHDAY_KIDS_RSVP_DUE = eventDay(23)
+const BIRTHDAY_KIDS_RSVP_DUE = daysBefore(BIRTHDAY_KIDS_DAY, 7)
 
 // 아동 생일 — 밝은 피치·코랄, sticker-pop 커버(폴라로이드 + 컨페티)
 const BIRTHDAY_KIDS_TEMPLATE = {
@@ -2114,7 +2114,7 @@ const GRADUATION_GALLERY_IMAGES = Array.from({ length: 4 }, (_, i) =>
 // 학위수여식은 학사일정으로 미리 공지되므로 리드타임을 길게 잡는다
 const GRADUATION_DAY = eventDayOn(120, 5)   // 학위수여식은 평일(금)이 일반적
 // 참석 인원 집계용 회신 마감 — 행사 7일 전
-const GRADUATION_RSVP_DUE = eventDay(113)
+const GRADUATION_RSVP_DUE = daysBefore(GRADUATION_DAY, 7)
 // 커버 제목의 연도는 행사일에서 파생시킨다 (하드코딩 금지)
 const GRADUATION_YEAR = GRADUATION_DAY.iso.slice(0, 4)
 
