@@ -51,7 +51,7 @@ export default async function TemplatePreviewPage({ params }: Props) {
       {/* 초대장 본문 */}
       <div className="pt-12 bg-[#edeae6] min-h-screen">
         {hasTemplateData ? (
-          <TemplatePreviewClient content={defaultContent} modules={defaultModules} styles={styles} />
+          <TemplatePreviewClient content={defaultContent} modules={defaultModules} styles={styles} categorySlug={template.category.slug} />
         ) : template.thumbnail ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={template.thumbnail} alt={template.name} className="w-full max-w-[375px] mx-auto" />

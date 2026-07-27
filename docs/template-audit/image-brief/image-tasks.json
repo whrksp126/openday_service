@@ -1,0 +1,980 @@
+{
+ "version": 1,
+ "model": "nano-banana-pro",
+ "format": "jpeg",
+ "quality": 82,
+ "sets": [
+  {
+   "set": "wedding-classic",
+   "templateId": "wedding-classic-template-001",
+   "images": [
+    {
+     "order": 1,
+     "path": "wedding-classic-template-001/main_img_v2.jpg",
+     "aspect": "4:5",
+     "width": 1200,
+     "height": 1500,
+     "referencePrevious": false,
+     "purpose": "커버. 이 세트 전체의 인물 레퍼런스가 되는 유일한 정면 커플 컷이며, 팔레트와 충돌하던 주황·빨강 부케를 아이보리·샴페인 계열로 교체한다.",
+     "prompt": "Vertical 4:5 photograph. A Korean couple in their early thirties seated on two pale oak chairs turned toward each other in a bright studio with a plain ivory wall. The groom wears a soft beige single-breasted suit over a white crew-neck tee, short neat black hair, clean-shaven. The bride wears a long ivory lace-sleeve wedding dress with a short delicate tulle veil and a small cream floral hairpin, dark hair in a low chignon. She holds a loose garden-style bouquet of ivory roses, champagne ranunculus and dusty pink lisianthus - strictly no orange, red or magenta flowers. Soft natural window light from the left, warm cream and sand color grade (#faf5ef background tones, #f5ebdf highlights, a muted #bf8362 terracotta accent), low saturation, fine film grain, editorial Korean wedding studio photography. Both faces clearly visible, calm and natural; this frame is the character reference for every following image. Keep the couple centered so a square center crop still reads. No text, no logos, no watermarks."
+    },
+    {
+     "order": 2,
+     "path": "wedding-classic-template-001/profile/groom.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "프로필 카드 좌측(신랑). 1:1 컨테이너에 렌더된다. 정면 노출을 허용하는 2장 중 하나.",
+     "prompt": "Square 1:1 photograph. Same visual world and same color grade as the previous images. Waist-up solo portrait of the same Korean groom in his early thirties, soft beige single-breasted suit over a white crew-neck tee, short neat black hair, standing at a three-quarter angle against the same plain ivory studio wall, relaxed hands, a calm closed-lip smile. Soft natural window light from the left, warm cream and sand palette (#faf5ef, #f5ebdf) with a muted #bf8362 terracotta undertone, low saturation, fine film grain, editorial Korean wedding studio photography. Reference the cover frame of this set for the same man's face, hair and suit. No text, no logos, no watermarks."
+    },
+    {
+     "order": 3,
+     "path": "wedding-classic-template-001/profile/bride.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "프로필 카드 우측(신부). 신랑 컷과 조명·배경을 정확히 맞춰 한 쌍으로 보이게 한다.",
+     "prompt": "Square 1:1 photograph. Same visual world, same studio, same lighting and same color grade as the previous image. Waist-up solo portrait of the same Korean bride in her early thirties, long ivory lace-sleeve wedding dress, dark hair in a low chignon with a small cream floral pin, veil removed, standing at a three-quarter angle against the plain ivory studio wall, hands loosely clasped, a soft natural smile. Soft natural window light from the left, warm cream and sand palette (#faf5ef, #f5ebdf) with a muted #bf8362 terracotta undertone, low saturation, fine film grain, editorial Korean wedding studio photography. Reference the cover frame of this set for the same woman's face, hair and dress so the two profile portraits read as one pair. No text, no logos, no watermarks."
+    },
+    {
+     "order": 4,
+     "path": "wedding-classic-template-001/sub_img_v2.jpg",
+     "aspect": "3:2",
+     "width": 1500,
+     "height": 1000,
+     "referencePrevious": true,
+     "purpose": "인사말 뒤 midphoto(풀블리드). 같은 커플의 한복 컷으로 호흡을 준다. 얼굴은 돌려 노출을 피한다.",
+     "prompt": "Horizontal 3:2 photograph. Same visual world, same couple and same color grade as the previous images. The two of them stand side by side in traditional Korean hanbok against a plain warm grey studio backdrop, seen from a three-quarter rear angle so their faces are turned away and not visible. The bride wears an ivory jeogori with a soft champagne skirt and holds a small posy of cream and white flowers at her side; the groom wears a beige and ivory hanbok. Even soft studio lighting, muted warm color grade, cream and sand tones (#faf5ef, #f5ebdf) with a faint #bf8362 warmth, low saturation, fine film grain, editorial Korean wedding photography. Leave calm empty space on both sides - the frame will be center-cropped to 4:3. No text, no logos, no watermarks."
+    },
+    {
+     "order": 5,
+     "path": "wedding-classic-template-001/gallery/01.jpg",
+     "aspect": "4:5",
+     "width": 1200,
+     "height": 1500,
+     "referencePrevious": true,
+     "purpose": "갤러리 1. 이마를 맞댄 클로즈업. 측면·눈감음으로 얼굴 노출을 최소화한다.",
+     "prompt": "Vertical 4:5 photograph. Same visual world, same couple and same color grade as the previous images. Tight close-up of the two resting forehead to forehead with their eyes closed, shot from the side so the faces read only in profile and soften toward the edges of the frame; the bride in the ivory lace-sleeve dress, the groom in the beige suit. Warm window light from behind them, cream and sand palette (#faf5ef, #f5ebdf) with muted #bf8362 warmth, shallow depth of field, low saturation, fine film grain, editorial Korean wedding photography. Keep the subjects centered so a square center crop still reads. No text, no logos, no watermarks."
+    },
+    {
+     "order": 6,
+     "path": "wedding-classic-template-001/gallery/02.jpg",
+     "aspect": "4:5",
+     "width": 1200,
+     "height": 1500,
+     "referencePrevious": true,
+     "purpose": "갤러리 2. 창가 역광 실루엣. 인물 식별이 필요 없는 무드 컷.",
+     "prompt": "Vertical 4:5 photograph. Same visual world, same couple and same color grade as the previous image. Backlit silhouette of the bride and groom standing close together in front of a tall window hung with a sheer ivory curtain; strong hazy daylight blows out the background so the two figures read almost entirely as soft dark shapes and no facial features are visible. Bride's veil and dress hem catch the light. Warm cream and sand palette (#faf5ef, #f5ebdf) with a muted #bf8362 glow in the highlights, low saturation, fine film grain, editorial Korean wedding photography. Keep the figures centered for a safe square crop. No text, no logos, no watermarks."
+    },
+    {
+     "order": 7,
+     "path": "wedding-classic-template-001/gallery/03.jpg",
+     "aspect": "4:5",
+     "width": 1200,
+     "height": 1500,
+     "referencePrevious": true,
+     "purpose": "갤러리 3. 정원 아치 아래 걸어가는 전신 뒷모습. 야외 컷 확보.",
+     "prompt": "Vertical 4:5 photograph. Same visual world, same couple and same color grade as the previous images. Full-body rear view of the Korean bride and groom walking away hand in hand under a garden arch covered in white roses and green foliage; the bride in the long ivory lace wedding dress with a flowing veil, the groom in the beige suit. Dappled afternoon sunlight, soft bokeh leaves in the foreground, warm cream and sage color grade with #faf5ef and #f5ebdf tones and a muted #bf8362 accent, low saturation, fine film grain, editorial Korean wedding photography. Faces are not visible at all. Keep the pair centered for a safe square crop. No text, no logos, no watermarks."
+    },
+    {
+     "order": 8,
+     "path": "wedding-classic-template-001/gallery/04.jpg",
+     "aspect": "4:5",
+     "width": 1200,
+     "height": 1500,
+     "referencePrevious": true,
+     "purpose": "갤러리 4. 맞잡은 손과 반지 디테일 컷. 인물 일관성 위험이 없는 안전한 클로즈업.",
+     "prompt": "Vertical 4:5 photograph. Same visual world and same color grade as the previous images. Extreme close-up of the Korean couple's hands clasped together, two simple thin gold wedding bands, the bride's ivory lace sleeve and cuff filling one side of the frame, a few small cream flowers softly out of focus behind. Warm natural window light, very shallow depth of field, cream and champagne palette (#faf5ef, #f5ebdf) with a muted #bf8362 skin-warmth, low saturation, fine film grain, editorial detail photography. No faces in frame. Hands centered for a safe square crop. No text, no logos, no watermarks."
+    },
+    {
+     "order": 9,
+     "path": "wedding-classic-template-001/gallery/05.jpg",
+     "aspect": "4:5",
+     "width": 1200,
+     "height": 1500,
+     "referencePrevious": true,
+     "purpose": "갤러리 5. 신부 뒷모습 - 베일과 드레스 백라인. 드레스 디테일을 보여주는 컷.",
+     "prompt": "Vertical 4:5 photograph. Same visual world, same bride and same color grade as the previous images. Rear view of the Korean bride standing alone in a bright ivory room, showing the back of the long ivory lace wedding dress, the buttoned back line and the soft tulle veil falling over her shoulders, her dark hair in a low chignon. Her face is completely turned away. Soft directional daylight from a window on the left, warm cream and sand palette (#faf5ef, #f5ebdf) with a muted #bf8362 accent, low saturation, fine film grain, editorial Korean wedding photography. Subject centered for a safe square crop. No text, no logos, no watermarks."
+    },
+    {
+     "order": 10,
+     "path": "wedding-classic-template-001/gallery/06.jpg",
+     "aspect": "4:5",
+     "width": 1200,
+     "height": 1500,
+     "referencePrevious": true,
+     "purpose": "갤러리 6. 한복 커플 옆모습, 얕은 심도. midphoto 와 같은 세계관을 세로 컷으로 잇는다.",
+     "prompt": "Vertical 4:5 photograph. Same visual world, same couple and same color grade as the previous images. Side profile view of the two in traditional Korean hanbok facing each other, framed from the chest up, the foreground shoulder softly out of focus so only the far figure's profile is legible; the bride in an ivory jeogori with a champagne skirt, the groom in a beige and ivory hanbok. Plain warm grey backdrop, soft even studio light, shallow depth of field, muted warm color grade with #faf5ef and #f5ebdf tones and a faint #bf8362 warmth, low saturation, fine film grain, editorial Korean wedding photography. Centered for a safe square crop. No text, no logos, no watermarks."
+    },
+    {
+     "order": 11,
+     "path": "wedding-classic-template-001/gallery/07.jpg",
+     "aspect": "4:5",
+     "width": 1200,
+     "height": 1500,
+     "referencePrevious": false,
+     "purpose": "갤러리 7. 부케 정물 - 인물 없음. 팔레트를 확정하는 컷이자 3x3 그리드의 호흡.",
+     "prompt": "Vertical 4:5 photograph. Still life of a wedding bouquet resting on a pale oak chair with a rumpled ivory linen cloth: ivory garden roses, champagne ranunculus, dusty pink lisianthus and a little eucalyptus, tied with a wide cream silk ribbon. Strictly no orange, red or magenta flowers. No people anywhere in the frame. Soft natural window light from the left, plain ivory wall behind, warm cream and sand color grade (#faf5ef background, #f5ebdf highlights, a muted #bf8362 terracotta accent), low saturation, fine film grain, editorial still-life photography. Bouquet centered for a safe square crop. No text, no logos, no watermarks."
+    },
+    {
+     "order": 12,
+     "path": "wedding-classic-template-001/gallery/08.jpg",
+     "aspect": "4:5",
+     "width": 1200,
+     "height": 1500,
+     "referencePrevious": true,
+     "purpose": "갤러리 8. 웨딩홀 로비 창가 원경. 인물이 작아 얼굴 일관성 부담이 없고 공간감을 준다.",
+     "prompt": "Vertical 4:5 photograph. Same visual world, same couple and same color grade as the previous images. Wide interior shot of a bright wedding hall lobby with tall arched windows and pale stone floor; the bride and groom sit small in the frame on a low bench by the far window, seen from behind and to the side so their faces are not readable, the bride's ivory dress and veil spilling onto the floor. Large calm areas of empty light-filled space around them. Warm cream and sand color grade (#faf5ef, #f5ebdf) with a muted #bf8362 accent, low saturation, fine film grain, editorial Korean wedding photography. Compose so the couple sits near the center for a safe square crop. No text, no logos, no watermarks."
+    },
+    {
+     "order": 13,
+     "path": "wedding-classic-template-001/gallery/09.jpg",
+     "aspect": "4:5",
+     "width": 1200,
+     "height": 1500,
+     "referencePrevious": true,
+     "purpose": "갤러리 9. 햇살 플레어 속 걸어가는 뒷모습. 갤러리를 밝게 닫는 컷.",
+     "prompt": "Vertical 4:5 photograph. Same visual world, same couple and same color grade as the previous images. Rear view of the Korean bride and groom walking away together along a sunlit path, mid-stride and clearly laughing, the bride lifting the hem of her ivory lace dress, veil floating, the groom in the beige suit with his arm around her waist. Low late-afternoon sun creates a warm lens flare and long shadows. Warm cream and sand color grade (#faf5ef, #f5ebdf) with a muted #bf8362 accent, low saturation, fine film grain, editorial Korean wedding photography. Faces not visible. Figures centered for a safe square crop. No text, no logos, no watermarks."
+    },
+    {
+     "order": 14,
+     "path": "wedding-classic-template-001/timeline/01.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "타임라인 '첫 만남'. 웨딩드레스가 아닌 연애 시절 일상 스냅이어야 캡션과 맞는다. 1:1 컨테이너.",
+     "prompt": "Square 1:1 photograph. Same two Korean people as the previous images, but in casual everyday clothes - the man in a cream knit sweater, the woman in a soft beige cardigan and white shirt - sitting across a small round table by a sunlit cafe window, two coffee cups between them, both leaning in and laughing. Shot from the side and slightly behind so faces are largely turned away or softly out of focus. Warm afternoon light, cream and sand palette (#faf5ef, #f5ebdf) with a muted #bf8362 accent, shallow depth of field, low saturation, fine film grain, documentary lifestyle photography. No text, no logos, no watermarks."
+    },
+    {
+     "order": 15,
+     "path": "wedding-classic-template-001/timeline/02.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "타임라인 '첫 여행'. 함께 걷는 여행 뒷모습으로 캡션과 정확히 맞춘다.",
+     "prompt": "Square 1:1 photograph. Same visual world, same two people and same color grade as the previous image, in casual travel clothes - cream knit sweater and beige cardigan, a small canvas bag over one shoulder. Rear view of the two walking side by side down a narrow sunlit old-town alley with pale plaster walls and worn stone paving, shoulders touching, one of them pointing ahead. Warm late-morning light, cream and sand palette (#faf5ef, #f5ebdf) with a muted #bf8362 accent, low saturation, fine film grain, documentary travel photography. Faces not visible. No text, no logos, no watermarks."
+    },
+    {
+     "order": 16,
+     "path": "wedding-classic-template-001/timeline/03.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "타임라인 '프로포즈'. '늘 걷던 길 위에서' 라는 문구와 맞는 저녁 거리 실루엣.",
+     "prompt": "Square 1:1 photograph. Same visual world, same two people and same color grade as the previous image, in casual autumn clothes. Evening scene on a quiet tree-lined street with small warm string lights overhead; the man stands close to the woman holding out a tiny open ring box, both seen mostly as warm backlit silhouettes against the glowing bokeh lights, faces not readable. Deep warm dusk grade built on cream and sand tones (#faf5ef, #f5ebdf) with a muted #bf8362 amber glow, low saturation, fine film grain, documentary lifestyle photography. No text, no logos, no watermarks."
+    },
+    {
+     "order": 17,
+     "path": "wedding-classic-template-001/slide/01.jpg",
+     "aspect": "16:9",
+     "width": 1600,
+     "height": 900,
+     "referencePrevious": false,
+     "purpose": "안내사항 슬라이드 1 '화환 안내'. 슬라이드는 이미지가 텍스트 위에 16:9로 얹히므로 인물 없는 차분한 정물이 읽기 좋다.",
+     "prompt": "Horizontal 16:9 photograph. A single tall ceremonial flower stand of ivory and cream roses with pale eucalyptus, standing beside a plain ivory wall in a quiet, almost empty bright wedding hall entrance. No people anywhere in the frame. Large calm areas of pale negative space to the right. Soft diffused daylight, warm cream and sand color grade (#faf5ef background, #f5ebdf highlights, a muted #bf8362 terracotta accent), low contrast, low saturation, fine film grain, editorial interior photography. No text, no logos, no watermarks."
+    },
+    {
+     "order": 18,
+     "path": "wedding-classic-template-001/slide/02.jpg",
+     "aspect": "16:9",
+     "width": 1600,
+     "height": 900,
+     "referencePrevious": true,
+     "purpose": "안내사항 슬라이드 2 '연회 & 식사 안내'. 뷔페·연회장 무드를 정물로 전달한다.",
+     "prompt": "Horizontal 16:9 photograph. Same warm cream and sand color grade as the previous image. A banquet table laid for a wedding reception: ivory linen cloth, cream ceramic plates, simple gold-toned cutlery, low arrangements of white and champagne flowers, folded linen napkins, soft daylight from a window on the left. No people anywhere in the frame. Warm cream and sand palette (#faf5ef, #f5ebdf) with a muted #bf8362 accent, low contrast, low saturation, fine film grain, editorial interior photography, generous calm empty space. No text, no logos, no watermarks."
+    },
+    {
+     "order": 19,
+     "path": "wedding-classic-template-001/slide/03.jpg",
+     "aspect": "16:9",
+     "width": 1600,
+     "height": 900,
+     "referencePrevious": true,
+     "purpose": "안내사항 슬라이드 3 '사진 촬영 안내'. 포토테이블 코너를 정물로 보여준다.",
+     "prompt": "Horizontal 16:9 photograph. Same warm cream and sand color grade as the previous image. A wedding photo corner still life on an ivory linen table: a small vintage film camera, a stack of blank instant-photo frames, wooden clips on a thin twine line, a cream fountain pen and a few dried cream flowers. No people anywhere in the frame. Soft diffused daylight, warm cream and sand palette (#faf5ef, #f5ebdf) with a muted #bf8362 terracotta accent, low contrast, low saturation, fine film grain, editorial still-life photography, calm empty space on the right. No text, no logos, no watermarks."
+    }
+   ]
+  },
+  {
+   "set": "baby-first-birthday",
+   "templateId": "baby-first-birthday-template-001",
+   "images": [
+    {
+     "order": 1,
+     "path": "baby-first-birthday-template-001/main_img.jpg",
+     "aspect": "3:4",
+     "width": 1200,
+     "height": 1600,
+     "referencePrevious": false,
+     "purpose": "커버. 현재 컷은 이가 여럿 나고 머리숱이 많아 2~3세로 보여 '1st BIRTHDAY'와 어긋난다. 정확히 12개월로 재생성하고 이 아기가 전 컷의 기준 레퍼런스가 된다",
+     "prompt": "Vertical 3:4 photograph. Studio portrait of a smiling Korean baby girl at exactly twelve months old, sitting upright unaided. Fix her appearance for all later images: light warm ivory skin tone, fine wispy dark-brown hair with a soft rounded hairline and no thick fringe, round dark-brown eyes with monolid single eyelids, full round cheeks, small button nose. Only two small lower front teeth are visible when she smiles, no upper teeth. She wears a soft blush-pink hanbok jeogori and skirt with a delicate cream dried-flower crown. Backdrop is a soft peach and cream floral set, softly out of focus. Palette locked to cream #fff0e6 background, soft coral #f48a6e accents and pale peach #ffe1d0. Bright natural window light, high-key soft lighting, low-saturation pastel color grade, shallow depth of field, professional Korean doljanchi first-birthday studio photography. No text, no logos, no watermarks."
+    },
+    {
+     "order": 2,
+     "path": "baby-first-birthday-template-001/profile_img.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "주인공 소개 모듈의 원형 프로필. 원형으로 잘리므로 얼굴이 정중앙에 와야 한다",
+     "prompt": "Square 1:1 photograph. Same visual world and color grade as the previous image. Head-and-shoulders portrait of the same Korean baby girl at exactly twelve months old, reference the previous image for the same child — identical light ivory skin, fine wispy dark-brown hair, monolid round dark-brown eyes, only two small lower front teeth. Three-quarter turn toward camera, gentle closed-lip smile, wearing a plain cream ribbed knit bodysuit instead of the hanbok. Face centered in the exact middle of the frame with generous even margin on all four sides so a circular crop will not cut her hair or chin. Plain soft cream #fff0e6 seamless backdrop, no props. Bright diffused window light, high-key, low-saturation pastel grade. No text, no logos, no watermarks."
+    },
+    {
+     "order": 3,
+     "path": "baby-first-birthday-template-001/timeline/01.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "성장 타임라인 1단계 '태어난 날'. 신생아 단계. 얼굴 노출을 최소화해 이후 단계와의 외모 불일치 위험을 줄인다",
+     "prompt": "Square 1:1 photograph. Same visual world and color grade as the previous images. A Korean newborn baby girl on her day of birth, only a few hours old, eyes gently closed and asleep, tightly wrapped in a plain white cotton swaddle, cradled on an adult's forearms and hands. Newborn proportions — tiny wrinkled fingers, very sparse fine dark hair, no teeth, slightly puffy eyelids. Adults' faces are completely outside the frame, only hands and forearms in a cream knit sleeve are visible. Soft cream #fff0e6 blanket beneath, pale peach #ffe1d0 shadows. Very soft diffused natural light, high-key, low-saturation pastel grade, shallow depth of field. No text, no logos, no watermarks."
+    },
+    {
+     "order": 4,
+     "path": "baby-first-birthday-template-001/timeline/02.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "성장 타임라인 2단계 '100일'. 생후 3개월임이 자세와 체형으로 읽혀야 한다",
+     "prompt": "Square 1:1 photograph. Same visual world, same child and same color grade as the previous images. The same Korean baby girl now at exactly three months old, doing tummy time on a cream knit blanket, propped up on her forearms with her head lifted, looking at the camera with a wide gummy open-mouth smile and absolutely no teeth. Clear three-month proportions — she cannot sit up, head still slightly large for the body, very fine wispy dark-brown hair with the same soft rounded hairline, same monolid round dark-brown eyes. She wears a plain cream ribbed knit bodysuit. Soft peach #ffe1d0 and cream #fff0e6 background out of focus. Bright natural window light, high-key, low-saturation pastel grade. No text, no logos, no watermarks."
+    },
+    {
+     "order": 5,
+     "path": "baby-first-birthday-template-001/timeline/03.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "성장 타임라인 3단계 '첫 걸음마'. 생후 9개월. 옆모습으로 잡아 얼굴 일관성 부담을 낮춘다",
+     "prompt": "Square 1:1 photograph. Same visual world, same child and same color grade as the previous images. The same Korean baby girl now at about nine months old, cruising — standing while holding onto the edge of a cream fabric sofa on a living room rug, one bare foot lifted mid-step. Seen from the side in profile so only her cheek and the same fine wispy dark-brown hairline are visible, not a full frontal face. Nine-month proportions — chubby thighs, unsteady balance, still no visible teeth. She wears a soft peach linen romper. A parent's hands hover just behind her waist, the parent's face is outside the frame. Warm cream #fff0e6 room, pale peach #ffe1d0 textiles, soft coral #f48a6e cushion. Bright afternoon window light, high-key, low-saturation pastel grade, shallow depth of field. No text, no logos, no watermarks."
+    },
+    {
+     "order": 6,
+     "path": "baby-first-birthday-template-001/timeline/04.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "성장 타임라인 4단계 '첫 생일'. 현재 풍선 사진만 있어 주인공이 사라져 있다. 12개월 아기 + 돌상/돌잡이로 교체",
+     "prompt": "Square 1:1 photograph. Same visual world, same child and same color grade as the previous images. The same Korean baby girl at exactly twelve months old, reference the earlier images for the same face — fine wispy dark-brown hair, monolid round dark-brown eyes, only two small lower front teeth. She sits upright in the blush-pink hanbok in front of a traditional Korean doljanchi table set with stacked white and pink rice cakes, fresh fruit, and a small row of doljabi objects (a thread skein, a brush, a coin, a tiny book) laid on a cream cloth. Pastel peach and ivory balloons softly out of focus behind. Cream #fff0e6 and pale peach #ffe1d0 decorations with soft coral #f48a6e ribbon accents. Bright natural light, high-key, low-saturation pastel grade. No text, no logos, no watermarks."
+    },
+    {
+     "order": 7,
+     "path": "baby-first-birthday-template-001/gallery/01.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "갤러리 1컷. 부모 품에 안긴 모습으로 '부모가 초대의 주체'라는 맥락을 시각적으로 전달",
+     "prompt": "Square 1:1 photograph. Same visual world, same child and same color grade as the previous images. The same Korean baby girl at twelve months old being held in her mother's arms, resting her cheek against the mother's shoulder and looking back toward the camera with a small two-lower-teeth smile. The mother is seen from behind and in profile, wearing a soft cream knit cardigan, her face turned away and mostly outside the frame. Baby wears the blush-pink hanbok. Warm cream #fff0e6 interior wall, pale peach #ffe1d0 curtain blurred behind. Bright natural window light, high-key, low-saturation pastel grade, shallow depth of field. No text, no logos, no watermarks."
+    },
+    {
+     "order": 8,
+     "path": "baby-first-birthday-template-001/gallery/02.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "갤러리 2컷. 손 클로즈업 — 얼굴 노출 없이 세트의 온도를 유지하는 컷",
+     "prompt": "Square 1:1 photograph. Same visual world and color grade as the previous images. Extreme close-up of a twelve-month-old Korean baby's small chubby hand gripping an adult's index finger, resting on a soft cream knit blanket. Only hands in frame, no faces at all. Tiny soft fingernails, dimpled knuckles, warm ivory skin. A sprig of dried peach-colored flowers lies blurred at the edge of the frame. Cream #fff0e6 blanket, pale peach #ffe1d0 shadow, soft coral #f48a6e flower. Very shallow depth of field, bright diffused natural light, high-key, low-saturation pastel grade. No text, no logos, no watermarks."
+    },
+    {
+     "order": 9,
+     "path": "baby-first-birthday-template-001/gallery/03.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "갤러리 3컷. 당일 파티룸 세팅 — 받는 사람이 '어떤 자리인지' 가늠할 수 있게 한다",
+     "prompt": "Square 1:1 photograph. Same visual world and color grade as the previous images. Interior of a bright Korean first-birthday party room, no people in frame. A cream draped table holds a small round naked cream cake with fresh peach slices, a stack of pastel rice cakes, and a low arch of pale peach, ivory and blush balloons behind it. Dried pampas and eucalyptus in a ceramic vase at the side, a cream fabric banner with no lettering on the wall. Cream #fff0e6 walls, pale peach #ffe1d0 fabrics, soft coral #f48a6e floral accents. Large window light from the left, high-key, low-saturation pastel grade. No text, no logos, no watermarks."
+    },
+    {
+     "order": 10,
+     "path": "baby-first-birthday-template-001/ending_img.jpg",
+     "aspect": "16:9",
+     "width": 1600,
+     "height": 900,
+     "referencePrevious": true,
+     "purpose": "엔딩 사진. 현재는 또 다른 남아 사진이라 교체 필요. 하단에 감사 문구가 얹히므로 아래쪽 여백 확보",
+     "prompt": "Horizontal 16:9 photograph. Same visual world, same child and same color grade as the previous images. The same Korean baby girl at twelve months old lying on her back on a soft cream blanket, looking up and laughing with her two small lower front teeth showing, arms flung out. She is positioned in the upper left third of the frame. Pale peach, ivory and blush balloons rest softly around her, drifting out of focus toward the edges. The lower right portion of the frame is calm empty cream blanket so overlaid text can sit there. Cream #fff0e6, pale peach #ffe1d0, soft coral #f48a6e. Bright airy natural light from above, high-key, dreamy soft-focus edges, low-saturation pastel grade. No text, no logos, no watermarks."
+    },
+    {
+     "order": 11,
+     "path": "baby-first-birthday-template-001/photo_share/sample-01.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "사진 공유 모듈 미리보기 샘플 1. 지금은 회색 빈 박스라 미완성으로 읽힌다. 하객이 올릴 법한 캐주얼 스냅이어야 한다",
+     "prompt": "Square 1:1 photograph. Same visual world and color grade as the previous images, but shot like a casual smartphone snapshot taken by a guest at a Korean first-birthday party, not a studio photo. Guests' hands clapping in the foreground, a baby in a blush-pink hanbok blurred in the middle distance, pastel balloons and the cake table behind. Slightly imperfect framing and a small tilt, mild motion blur, warm indoor lighting mixed with window light, natural casual mood. Cream #fff0e6 room, pale peach #ffe1d0 balloons, soft coral #f48a6e accents. No text, no logos, no watermarks."
+    },
+    {
+     "order": 12,
+     "path": "baby-first-birthday-template-001/photo_share/sample-02.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "사진 공유 샘플 2. 돌잡이 순간을 하객 시점에서 찍은 느낌",
+     "prompt": "Square 1:1 photograph. Same visual world and color grade as the previous image, casual smartphone snapshot by a guest. Shot from a guest's seat over other people's shoulders toward the doljabi table — a twelve-month-old Korean baby girl in a blush-pink hanbok reaching for one of the small objects on the cream cloth. Foreground shoulders and a raised phone are dark and slightly out of focus, framing is a bit off-center, warm indoor lighting, candid unposed mood. Cream #fff0e6 and pale peach #ffe1d0 party decor, soft coral #f48a6e ribbons. No text, no logos, no watermarks."
+    },
+    {
+     "order": 13,
+     "path": "baby-first-birthday-template-001/photo_share/sample-03.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "사진 공유 샘플 3. 테이블 위 답례 떡·디저트 스냅. 인물 없이 분위기만 전달",
+     "prompt": "Square 1:1 photograph. Same visual world and color grade as the previous image, casual smartphone snapshot by a guest. Overhead view of a party table corner — small boxed Korean rice cakes tied with peach ribbon, a paper plate with a slice of cream cake, a coffee cup, and a pastel balloon string entering the frame. Handheld top-down angle, slightly crooked, warm indoor light with a soft window highlight, everyday unstyled feel. Cream #fff0e6 tablecloth, pale peach #ffe1d0 paper goods, soft coral #f48a6e ribbon. No text, no logos, no watermarks."
+    }
+   ]
+  },
+  {
+   "set": "business-seminar",
+   "templateId": "business-seminar-template-001",
+   "images": [
+    {
+     "order": 1,
+     "path": "business-seminar-template-001/main_img.png",
+     "aspect": "3:2",
+     "width": 1500,
+     "height": 1000,
+     "referencePrevious": false,
+     "purpose": "커버 상단 사진(half-split 은 3/2 로 렌더). 세미나가 열리는 공간 자체를 보여주는 첫 인상",
+     "prompt": "Horizontal 3:2 photograph. A wide, empty hotel ballroom set up for a business forum shortly before the doors open: neat rows of dark grey chairs, a low stage with a plain lectern and a large blank presentation screen, no people present. Strictly neutral monochrome interior built from white #ffffff, charcoal #1f1f1f and cool light grey #e8eaef, even diffused ceiling light, calm and orderly, sharp architectural lines, documentary editorial photography, low saturation, no decorative elements, no flowers, no colored lighting. No text, no logos, no watermarks."
+    },
+    {
+     "order": 2,
+     "path": "business-seminar-template-001/timeline/01.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "프로그램 타임라인 1 — 13:30 기조 발표. 타임라인 아이템은 이미지가 없으면 회색 플레이스홀더가 그대로 보인다",
+     "prompt": "Square 1:1 photograph. Same visual world and color grade as the previous images: a plain charcoal lectern with a slim microphone on the forum stage, the softly glowing edge of a large blank presentation screen behind it, shot from a low side angle, no people in frame. White #ffffff, charcoal #1f1f1f, cool light grey #e8eaef, even diffused indoor light, shallow depth of field, documentary editorial photography, low saturation, blank screen with nothing displayed on it. No text, no logos, no watermarks."
+    },
+    {
+     "order": 3,
+     "path": "business-seminar-template-001/timeline/02.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "프로그램 타임라인 2 — 14:20 세션 1·2. 실제로 앉아서 듣는 자리라는 감각",
+     "prompt": "Square 1:1 photograph. Same visual world and color grade as the previous image: a side view along a row of dark grey conference chairs with open blank notebooks and pens resting on the seats, soft projector light falling across the row, one attendee blurred at the very edge of the frame with the face not visible. White #ffffff, charcoal #1f1f1f, cool light grey #e8eaef, even diffused indoor light, shallow depth of field, documentary editorial photography, low saturation, blank notebook pages. No text, no logos, no watermarks."
+    },
+    {
+     "order": 4,
+     "path": "business-seminar-template-001/timeline/03.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "프로그램 타임라인 3 — 15:40 패널 토론. 패널 포맷임을 한눈에",
+     "prompt": "Square 1:1 photograph. Same visual world and color grade as the previous image: four identical charcoal lounge chairs and a small low side table arranged in a row on the forum stage for a panel discussion, seen straight on from the auditorium floor, chairs empty, a plain blank screen behind them. White #ffffff, charcoal #1f1f1f, cool light grey #e8eaef, even diffused indoor light, symmetrical composition, documentary editorial photography, low saturation. No text, no logos, no watermarks."
+    },
+    {
+     "order": 5,
+     "path": "business-seminar-template-001/timeline/04.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "프로그램 타임라인 4 — 16:40 네트워킹. 다과·명찰로 휴식과 교류 시간을 설명",
+     "prompt": "Square 1:1 photograph. Same visual world and color grade as the previous image: a side table during a conference break with plain white coffee cups, a water carafe and a small stack of empty transparent name badge holders, two people's hands reaching for cups with faces completely out of frame. White #ffffff, charcoal #1f1f1f, cool light grey #e8eaef, soft daylight from a large window, shallow depth of field, documentary editorial photography, low saturation, blank badge inserts. No text, no logos, no watermarks."
+    },
+    {
+     "order": 6,
+     "path": "business-seminar-template-001/gallery/01.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": false,
+     "purpose": "지난 회차 현장 1 — 무대 원경. 갤러리는 1/1 로 렌더되므로 정사각(4장 2×2)",
+     "prompt": "Square 1:1 photograph. Wide view of a speaker standing on a stage in a hotel ballroom in front of a large blank presentation screen, seen from the back of the room, audience heads silhouetted across the foreground, faces not identifiable. Neutral grey and charcoal interior in white #ffffff, charcoal #1f1f1f and cool light grey #e8eaef, even professional lighting, documentary conference photography, desaturated neutral color grade, nothing readable on the screen. No text, no logos, no watermarks."
+    },
+    {
+     "order": 7,
+     "path": "business-seminar-template-001/gallery/02.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "지난 회차 현장 2 — 기록하는 청중. 실무자가 오는 자리라는 신호",
+     "prompt": "Square 1:1 photograph. Same visual world and color grade as the previous image: over-the-shoulder view of conference attendees seated in rows, taking notes in notebooks and on laptops, all seen from behind so no face is visible. Neutral grey seating and charcoal carpet, white #ffffff, charcoal #1f1f1f, cool light grey #e8eaef, soft even indoor lighting, shallow depth of field, documentary conference photography, desaturated neutral color grade, blank laptop screens and blank pages. No text, no logos, no watermarks."
+    },
+    {
+     "order": 8,
+     "path": "business-seminar-template-001/gallery/03.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "지난 회차 현장 3 — 휴식 시간 네트워킹. 참석 가치 중 하나가 교류임을 보여준다",
+     "prompt": "Square 1:1 photograph. Same visual world and color grade as the previous image: candid view of business professionals standing and talking during a conference coffee break, holding paper cups, slightly motion-blurred and shot at a shallow depth of field so no face is identifiable, neutral grey lobby with tall windows, natural daylight. White #ffffff, charcoal #1f1f1f, cool light grey #e8eaef, documentary conference photography, desaturated neutral color grade, no staged handshakes, no posed smiles. No text, no logos, no watermarks."
+    },
+    {
+     "order": 9,
+     "path": "business-seminar-template-001/gallery/04.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "지난 회차 현장 4 — 등록 데스크. '등록 PM 1:00부터' 안내를 시각적으로 뒷받침",
+     "prompt": "Square 1:1 photograph. Same visual world and color grade as the previous image: a conference registration desk seen slightly from the side, a long charcoal counter with rows of blank name badge holders laid out and a neat stack of plain grey booklets, a staff member's hands passing a badge, faces out of frame. White #ffffff, charcoal #1f1f1f, cool light grey #e8eaef, even diffused lobby light, documentary conference photography, desaturated neutral color grade, blank badges and blank booklet covers. No text, no logos, no watermarks."
+    },
+    {
+     "order": 10,
+     "path": "business-seminar-template-001/speakers/01.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": false,
+     "purpose": "연사 프로필 1 — 김도현(기조 발표). profile 모듈은 1/1 원형·사각 카드로 렌더",
+     "prompt": "Square 1:1 photograph. Professional corporate headshot of a Korean man in his early fifties with short greying hair, wearing a charcoal suit and a plain white shirt without a tie, plain seamless light grey #e8eaef studio background, soft even key light, calm confident expression looking straight into the lens, head and shoulders framing. Desaturated neutral color grade in white #ffffff and charcoal #1f1f1f, natural skin texture, matte not glossy, restrained and documentary rather than a posed stock-photo smile. No text, no logos, no watermarks."
+    },
+    {
+     "order": 11,
+     "path": "business-seminar-template-001/speakers/02.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "연사 프로필 2 — 이서연(세션 1, 금융). 성별·연령 다양화",
+     "prompt": "Square 1:1 photograph. Same seamless light grey #e8eaef studio background, same soft even lighting and same desaturated color grade as the previous image, but a clearly different person — do not reuse the previous face: a Korean woman in her early forties with shoulder-length dark hair tied back, wearing a dark navy blazer over a white top, calm composed expression looking straight into the lens, head and shoulders framing. White #ffffff and charcoal #1f1f1f palette, natural skin texture, matte not glossy, no posed stock-photo smile. No text, no logos, no watermarks."
+    },
+    {
+     "order": 12,
+     "path": "business-seminar-template-001/speakers/03.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "연사 프로필 3 — 박준호(세션 2, 제조/SCM)",
+     "prompt": "Square 1:1 photograph. Same seamless light grey #e8eaef studio background, same soft even lighting and same desaturated color grade as the previous image, but a clearly different person — do not reuse the previous face: a Korean man in his late forties with neat black hair and glasses, wearing a dark grey suit and a light blue shirt, steady neutral expression looking straight into the lens, head and shoulders framing. White #ffffff and charcoal #1f1f1f palette, natural skin texture, matte not glossy, no posed stock-photo smile. No text, no logos, no watermarks."
+    },
+    {
+     "order": 13,
+     "path": "business-seminar-template-001/speakers/04.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "연사 프로필 4 — 정민아(패널, 테크 CTO)",
+     "prompt": "Square 1:1 photograph. Same seamless light grey #e8eaef studio background, same soft even lighting and same desaturated color grade as the previous image, but a clearly different person — do not reuse the previous face: a Korean woman in her late thirties with a short bob haircut, wearing a plain black knit top under a charcoal jacket, alert direct expression looking straight into the lens, head and shoulders framing. White #ffffff and charcoal #1f1f1f palette, natural skin texture, matte not glossy, no posed stock-photo smile. No text, no logos, no watermarks."
+    }
+   ]
+  },
+  {
+   "set": "education-graduation",
+   "templateId": "education-graduation-template-001",
+   "images": [
+    {
+     "order": 1,
+     "path": "education-graduation-template-001/main_img.jpg",
+     "aspect": "3:2",
+     "width": 1500,
+     "height": 1000,
+     "referencePrevious": false,
+     "purpose": "커버. 현재 이미지의 tassel '2024' 각인과 우하단 스파클 장식을 제거한 격식 있는 학사 정물",
+     "prompt": "Horizontal 3:2 photograph. Editorial still life of a black academic graduation cap lying flat on a light oak wooden desk, its plain navy and pale-gold tassel spread naturally beside it, next to a rolled diploma tied with a deep navy ribbon. Softly out-of-focus background of stacked hardcover books and a matte globe near a bright window. Bright natural window light from the left, calm and formal university mood, muted color grade built on deep navy #16305c, ivory #f4f7fb and warm oak tones, low saturation, shallow depth of field. The tassel must be completely plain: no year charm, no metal charm, no dangling ornament, no numbers anywhere in the frame. No sparkle graphics, no star or diamond overlays, no confetti, no decorative elements. No text, no logos, no watermarks."
+    },
+    {
+     "order": 2,
+     "path": "education-graduation-template-001/timeline/01.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "식순 09:30 입장 — 대강당 로비 안내 데스크와 좌석 안내",
+     "prompt": "Square 1:1 photograph, same visual world and color grade as the previous image. Interior of a quiet university auditorium lobby before a ceremony: a simple wooden reception table with neatly stacked plain paper programme booklets and a navy velvet rope stanchion guiding the entrance, tall doors slightly open toward the dark hall beyond. Empty of people. Soft daylight from a glass facade, muted navy #16305c and ivory #f4f7fb palette, low saturation, calm formal mood, documentary architectural photography, shallow depth of field. No sparkle graphics, no decorative overlays. No text, no logos, no watermarks."
+    },
+    {
+     "order": 3,
+     "path": "education-graduation-template-001/timeline/02.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "식순 10:00 개식 — 무대 연단과 마이크",
+     "prompt": "Square 1:1 photograph, same visual world and color grade as the previous image. A plain wooden lectern with a slim microphone standing at the centre of a university auditorium stage, deep navy stage curtain behind it, a modest arrangement of white and cream flowers at the base. No people, no flags, no banners. Warm soft stage light, muted navy #16305c and ivory #f4f7fb palette, low saturation, formal restrained mood, shallow depth of field, documentary photography. No sparkle graphics, no decorative overlays. No text, no logos, no watermarks."
+    },
+    {
+     "order": 4,
+     "path": "education-graduation-template-001/timeline/03.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "식순 10:20 학위수여 — 학위기를 건네받는 손 클로즈업",
+     "prompt": "Square 1:1 photograph, same visual world and color grade as the previous image. Close-up of two pairs of hands on a university stage: one hand passing a rolled diploma tied with a navy ribbon to another hand emerging from a black academic gown sleeve with a plain navy cuff. Faces not visible, cropped at chest level. Warm soft stage light, blurred navy curtain background, muted navy #16305c and ivory #f4f7fb palette, low saturation, shallow depth of field, formal documentary detail shot. No sparkle graphics, no decorative overlays. No text, no logos, no watermarks."
+    },
+    {
+     "order": 5,
+     "path": "education-graduation-template-001/timeline/04.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "식순 11:00 축사 — 객석에서 무대를 바라보는 시점",
+     "prompt": "Square 1:1 photograph, same visual world and color grade as the previous image. View from the back rows of a university auditorium during a ceremony: silhouetted heads and shoulders of a seated audience in the dark foreground, the brightly lit distant stage far out of focus. Faces not visible, no recognisable individuals. Warm stage light against cool navy shadows, muted navy #16305c and ivory #f4f7fb palette, low saturation, calm formal mood, strong shallow depth of field, documentary photography. No sparkle graphics, no decorative overlays. No text, no logos, no watermarks."
+    },
+    {
+     "order": 6,
+     "path": "education-graduation-template-001/timeline/05.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "식순 11:30 기념 촬영 — 촬영 장소인 캠퍼스 잔디광장",
+     "prompt": "Square 1:1 photograph, same visual world and color grade as the previous image. A black academic cap with a plain navy tassel and a small bouquet of white and cream flowers resting together on a low stone ledge beside a campus lawn, a classic stone university building softly out of focus in the background under bright overcast winter daylight. No people. Muted navy #16305c and ivory #f4f7fb palette, low saturation, calm formal mood, shallow depth of field, editorial still life photography. The tassel is completely plain: no year charm, no numbers. No sparkle graphics, no decorative overlays. No text, no logos, no watermarks."
+    },
+    {
+     "order": 7,
+     "path": "education-graduation-template-001/gallery/01.jpg",
+     "aspect": "4:5",
+     "width": 1200,
+     "height": 1500,
+     "referencePrevious": true,
+     "purpose": "갤러리 01 — 행사 전 대강당 좌석 전경(인물 없음). 현재 이미지는 실내 창밖에 바다·대교가 보이는 비현실적 합성이라 교체",
+     "prompt": "Vertical 4:5 photograph, same visual world and color grade as the previous image. Wide interior view of an empty university auditorium before a ceremony: long rows of dark wooden seats seen from the centre aisle, a modest stage with a deep navy curtain at the far end. Plain windowless side walls, an ordinary campus interior. No people. Even soft indoor lighting, muted navy #16305c and ivory #f4f7fb palette, low saturation, calm formal mood, architectural documentary photography. No ocean, no bridge, no city skyline visible anywhere. No sparkle graphics, no decorative overlays. No text, no logos, no watermarks."
+    },
+    {
+     "order": 8,
+     "path": "education-graduation-template-001/gallery/02.jpg",
+     "aspect": "4:5",
+     "width": 1200,
+     "height": 1500,
+     "referencePrevious": true,
+     "purpose": "갤러리 02 — 학위복 입은 졸업생들의 뒷모습 줄. 얼굴 노출 없음",
+     "prompt": "Vertical 4:5 photograph, same visual world and color grade as the previous image. Rear view of a row of university graduates in black academic gowns and caps with plain navy tassels, seated shoulder to shoulder in a large auditorium, seen from directly behind so no faces are visible. Soft warm stage light glowing far in the background, shallow depth of field, muted navy #16305c and ivory #f4f7fb palette, low saturation, calm formal mood, documentary photography. Tassels are plain: no year charms, no numbers. No sparkle graphics, no decorative overlays. No text, no logos, no watermarks."
+    },
+    {
+     "order": 9,
+     "path": "education-graduation-template-001/gallery/03.jpg",
+     "aspect": "4:5",
+     "width": 1200,
+     "height": 1500,
+     "referencePrevious": true,
+     "purpose": "갤러리 03 — 학사모를 던지는 순간의 실루엣(하늘 배경)",
+     "prompt": "Vertical 4:5 photograph, same visual world and color grade as the previous image. Low angle looking up at a pale winter sky as several black academic caps with plain navy tassels are thrown into the air, captured as crisp dark silhouettes, with the top edge of a stone campus building entering the lower frame. No faces visible. Soft overcast daylight, muted navy #16305c and ivory #f4f7fb palette, low saturation, restrained celebratory mood, documentary photography. No sparkle graphics, no confetti, no decorative overlays. No text, no logos, no watermarks."
+    },
+    {
+     "order": 10,
+     "path": "education-graduation-template-001/gallery/04.jpg",
+     "aspect": "4:5",
+     "width": 1200,
+     "height": 1500,
+     "referencePrevious": true,
+     "purpose": "갤러리 04 — 졸업장과 꽃다발을 든 손 클로즈업",
+     "prompt": "Vertical 4:5 photograph, same visual world and color grade as the previous image. Close-up of hands holding a rolled diploma tied with a navy ribbon together with a small bouquet of white and cream flowers, a black academic gown sleeve visible at the wrist. Face not visible, cropped at chest level. Soft outdoor daylight, a blurred stone campus building behind, muted navy #16305c and ivory #f4f7fb palette, low saturation, calm formal mood, shallow depth of field, editorial detail shot. No sparkle graphics, no decorative overlays. No text, no logos, no watermarks."
+    }
+   ]
+  },
+  {
+   "set": "memorial-obituary",
+   "templateId": "memorial-obituary-template-001",
+   "images": [
+    {
+     "order": 1,
+     "path": "memorial-obituary-template-001/main_img.jpg",
+     "aspect": "3:4",
+     "width": 1200,
+     "height": 1600,
+     "referencePrevious": false,
+     "purpose": "커버 국화 컷 재생성 — 현재 파일에는 우하단 ✦ 반짝임이 이미지에 구워져 있다(코드 장식이 아님). 아치 마스크(3:4)에 맞춰 상단 여백을 비운 클린 버전이 필요하다.",
+     "prompt": "Vertical 3:4 photograph. A single white chrysanthemum blossom resting on dark folded sage-green linen laid over weathered near-black wood, palette locked to muted sage #3f4f45, deep charcoal, and pale off-white #f3f4f1 with no other hues. Soft directional low light from one side, deep quiet shadows, shallow depth of field, fine-art still-life photography, solemn and restrained mood. Compose the flower centered and slightly BELOW the middle of the frame, leaving the top third as empty out-of-focus dark background, because the image is masked into an arch shape with a rounded top. The lower right corner must be completely plain dark fabric or wood — absolutely no sparkle, no star glint, no lens flare, no bokeh highlight, no dust specks, no light orb there. No decorative elements, no sparkles, no glitter, no ribbons, no candles, no bright colors, no warm gold tones, no people, no hands. No text, no logos, no watermarks."
+    },
+    {
+     "order": 2,
+     "path": "memorial-obituary-template-001/timeline/01.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "장례 일정 타임라인 1컷 — '빈소 개시'. 빈소가 마련된 조용한 실내를 상징한다.",
+     "prompt": "Square 1:1 photograph, same visual world and color grade as the previous image. A dim quiet interior corner: a simple arrangement of white chrysanthemums in a plain matte ceramic vessel standing on a low dark wooden table against a muted sage-green wall, palette locked to sage #3f4f45, deep charcoal, and pale off-white #f3f4f1. Soft cool low lamp light from the left, long soft shadows, shallow depth of field, fine-art documentary still-life, solemn and restrained. No decorative elements, no sparkles, no candles, no incense smoke, no portraits, no picture frames, no bright colors, no people. No text, no logos, no watermarks."
+    },
+    {
+     "order": 3,
+     "path": "memorial-obituary-template-001/timeline/02.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "장례 일정 타임라인 2컷 — '입관'. 절차를 직접 묘사하지 않고 정갈하게 준비된 흰 천으로 대신한다.",
+     "prompt": "Square 1:1 photograph, same visual world and color grade as the previous image. A neat stack of folded plain white hemp and linen cloth resting on a dark weathered wooden surface, with a pair of plain white cotton gloves laid flat beside the stack, palette locked to sage #3f4f45, deep charcoal, and pale off-white #f3f4f1. Soft directional low light from one side, deep shadows, shallow depth of field, fine-art still-life photography, quiet, solemn and restrained. No decorative elements, no sparkles, no embroidery, no patterns, no bright colors, no people, no hands. No text, no logos, no watermarks."
+    },
+    {
+     "order": 4,
+     "path": "memorial-obituary-template-001/timeline/03.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "장례 일정 타임라인 3컷 — '발인'. 이른 새벽 떠나는 길을 상징하는 빈 도로.",
+     "prompt": "Square 1:1 photograph, same visual world and color grade as the previous image. An empty narrow country road at first light, receding into cool grey mist, bare dark trees lining both edges, wet asphalt reflecting a pale sky, palette locked to muted sage #3f4f45, deep charcoal, and pale off-white #f3f4f1, very low saturation. Flat diffused dawn light, no sun in frame, quiet and still, fine-art landscape photography, solemn and restrained. No vehicles, no people, no animals, no signage, no decorative elements, no sparkles, no lens flare, no bright colors, no warm sunrise glow. No text, no logos, no watermarks."
+    },
+    {
+     "order": 5,
+     "path": "memorial-obituary-template-001/timeline/04.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "장례 일정 타임라인 4컷 — '장지 도착'. 추모공원의 조용한 잔디와 나무.",
+     "prompt": "Square 1:1 photograph, same visual world and color grade as the previous image. A quiet memorial park lawn at dawn: closely mown grass rising in a gentle slope, a row of tall dark pine and cypress silhouettes behind, thin cool mist between the trunks, palette locked to muted sage #3f4f45, deep charcoal, and pale off-white #f3f4f1, very low saturation. Flat diffused light, shallow depth of field on the foreground grass, fine-art landscape photography, calm, solemn and restrained. No headstones with inscriptions, no engraved markers, no monuments, no crosses, no people, no flowers arrangements, no decorative elements, no sparkles, no bright colors. No text, no logos, no watermarks."
+    },
+    {
+     "order": 6,
+     "path": "memorial-obituary-template-001/main_alt_01.jpg",
+     "aspect": "3:4",
+     "width": 1200,
+     "height": 1600,
+     "referencePrevious": true,
+     "purpose": "(선택) 커버 대안 — 국화 꽃잎 클로즈업. 사용자가 고를 수 있도록 준비만 해두는 컷이며 시드에서는 참조하지 않는다.",
+     "prompt": "Vertical 3:4 photograph, same visual world and color grade as the previous images. A soft-focus close-up of white chrysanthemum petals filling the frame, very low saturation, cool grey, pale ivory #f3f4f1 and muted sage #3f4f45 tones only, gentle diffused light, extremely shallow depth of field, fine-art macro photography, calm, solemn and restrained. Keep the top third of the frame soft and empty because the image is masked into an arch shape with a rounded top; keep the lower right corner plain with no highlight. No decorative elements, no sparkles, no glitter, no lens flare, no dew drops, no bright colors, no people. No text, no logos, no watermarks."
+    }
+   ]
+  },
+  {
+   "set": "business-launch",
+   "templateId": "business-launch-template-001",
+   "images": [
+    {
+     "order": 1,
+     "path": "business-launch-template-001/main_img.png",
+     "aspect": "9:16",
+     "width": 1080,
+     "height": 1920,
+     "referencePrevious": false,
+     "purpose": "커버 히어로 — 6월 행사에 설산 배경이 들어간 계절 불일치를 없앤 계절 중립 제품컷. 대리석·실크·유리로 럭셔리 무드를 만든다",
+     "prompt": "Vertical 9:16 photograph. A tall clear glass luxury perfume bottle with a polished champagne-gold cap standing on a honed cream marble slab, soft ivory silk draped in folds behind it, warm champagne studio light raking from the left and casting one long soft shadow across the marble. Muted cream #f8f5f0 base tone with warm gold #a08658 reflections on the metal cap, low saturation, soft high-key grade, high-end product advertising photography, shallow depth of field. Strictly seasonless studio setting: no snow, no snow-capped mountains, no ice, no autumn leaves, no pine branches, no holiday or seasonal props. Plain unbranded bottle with no engraving of words. Keep the bottle centered within the middle third of the frame so that a square centre crop still contains the entire bottle, and leave generous empty space above and below for overlaid text. No text, no logos, no watermarks."
+    },
+    {
+     "order": 2,
+     "path": "business-launch-template-001/gallery/01.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "컬렉션 정면컷 — '열 가지 향' 이라는 인사말 문구를 시각적으로 뒷받침하는 라인업 이미지",
+     "prompt": "Square 1:1 photograph. Same visual world and color grade as the previous image. Three clear glass perfume bottles from one collection, slightly different heights, lined up straight-on at eye level on a honed cream marble surface against a plain cream #f8f5f0 backdrop, champagne-gold caps catching a warm #a08658 highlight, soft even studio light with gentle grounded shadows, generous negative space around the bottles, minimal seasonless product photography, low saturation warm beige grade. No snow, no ice, no seasonal props, no flowers. Plain unbranded bottles. No text, no logos, no watermarks."
+    },
+    {
+     "order": 3,
+     "path": "business-launch-template-001/gallery/02.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "디테일 클로즈업 — 마감 품질을 보여주는 컷. 제품 런칭 초대장에서 '볼 것이 있다'는 신호",
+     "prompt": "Square 1:1 photograph. Same visual world and color grade as the previous image. Extreme close-up of the polished champagne-gold cap and the faceted glass shoulder of the same luxury perfume bottle, water-clear glass refracting warm light into soft caustics, fine brushed metal texture on the cap, cream #f8f5f0 and gold #a08658 tones, very shallow depth of field, soft directional studio lighting, high-end product detail photography, seasonless minimal setting. No engraved words or initials on the metal. No text, no logos, no watermarks."
+    },
+    {
+     "order": 4,
+     "path": "business-launch-template-001/gallery/03.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "패키지컷 — 런칭 에디션 선구매·웰컴 기프트를 언급하는 초대장이라 '무엇을 받는지'가 보여야 한다",
+     "prompt": "Square 1:1 photograph. Same visual world and color grade as the previous image. A cream rigid gift box with a thin gold foil edge, lid resting slightly ajar to reveal ivory tissue paper and the shoulder of the perfume bottle inside, a slim champagne silk ribbon lying loosely beside it on a cream marble surface, warm soft studio light from the upper left, muted cream #f8f5f0 and warm gold #a08658 palette, generous negative space, editorial packaging still life, seasonless minimal setting with no snow, no pine, no holiday decoration. Plain unbranded packaging. No text, no logos, no watermarks."
+    },
+    {
+     "order": 5,
+     "path": "business-launch-template-001/gallery/04.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "원료 무드컷 — 향의 노트를 암시해 시향 프로그램에 대한 기대를 만든다. 계절 단서 없는 재료만 사용",
+     "prompt": "Square 1:1 photograph. Same visual world and color grade as the previous image. Overhead flat lay of perfume ingredients on cream linen: a few white jasmine petals, one piece of pale sandalwood, thin strips of dried citrus peel and two vanilla pods, arranged sparsely with generous negative space, soft diffused daylight and delicate shadows, muted cream #f8f5f0 and warm beige grade with a single gold #a08658 accent, editorial still life photography, seasonless — no pine cones, no cinnamon sticks, no dried autumn leaves, no snow, no holiday styling. No text, no logos, no watermarks."
+    }
+   ]
+  },
+  {
+   "set": "seasonal-yearend",
+   "templateId": "seasonal-yearend-template-001",
+   "images": [
+    {
+     "order": 1,
+     "path": "seasonal-yearend-template-001/main_img.png",
+     "aspect": "4:5",
+     "width": 1200,
+     "height": 1500,
+     "referencePrevious": false,
+     "purpose": "커버. event-headline variant 가 4/5 로 크롭하고 하단에 흰 오버레이 텍스트를 얹으므로, 웨딩 코드(밀랍 봉인·봉투·흰 꽃)를 완전히 배제한 딥그린 캔들 테이블 컷이 필요하다",
+     "prompt": "Vertical 4:5 photograph. Overhead view of a candlelit year-end dinner table at night: deep forest green linen tablecloth in the tone of #14261e, three lit brass taper candles, two wine glasses catching warm candlelight, sprigs of fir and dried orange slices scattered as decoration, warm string-light bokeh far back in the dark, no people. Intimate winter gathering mood, low-key warm tungsten lighting, warm gold #c9a24d highlights and burgundy #8c2f39 accents, shallow depth of field. Keep the lower third of the frame dark and uncluttered so overlaid white text stays legible. Editorial lifestyle photography. No wax seal, no envelope, no ribbon, no white florals, no wedding motifs, no cream or ivory background. No text, no logos, no watermarks."
+    },
+    {
+     "order": 2,
+     "path": "seasonal-yearend-template-001/gallery/01.jpg",
+     "aspect": "4:5",
+     "width": 1200,
+     "height": 1500,
+     "referencePrevious": true,
+     "purpose": "갤러리 1 — 작년 송년회 단체 사진. 얼굴이 작게 나오는 원경으로 개인 식별을 피하면서 '모임'의 규모와 분위기를 전달",
+     "prompt": "Vertical 4:5 photograph, same visual world and color grade as the previous image. Wide candid documentary shot of about fifteen adults gathered around a long table at a year-end dinner party, seen from a distance and slightly above so faces are small and not identifiable, warm candlelight and string lights overhead, deep forest green #14261e interior with burgundy #8c2f39 upholstery, glasses raised mid-conversation, relaxed celebratory winter mood, warm gold #c9a24d low-key color grade, natural documentary photography. No wedding motifs, no formal ceremony, no stage. No text, no logos, no watermarks."
+    },
+    {
+     "order": 3,
+     "path": "seasonal-yearend-template-001/gallery/02.jpg",
+     "aspect": "4:5",
+     "width": 1200,
+     "height": 1500,
+     "referencePrevious": true,
+     "purpose": "갤러리 2 — 건배 순간. 손 클로즈업으로 얼굴 노출 없이 송년회의 절정 장면을 담는다",
+     "prompt": "Vertical 4:5 photograph, same visual world and color grade as the previous image. Close-up of five or six hands raising wine glasses in a toast across a dinner table, faces cropped out of frame, warm candlelight refracting through red wine and glass, deep forest green #14261e tablecloth, brass candle holders, string-light bokeh in the dark background, shallow depth of field, warm gold #c9a24d low-key color grade, natural documentary photography. No text, no logos, no watermarks."
+    },
+    {
+     "order": 4,
+     "path": "seasonal-yearend-template-001/gallery/03.jpg",
+     "aspect": "4:5",
+     "width": 1200,
+     "height": 1500,
+     "referencePrevious": true,
+     "purpose": "갤러리 3 — 겨울 저녁 빈티지 라운지 실내. 모임 장소(한남 빈티지 라운지)의 무드를 미리 보여주는 컷",
+     "prompt": "Vertical 4:5 photograph, same visual world and color grade as the previous image. Interior of a warm vintage lounge on a winter evening: worn burgundy #8c2f39 leather seating, dark forest green #14261e painted walls, brass wall lamps casting pools of warm gold #c9a24d light, a small decorated fir branch arrangement and lit candle on a side table, wooden floor, no people, cozy intimate low-key mood, editorial interior photography, shallow depth of field. No text, no logos, no watermarks."
+    },
+    {
+     "order": 5,
+     "path": "seasonal-yearend-template-001/gallery/04.jpg",
+     "aspect": "4:5",
+     "width": 1200,
+     "height": 1500,
+     "referencePrevious": true,
+     "purpose": "갤러리 4 — 한 해를 돌아보는 정물. 12월 달력·사진·캔들로 '송년'이라는 주제를 명시적으로 못박는 컷",
+     "prompt": "Vertical 4:5 photograph, same visual world and color grade as the previous image. Still life on a dark wooden table: a wall calendar turned to its last month lying flat, a few scattered instant photos face down and face up, a lit candle in a brass holder, a glass of red wine, a fir sprig, warm side light from a nearby lamp, deep forest green #14261e cloth under the objects, warm gold #c9a24d and burgundy #8c2f39 tones, nostalgic year-end mood, no people, shallow depth of field, editorial still life photography. Calendar grid and photos must be blank and illegible. No text, no logos, no watermarks."
+    }
+   ]
+  },
+  {
+   "set": "birthday-adult",
+   "templateId": "birthday-celebration-template-001",
+   "images": [
+    {
+     "order": 1,
+     "path": "birthday-celebration-template-001/adult/main_img.jpg",
+     "aspect": "3:4",
+     "width": 1200,
+     "height": 1600,
+     "referencePrevious": false,
+     "purpose": "커버. arch(위가 둥근 아치) 마스크로 잘리므로 상단 여백이 넉넉한 세로 컷. 어른 홈파티의 차분한 첫인상",
+     "prompt": "Vertical 3:4 photograph. A small elegant single-tier birthday cake with soft ivory buttercream and two thin taper candles, standing on a cream ceramic cake stand on a wrinkled linen tablecloth. A few pale dusty-pink and cream balloons drift far out of focus in the background. Warm late-afternoon window light rakes across the table from the left. Muted low-saturation pastel color grade built on warm cream #fff8f2, peach #ffe4d3 and a single dusty coral accent #d1603f. Grown-up, calm, editorial lifestyle photography, natural film grain, shallow depth of field, generous empty space above the cake so the top of the frame stays clean. No people, no children, no party hats, no cartoon characters, no number candles, no primary-colored balloons, no confetti scattered on the table, no glitter. No text, no logos, no watermarks."
+    },
+    {
+     "order": 2,
+     "path": "birthday-celebration-template-001/adult/gallery/01.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "갤러리 1/4. 촛불 켠 케이크 클로즈업 — 저녁 홈파티의 온도를 보여주는 컷",
+     "prompt": "Square 1:1 photograph, same visual world and color grade as the previous image. Extreme close-up of two lit thin taper candles on an ivory buttercream cake, warm candle flame glow spilling onto the frosting, dark soft evening interior falling away behind. Muted pastel palette of cream #fff8f2 and peach #ffe4d3 with a dusty coral #d1603f warmth in the flame. Shallow depth of field, natural film grain, quiet and grown-up mood, editorial lifestyle photography. No people, no children, no party hats, no cartoon characters, no number candles, no sparkler candles, no glitter. No text, no logos, no watermarks."
+    },
+    {
+     "order": 3,
+     "path": "birthday-celebration-template-001/adult/gallery/02.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "갤러리 2/4. 파티룸 공간감 — 어떤 분위기의 자리인지 알려주는 컷",
+     "prompt": "Square 1:1 photograph, same visual world and color grade as the previous image. A corner of a small private party room: a soft wall cluster of matte balloons in cream, dusty pink and pale sand, with a low wooden side table holding dried pampas stems in a ceramic vase and two folded linen napkins. Warm diffused daylight from a window on the right, muted low-saturation pastel grade on warm cream #fff8f2 and peach #ffe4d3, one dusty coral #d1603f object as the only saturated note. Calm grown-up interior, editorial lifestyle photography, natural film grain. No people, no children, no cartoon characters, no primary-colored or metallic foil balloons, no banners, no streamers, no glitter. No text, no logos, no watermarks."
+    },
+    {
+     "order": 4,
+     "path": "birthday-celebration-template-001/adult/gallery/03.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "갤러리 3/4. 어른들의 건배 — 얼굴 없이 손만으로 성인 모임임을 드러내는 핵심 컷",
+     "prompt": "Square 1:1 photograph, same visual world and color grade as the previous image. Close-up of four adult hands raising slim glasses of sparkling drink in a toast, cropped at the wrists so no faces and no heads are visible. Warm string-light bokeh floats in the dim background. Muted pastel palette of cream #fff8f2 and peach #ffe4d3 with a dusty coral #d1603f glow in the highlights. Soft indoor evening light, shallow depth of field, candid grown-up lifestyle photography, natural film grain. No faces, no children, no party hats, no cartoon characters, no glitter, no confetti in the air. No text, no logos, no watermarks."
+    },
+    {
+     "order": 5,
+     "path": "birthday-celebration-template-001/adult/gallery/04.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": true,
+     "purpose": "갤러리 4/4. 상차림 — 어떤 음식이 나오는지(핑거푸드) 실질 정보까지 전달",
+     "prompt": "Square 1:1 photograph, same visual world and color grade as the previous image. Overhead view of a party table spread: small ceramic plates of finger food — cheese, olives, figs, crackers — with linen napkins, matte cutlery and two low tumblers on a wrinkled linen tablecloth. Warm afternoon window light from the upper left, muted low-saturation pastel grade on warm cream #fff8f2 and peach #ffe4d3 with a dusty coral #d1603f accent in one small dish. Calm grown-up styling, editorial food-lifestyle photography, natural film grain, slightly imperfect real arrangement. No people, no children, no birthday cake, no cartoon characters, no paper party plates, no glitter, no confetti. No text, no logos, no watermarks."
+    }
+   ]
+  },
+  {
+   "set": "sports-tennis",
+   "templateId": "sports-tennis-template-001",
+   "images": [
+    {
+     "order": 1,
+     "path": "sports-tennis-template-001/gallery/01.jpg",
+     "aspect": "4:5",
+     "width": 1200,
+     "height": 1500,
+     "referencePrevious": false,
+     "purpose": "지난 대회 코트 전경 — 시설 규모와 대회 세팅(무대 없는 동호인 대회 분위기)을 한눈에 보여줘 참가 판단 근거가 된다",
+     "prompt": "Vertical 4:5 photograph. Wide view of an outdoor hard tennis court on a clear sunny day, court surface in a vivid cyan blue close to #1aaedb with crisp bright white #ffffff painted lines, a plain unmarked fabric banner with no lettering zip-tied to the chain-link fence behind the baseline, folding chairs, a large water cooler and a stack of racket bags along the side, a wire basket of lime-yellow #c9dc1f tennis balls near the net post, no players on the court, green summer trees beyond the fence, vivid but natural saturation, strong bright midday daylight, amateur community tournament atmosphere rather than a professional stadium, documentary photography, 35mm look, deep focus. No text, no logos, no watermarks."
+    },
+    {
+     "order": 2,
+     "path": "sports-tennis-template-001/gallery/02.jpg",
+     "aspect": "4:5",
+     "width": 1200,
+     "height": 1500,
+     "referencePrevious": true,
+     "purpose": "경기 중 스윙 순간 — 아마추어 레벨의 실제 경기 장면으로 '나도 나갈 수 있겠다'는 판단을 준다",
+     "prompt": "Vertical 4:5 photograph. Same visual world and color grade as the previous image: vivid cyan blue #1aaedb hard court, white #ffffff lines, lime-yellow #c9dc1f ball, bright natural sunlight. An amateur adult tennis player in casual mixed-color sportswear and a cap, captured mid-swing at the exact moment of contact with the ball, body turned away from the camera and face shaded by the cap brim so the person is not identifiable, slight motion blur on the racket arm, an opponent far away across the net rendered small and out of focus, shallow depth of field, strong directional afternoon light with a crisp shadow on the court, ordinary club-level technique rather than professional form, documentary sports photography. No text, no logos, no watermarks."
+    },
+    {
+     "order": 3,
+     "path": "sports-tennis-template-001/gallery/03.jpg",
+     "aspect": "4:5",
+     "width": 1200,
+     "height": 1500,
+     "referencePrevious": true,
+     "purpose": "시상 트로피 — 시상 안내 탭을 시각적으로 뒷받침하는 참가 동기 컷",
+     "prompt": "Vertical 4:5 photograph. Same visual world and color grade as the previous images: cyan blue #1aaedb court in the softly blurred background, white #ffffff lines, lime-yellow #c9dc1f balls. A row of small plain gold and silver trophies and a few ribbon medals arranged on a simple folding table beside the court, an old wooden-handled racket and three tennis balls lying next to them, trophy plaques left blank and unengraved, warm late-afternoon sunlight raking across the table, no people in frame, shallow depth of field on the closest trophy, vivid natural color, modest amateur tournament prize setup. No text, no logos, no watermarks."
+    },
+    {
+     "order": 4,
+     "path": "sports-tennis-template-001/gallery/04.jpg",
+     "aspect": "4:5",
+     "width": 1200,
+     "height": 1500,
+     "referencePrevious": true,
+     "purpose": "참가자 단체 사진 — 대회 규모(30여 명)와 친근한 동호인 분위기를 전달, 얼굴은 작게",
+     "prompt": "Vertical 4:5 photograph. Same visual world and color grade as the previous images: vivid cyan blue #1aaedb hard court, crisp white #ffffff lines, bright sunny daylight. About twenty adult amateur tennis players of mixed ages standing together in two loose rows on the court holding rackets, some raising a racket in celebration, casual sportswear in mixed colors, photographed from a distance and slightly elevated angle so every face is small and not identifiable, relaxed cheerful group mood, green trees and chain-link fence behind them, vivid natural saturation, documentary photography, deep focus. No text, no logos, no watermarks."
+    }
+   ]
+  },
+  {
+   "set": "culture-exhibition",
+   "templateId": "culture-exhibition-template-001",
+   "images": [
+    {
+     "order": 1,
+     "path": "culture-exhibition-template-001/main_img.jpg",
+     "aspect": "4:5",
+     "width": 1200,
+     "height": 1500,
+     "referencePrevious": false,
+     "purpose": "커버 재생성 — 현재 커버는 상·하단이 모두 밝아 흰 타이포가 읽히지 않는다(E-2). 텍스트가 놓이는 하단을 어둡게 확보한 갤러리 전경.",
+     "prompt": "Vertical 4:5 photograph. Interior of a minimal art gallery with white walls and warm oak flooring, a single large abstract painting in muted cream, greige and soft charcoal hanging on the far wall, narrow directional track lighting from above, no people, no furniture. The lower 40 percent of the frame falls into deep even shadow across the floor so that white overlaid text placed there stays clearly legible, while the upper half stays quiet and softly lit. Restrained monochrome color grade built strictly around off-white #f4f1ea, warm grey #e5e0d5 and near-black #141414, very low saturation, no blue, red, green or orange anywhere including the painting on the wall, still and contemplative, editorial architectural photography, fine natural film grain. No text, no logos, no watermarks."
+    },
+    {
+     "order": 2,
+     "path": "culture-exhibition-template-001/gallery/02.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": false,
+     "purpose": "현재 02번은 작품이 아니라 청·주황·적·녹 원색 그림이 걸린 전시 전경이라 모노톤 테마와 작품 캡션(《고요한 시간 II》 캔버스에 유채)에 맞지 않는다. 01·03·04 와 같은 결의 회화 1점으로 교체.",
+     "prompt": "Square 1:1 photograph. One framed abstract painting hanging alone on a plain white gallery wall, thin light oak floating frame, portrait-format canvas centered within the square frame with generous wall margin. The painting is a calm abstraction of broad cream, greige and soft charcoal brushstrokes over raw linen, visible canvas weave, dry-brush edges and thin scraped layers, no recognizable objects or figures. Same visual world and color grade as the other artwork images in this set: off-white #f4f1ea, warm grey #e5e0d5, near-black #141414, extremely low saturation, absolutely no blue, red, green, orange or pink. Soft even gallery lighting from above with a faint natural shadow under the frame. Fine art documentation photography, sharp texture, no perspective distortion. No text, no logos, no watermarks."
+    },
+    {
+     "order": 3,
+     "path": "culture-exhibition-template-001/profile_img.jpg",
+     "aspect": "1:1",
+     "width": 1200,
+     "height": 1200,
+     "referencePrevious": false,
+     "purpose": "작가 소개(solo_profile) 모듈용 초상. 이 모듈은 이미지를 원형 1:1 로 렌더하므로 정사각·여백 확보가 필요하다.",
+     "prompt": "Square 1:1 photograph. Environmental portrait of a Korean artist in their thirties standing in a bright quiet studio, blank canvases leaning against a white wall behind them, wearing a plain linen apron over neutral clothing, hands relaxed at their sides, calm unposed expression looking slightly off camera. Head and shoulders centered with generous margin on all sides so the square can be cropped to a circle without cutting the head. Soft natural window light from the left, same restrained color grade as the rest of the set: off-white #f4f1ea, warm grey #e5e0d5, near-black #141414, muted and desaturated, no strong colors in clothing or background. Documentary portrait photography, shallow depth of field, natural skin texture. No text, no logos, no watermarks."
+    }
+   ]
+  },
+  {
+   "set": "birthday-kids",
+   "templateId": "birthday-kids-template-001",
+   "images": [
+    {
+     "order": 1,
+     "path": "birthday-kids-template-001/main_img.png",
+     "aspect": "4:5",
+     "width": 1200,
+     "height": 1500,
+     "referencePrevious": false,
+     "purpose": "커버(sticker-pop 폴라로이드 프레임 안에 들어가는 유일한 신규 컷). 아동 생일파티라는 정체성과 '일곱 살'이라는 나이를 촛불 개수로 즉시 전달한다.",
+     "prompt": "Vertical 4:5 photograph. A bright children's birthday party table photographed slightly from above: a small round layered cake with exactly seven thin candles on a light wooden table, paper cups, striped paper straws and folded party hats scattered around, pastel balloons in peach, cream and soft coral floating out of focus above the table, one small child's hands reaching in from the bottom edge of the frame, face not visible. Warm cream and peach color world built on a #fff1e8 background tone with coral #f2683c accents on the candles, balloon ribbons and paper goods. Natural daylight from a side window, cheerful and playful but soft and uncluttered, shallow depth of field, candid lifestyle photography, no adults in frame. No text, no logos, no watermarks."
+    }
+   ]
+  }
+ ],
+ "derivedThumbnails": [
+  {
+   "path": "business-launch-template-001/thumb_v2.jpeg",
+   "from": "cover",
+   "aspect": "3:4",
+   "width": 1200,
+   "height": 1600,
+   "note": "AI 생성 금지 — 해당 템플릿 커버를 중앙 크롭"
+  },
+  {
+   "path": "seasonal-yearend-template-001/thumbnail.jpeg",
+   "from": "cover",
+   "aspect": "3:4",
+   "width": 1200,
+   "height": 1600,
+   "note": "AI 생성 금지 — 해당 템플릿 커버를 중앙 크롭"
+  },
+  {
+   "path": "education-graduation-template-001/thumb_v2.jpeg",
+   "from": "cover",
+   "aspect": "3:4",
+   "width": 1200,
+   "height": 1600,
+   "note": "AI 생성 금지 — 해당 템플릿 커버를 중앙 크롭"
+  },
+  {
+   "path": "baby-first-birthday-template-001/thumb_v2.jpeg",
+   "from": "cover",
+   "aspect": "3:4",
+   "width": 1200,
+   "height": 1600,
+   "note": "AI 생성 금지 — 해당 템플릿 커버를 중앙 크롭"
+  },
+  {
+   "path": "memorial-obituary-template-001/thumb_v2.jpeg",
+   "from": "cover",
+   "aspect": "3:4",
+   "width": 1200,
+   "height": 1600,
+   "note": "AI 생성 금지 — 해당 템플릿 커버를 중앙 크롭"
+  },
+  {
+   "path": "business-seminar-template-001/thumbnail.jpeg",
+   "from": "cover",
+   "aspect": "3:4",
+   "width": 1200,
+   "height": 1600,
+   "note": "AI 생성 금지 — 해당 템플릿 커버를 중앙 크롭"
+  },
+  {
+   "path": "wedding-classic-template-001/thumb_v2.jpeg",
+   "from": "cover",
+   "aspect": "3:4",
+   "width": 1200,
+   "height": 1600,
+   "note": "AI 생성 금지 — 해당 템플릿 커버를 중앙 크롭"
+  },
+  {
+   "path": "culture-exhibition-template-001/thumb_v2.jpeg",
+   "from": "cover",
+   "aspect": "3:4",
+   "width": 1200,
+   "height": 1600,
+   "note": "AI 생성 금지 — 해당 템플릿 커버를 중앙 크롭"
+  }
+ ]
+}

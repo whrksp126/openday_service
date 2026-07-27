@@ -16,11 +16,12 @@ interface Invitation {
 
 interface Props {
   invitation: Invitation
+  categorySlug?: string | null
 }
 
 const DESIGN_WIDTH = 375
 
-export default function InvitationView({ invitation }: Props) {
+export default function InvitationView({ invitation, categorySlug }: Props) {
   const content = (invitation.contentJson ?? {}) as InvitationContent
   const modules = (invitation.modulesJson ?? []) as InvitationModule[]
   const styles = (invitation.styles ?? {}) as InvitationStyles
@@ -76,6 +77,7 @@ export default function InvitationView({ invitation }: Props) {
             readOnly
             live
             invitationId={invitation.id}
+            categorySlug={categorySlug}
           />
         </div>
       </div>

@@ -84,12 +84,12 @@ export default async function InvitationPage({ params }: Props) {
   const { slug } = await params
   const invitation = await prisma.invitation.findUnique({
     where: { slug, isPublished: true },
-    include: { template: true },
+    include: { template: { include: { category: true } } },
   })
 
   if (!invitation) notFound()
 
   await recordVisit(invitation.id)
 
-  return <InvitationView invitation={invitation} />
+  return <InvitationView invitation={invitation} categorySlug={invitation.template?.category.slug ?? null} />
 }

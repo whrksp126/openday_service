@@ -23,9 +23,14 @@ import ScrollAnimateChildren from '@/components/shared/ScrollAnimateChildren'
 import { normalizeScrollAnimation } from '@/lib/scroll-animations'
 import { findVariant } from './main-screen-variants'
 import { systemAssetUrl } from '@/lib/asset-paths'
+import { categoryLabels, type CategoryLabels } from '@/lib/category-labels'
 
 const DEFAULT_ACCENT = '#bf8362'
 const DEFAULT_BG = '#f3f3f3'
+
+// 카테고리별 기본 문구를 하위 섹션까지 내려보낸다 (renderModule 시그니처 오염 방지)
+const LabelsContext = React.createContext<CategoryLabels>(categoryLabels(null))
+const useLabels = () => React.useContext(LabelsContext)
 
 const FONT_MAP: Record<string, string> = {
   '고운돋움': "'Gowun Dodum', sans-serif",
@@ -122,10 +127,10 @@ function BabyNameSection({ accent, content, fontFamily, module, showEnglish }: {
   const koreanLabelStyle: React.CSSProperties = { fontWeight: (cfg.koreanLabelBold as boolean) ? 'bold' : undefined, fontStyle: (cfg.koreanLabelItalic as boolean) ? 'italic' : undefined, textAlign: ((cfg.koreanLabelAlign as string | undefined) ?? 'center') as React.CSSProperties['textAlign'], whiteSpace: 'pre-line' }
   const labelStyle: React.CSSProperties = { fontWeight: (cfg.labelBold as boolean) ? 'bold' : undefined, fontStyle: (cfg.labelItalic as boolean) ? 'italic' : undefined, textAlign: ((cfg.labelAlign as string | undefined) ?? 'center') as React.CSSProperties['textAlign'], whiteSpace: 'pre-line' }
   return (
-    <section className="py-10 mx-4 border-t border-gray-200 text-center" style={{ fontFamily }}>
+    <section className="py-10 mx-4 border-t border-[var(--od-divider)] text-center" style={{ fontFamily }}>
       {(cfg.koreanLabelVisible as boolean) !== false && <p className="text-sm mb-1" style={{ color: accent, ...koreanLabelStyle }}>{(cfg.koreanTitle as string | undefined) ?? '주인공'}</p>}
       {showEnglish && (cfg.labelVisible as boolean) !== false && <p className="text-xs mb-1" style={{ color: accent, fontFamily: 'Georgia, serif', ...labelStyle }}>{(cfg.englishTitle as string | undefined) ?? 'Baby'}</p>}
-      {parentLine && <div className="text-xs text-gray-500 mb-2">{parentLine}</div>}
+      {parentLine && <div className="text-xs text-[var(--od-fg-500)] mb-2">{parentLine}</div>}
       <div className="tracking-widest" style={{ color: accent, fontSize: '1.25rem' }}>{babyName}</div>
     </section>
   )
@@ -152,40 +157,118 @@ function CoupleNamesSection({ accent, content, fontFamily, module, showEnglish }
   const titleBigStyle: React.CSSProperties = { fontWeight: (cfg.titleBigBold as boolean) ? 'bold' : 'medium', fontStyle: (cfg.titleBigItalic as boolean) ? 'italic' : undefined, textAlign: ((cfg.titleBigAlign as string | undefined) ?? 'center') as React.CSSProperties['textAlign'], whiteSpace: 'pre-line' }
   const titleSmallStyle: React.CSSProperties = { fontWeight: (cfg.titleSmallBold as boolean) ? 'bold' : undefined, fontStyle: (cfg.titleSmallItalic as boolean) ? 'italic' : undefined, textAlign: ((cfg.titleSmallAlign as string | undefined) ?? 'center') as React.CSSProperties['textAlign'], whiteSpace: 'pre-line' }
   return (
-    <section className="py-10 mx-4 border-t border-gray-200 text-center" style={{ fontFamily }}>
+    <section className="py-10 mx-4 border-t border-[var(--od-divider)] text-center" style={{ fontFamily }}>
       {(cfg.koreanLabelVisible as boolean) !== false && <p className="text-sm mb-1" style={{ color: accent, ...koreanLabelStyle }}>{(cfg.koreanTitle as string | undefined) ?? '신랑·신부'}</p>}
       {showEnglish && (cfg.labelVisible as boolean) !== false && <p className="text-xs mb-1" style={{ color: accent, fontFamily: 'Georgia, serif', ...labelStyle }}>{(cfg.englishTitle as string | undefined) ?? 'Couple'}</p>}
-      {(cfg.titleBigVisible as boolean) !== false && (cfg.titleBig as string | undefined) && (
-        <div className="text-sm text-gray-800 mb-1" style={titleBigStyle}>{cfg.titleBig as string}</div>
+      {bigTitle(cfg.titleBig as string | undefined, cfg.koreanTitle as string | undefined, cfg.titleBigVisible as boolean | undefined) && (
+        <div className="text-sm text-[var(--od-fg-800)] mb-1" style={titleBigStyle}>{cfg.titleBig as string}</div>
       )}
       {(cfg.titleSmallVisible as boolean) !== false && (cfg.titleSmall as string | undefined) && (
-        <div className="text-xs text-gray-400 mb-5" style={titleSmallStyle}>{cfg.titleSmall as string}</div>
+        <div className="text-xs text-[var(--od-fg-400)] mb-5" style={titleSmallStyle}>{cfg.titleSmall as string}</div>
       )}
       <div className="tracking-widest" style={{ color: accent, fontSize: '1.125rem' }}>
         {cfg.firstNameVisible !== false && <div style={firstStyle}>{firstName}</div>}
-        {cfg.separatorVisible !== false && <div className="my-1 text-gray-400 text-sm" style={sepStyle}>{sepText}</div>}
+        {cfg.separatorVisible !== false && <div className="my-1 text-[var(--od-fg-400)] text-sm" style={sepStyle}>{sepText}</div>}
         {cfg.secondNameVisible !== false && <div style={secondStyle}>{secondName}</div>}
       </div>
     </section>
   )
 }
 
+// ── 배경 명도 판정 + surface 토큰 ────────────────────────────────────────────
+// 템플릿 배경색이 어두우면 카드·구분선·본문색을 반전시킨다.
+// 라이트 값은 기존 Tailwind gray 스케일과 1:1 동일 → 밝은 템플릿은 렌더 결과가 변하지 않는다.
+function relativeLuminance(hex: string): number {
+  const m = /^#?([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(hex.trim())
+  if (!m) return 1
+  const h = m[1].length === 3 ? m[1].split('').map(c => c + c).join('') : m[1]
+  const [r, g, b] = [0, 2, 4].map(i => {
+    const v = parseInt(h.slice(i, i + 2), 16) / 255
+    return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4
+  })
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b
+}
+
+const LIGHT_SURFACE_VARS = {
+  '--od-surface': '#ffffff',
+  '--od-surface-muted': '#f3f4f6',
+  '--od-surface-border': '#f3f4f6',
+  '--od-divider': '#e5e7eb',
+  '--od-placeholder': '#e5e7eb',
+  '--od-fg-800': '#1f2937',
+  '--od-fg-700': '#374151',
+  '--od-fg-600': '#4b5563',
+  '--od-fg-500': '#6b7280',
+  '--od-fg-400': '#9ca3af',
+  '--od-fg-300': '#d1d5db',
+  '--od-body': '#333333',
+} as const
+
+const DARK_SURFACE_VARS = {
+  '--od-surface': 'rgba(255,255,255,0.06)',
+  '--od-surface-muted': 'rgba(255,255,255,0.08)',
+  '--od-surface-border': 'rgba(255,255,255,0.14)',
+  '--od-divider': 'rgba(255,255,255,0.13)',
+  '--od-placeholder': 'rgba(255,255,255,0.10)',
+  '--od-fg-800': '#eef1f5',
+  '--od-fg-700': '#dfe4ea',
+  '--od-fg-600': '#c9d0da',
+  '--od-fg-500': '#aab3bf',
+  '--od-fg-400': '#8d97a5',
+  '--od-fg-300': '#6f7a89',
+  '--od-body': '#dfe4ea',
+} as const
+
+function surfaceVars(bgColor: string): Record<string, string> {
+  return relativeLuminance(bgColor) < 0.18 ? { ...DARK_SURFACE_VARS } : { ...LIGHT_SURFACE_VARS }
+}
+
+/**
+ * 큰제목(titleBig)을 렌더할지 판정.
+ * 섹션 한글 제목과 같은 문자열이면 화면에 두 번 찍히므로 숨긴다.
+ * (예전에는 `계좌 정보 / Account / 마음 전하실 곳` 처럼 3중으로 나오는 템플릿이 있었다)
+ */
+function bigTitle(titleBig?: string, koreanTitle?: string, visible?: boolean): string | null {
+  if (visible === false || !titleBig) return null
+  if (koreanTitle && titleBig.trim() === koreanTitle.trim()) return null
+  return titleBig
+}
+
+/** accent 위에 올릴 글자색 — 밝은 accent(골드 등) 위 흰 글씨 방지 */
+function contrastOn(hex: string): string {
+  return relativeLuminance(hex) > 0.45 ? '#1a1a1a' : '#ffffff'
+}
+
+/**
+ * 달력 주말 색. 일요일 빨강 / 토요일 파랑은 청첩장 관습이라
+ * 비즈니스·스포츠·전시·부고 카테고리에서는 쓰지 않는다(weekendColors: null).
+ */
+function weekendColor(labels: CategoryLabels, dayIndex: number): React.CSSProperties {
+  const w = labels.weekendColors
+  if (!w) return {}
+  if (dayIndex === 0) return { color: w.sun }
+  if (dayIndex === 6) return { color: w.sat }
+  return {}
+}
+
 // ── bgEffect 패턴 계산 ──────────────────────────────────────────────────────
-function getBgEffect(effect?: string): { backgroundImage: string; backgroundSize?: string } {
+function getBgEffect(effect?: string, isDark = false): { backgroundImage: string; backgroundSize?: string } {
+  // 다크 배경에서는 검은 패턴이 보이지 않으므로 흰색 계열로 뒤집는다
+  const ink = (a: number) => (isDark ? `rgba(255,255,255,${a})` : `rgba(0,0,0,${a})`)
   switch (effect) {
     case 'grid':
       return {
-        backgroundImage: 'linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px)',
+        backgroundImage: `linear-gradient(${ink(0.04)} 1px, transparent 1px), linear-gradient(90deg, ${ink(0.04)} 1px, transparent 1px)`,
         backgroundSize: '20px 20px',
       }
     case 'dot':
       return {
-        backgroundImage: 'radial-gradient(circle, rgba(0,0,0,0.1) 1px, transparent 1px)',
+        backgroundImage: `radial-gradient(circle, ${ink(0.1)} 1px, transparent 1px)`,
         backgroundSize: '16px 16px',
       }
     case 'paper':
       return {
-        backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 24px, rgba(0,0,0,0.025) 24px, rgba(0,0,0,0.025) 25px)',
+        backgroundImage: `repeating-linear-gradient(0deg, transparent, transparent 24px, ${ink(0.025)} 24px, ${ink(0.025)} 25px)`,
       }
     case 'hanji':
       return {
@@ -232,12 +315,16 @@ function MainSection({ content, accent, fontFamily, showNames, showEnglish, modu
 
 // ── 인사말 ──────────────────────────────────────────────────────────────────
 function GreetingSection({ accent, content, showEnglish }: { accent: string; content: InvitationContent; showEnglish: boolean }) {
+  const labels = useLabels()
   const groom = content.groom ?? {}
   const bride = content.bride ?? {}
-  const groomName = `${groom.last ?? '신'}${groom.first ?? '랑'}`
-  const brideName = `${bride.last ?? '신'}${bride.first ?? '부'}`
+  // 커플 이름이 실제로 있을 때만 자동 서명한다.
+  // (예전에는 글자 단위 fallback 으로 '신랑 · 신부' 가 조립돼 비웨딩 템플릿에도 찍혔다)
+  const hasCoupleNames = Boolean(groom.first || groom.last || bride.first || bride.last)
+  const groomName = `${groom.last ?? ''}${groom.first ?? ''}` || '신랑'
+  const brideName = `${bride.last ?? ''}${bride.first ?? ''}` || '신부'
   const [first, second] = (content.groomFirst ?? true) ? [groomName, brideName] : [brideName, groomName]
-  const englishLabel = content.greetingEnglishTitle ?? 'Invitation'
+  const englishLabel = content.greetingEnglishTitle ?? labels.greetingEn
   const labelVisible = content.greetingLabelVisible !== false
   const labelStyle: React.CSSProperties = {
     fontWeight: content.greetingLabelBold ? 'bold' : undefined,
@@ -245,15 +332,15 @@ function GreetingSection({ accent, content, showEnglish }: { accent: string; con
     textAlign: (content.greetingLabelAlign as React.CSSProperties['textAlign']) ?? 'center',
     whiteSpace: 'pre-line',
   }
-  const author = content.greetingAuthor ?? `${first} · ${second}`
-  const authorVisible = content.greetingAuthorVisible !== false
+  const author = content.greetingAuthor ?? (hasCoupleNames ? `${first} · ${second}` : '')
+  const authorVisible = content.greetingAuthorVisible !== false && Boolean(author)
   const authorStyle: React.CSSProperties = {
     fontWeight: content.greetingAuthorBold ? 'bold' : undefined,
     fontStyle: content.greetingAuthorItalic ? 'italic' : undefined,
     textAlign: (content.greetingAuthorAlign as React.CSSProperties['textAlign']) ?? 'center',
     whiteSpace: 'pre-line',
   }
-  const koreanLabel = content.greetingKoreanTitle ?? '인사말'
+  const koreanLabel = content.greetingKoreanTitle ?? labels.greeting
   const koreanLabelVisible = content.greetingKoreanLabelVisible !== false
   const koreanLabelStyle: React.CSSProperties = {
     fontWeight: content.greetingKoreanLabelBold ? 'bold' : undefined,
@@ -274,26 +361,27 @@ function GreetingSection({ accent, content, showEnglish }: { accent: string; con
     whiteSpace: 'pre-line',
   }
   return (
-    <section className="py-10 mx-4 border-t border-gray-200 text-center">
+    <section className="py-10 mx-4 border-t border-[var(--od-divider)] text-center">
       {koreanLabelVisible && <p className="text-sm mb-1" style={{ color: accent, ...koreanLabelStyle }}>{koreanLabel}</p>}
       {showEnglish && labelVisible && <p className="text-xs mb-1" style={{ color: accent, fontFamily: 'Georgia, serif', ...labelStyle }}>{englishLabel}</p>}
       {content.invitationTitleVisible !== false && content.invitationTitle && (
-        <div className="text-sm text-gray-800 mb-1" style={titleBigStyle}>{content.invitationTitle}</div>
+        <div className="text-sm text-[var(--od-fg-800)] mb-1" style={titleBigStyle}>{content.invitationTitle}</div>
       )}
       {content.invitationTitleVisible !== false && !content.invitationTitle && (
-        <div className="text-sm text-gray-800 mb-1" style={titleBigStyle}>소중한 분들을 초대합니다</div>
+        <div className="text-sm text-[var(--od-fg-800)] mb-1" style={titleBigStyle}>소중한 분들을 초대합니다</div>
       )}
       {content.greetingTitleSmallVisible !== false && content.greetingTitleSmall && (
-        <div className="text-xs text-gray-400 mb-5" style={titleSmallStyle}>{content.greetingTitleSmall}</div>
+        <div className="text-xs text-[var(--od-fg-400)] mb-5" style={titleSmallStyle}>{content.greetingTitleSmall}</div>
       )}
-      {content.greetingMessageVisible !== false && <RichText html={content.greetingMessage ?? '저희 두 사람의 작은 만남이\n진실한 사랑으로 꽃피어\n오늘 이 자리를 빛내는 결혼식으로 이어졌습니다.'} className="text-xs text-gray-600 leading-8 mb-6" />}
-      {authorVisible && <div className="text-xs text-gray-500 mt-2" style={authorStyle}>{author}</div>}
+      {content.greetingMessageVisible !== false && <RichText html={content.greetingMessage ?? '저희 두 사람의 작은 만남이\n진실한 사랑으로 꽃피어\n오늘 이 자리를 빛내는 결혼식으로 이어졌습니다.'} className="text-xs text-[var(--od-fg-600)] leading-7 mb-6 [&_p:empty]:h-3 [&_p:empty]:leading-none" />}
+      {authorVisible && <div className="text-xs text-[var(--od-fg-500)] mt-2" style={authorStyle}>{author}</div>}
     </section>
   )
 }
 
 // ── 예식 일시 ────────────────────────────────────────────────────────────────
 function DatetimeSection({ accent, content, showEnglish }: { accent: string; content: InvitationContent; showEnglish: boolean }) {
+  const labels = useLabels()
   const dateObj = content.eventDate ? new Date(content.eventDate) : new Date('2026-10-18')
   const year = dateObj.getFullYear()
   const month = dateObj.getMonth() + 1
@@ -308,7 +396,7 @@ function DatetimeSection({ accent, content, showEnglish }: { accent: string; con
     textAlign: (content.datetimeLabelAlign as React.CSSProperties['textAlign']) ?? 'center',
     whiteSpace: 'pre-line',
   }
-  const datetimeKoreanLabel = content.datetimeKoreanTitle ?? '행사 일시'
+  const datetimeKoreanLabel = content.datetimeKoreanTitle ?? labels.datetime
   const datetimeKoreanLabelVisible = content.datetimeKoreanLabelVisible !== false
   const datetimeKoreanLabelStyle: React.CSSProperties = {
     fontWeight: content.datetimeKoreanLabelBold ? 'bold' : undefined,
@@ -333,16 +421,16 @@ function DatetimeSection({ accent, content, showEnglish }: { accent: string; con
     whiteSpace: 'pre-line',
   }
   return (
-    <section className="py-10 mx-4 border-t border-gray-200 text-center">
+    <section className="py-10 mx-4 border-t border-[var(--od-divider)] text-center">
       {datetimeKoreanLabelVisible && <p className="text-sm mb-1" style={{ color: accent, ...datetimeKoreanLabelStyle }}>{datetimeKoreanLabel}</p>}
-      {showEnglish && datetimeLabelVisible && <p className="text-xs mb-1" style={{ color: accent, fontFamily: 'Georgia, serif', ...datetimeLabelStyle }}>{content.datetimeEnglishTitle ?? 'Event Day'}</p>}
-      {titleBigVisible && titleBigText && <div className="text-sm text-gray-800 mt-2 mb-1" style={titleBigStyle}>{titleBigText}</div>}
-      {titleSmallVisible && titleSmallText && <div className="text-xs text-gray-500 mb-6" style={titleSmallStyle}>{titleSmallText}</div>}
-      <div className="text-sm font-medium mb-4" style={{ color: '#333' }}>{month}월</div>
+      {showEnglish && datetimeLabelVisible && <p className="text-xs mb-1" style={{ color: accent, fontFamily: 'Georgia, serif', ...datetimeLabelStyle }}>{content.datetimeEnglishTitle ?? labels.datetimeEn}</p>}
+      {titleBigVisible && titleBigText && <div className="text-sm text-[var(--od-fg-800)] mt-2 mb-1" style={titleBigStyle}>{titleBigText}</div>}
+      {titleSmallVisible && titleSmallText && <div className="text-xs text-[var(--od-fg-500)] mb-6" style={titleSmallStyle}>{titleSmallText}</div>}
+      <div className="text-sm font-medium mb-4 text-[var(--od-fg-700)]">{month}월</div>
       <table className="w-full text-xs mb-4" cellPadding={4}>
         <thead>
           <tr>{WEEKDAYS.map((d, i) => (
-            <th key={i} className="text-center font-normal" style={{ color: i === 0 ? '#d97c74' : i === 6 ? '#668eaa' : '#999' }}>{d}</th>
+            <th key={i} className="text-center font-normal text-[var(--od-fg-400)]" style={weekendColor(labels, i)}>{d}</th>
           ))}</tr>
         </thead>
         <tbody>
@@ -350,11 +438,12 @@ function DatetimeSection({ accent, content, showEnglish }: { accent: string; con
             <tr key={wi}>{week.map((d, di) => (
               <td key={di} className="text-center py-1">
                 {d && (
-                  <span className="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs" style={
-                    d === day
-                      ? { backgroundColor: accent, color: '#fff', fontWeight: 'bold' }
-                      : { color: di === 0 ? '#d97c74' : di === 6 ? '#668eaa' : '#555' }
-                  }>{d}</span>
+                  <span
+                    className="inline-flex items-center justify-center w-7 h-7 rounded-full text-xs text-[var(--od-fg-600)]"
+                    style={d === day
+                      ? { backgroundColor: accent, color: contrastOn(accent), fontWeight: 'bold' }
+                      : weekendColor(labels, di)}
+                  >{d}</span>
                 )}
               </td>
             ))}</tr>
@@ -382,17 +471,24 @@ function NavButton({ label, iconSrc, onClick }: { label: string; iconSrc: string
     <button
       type="button"
       onClick={onClick}
-      className="flex items-center justify-start gap-2 px-2 py-2 rounded-lg bg-white border border-gray-200 hover:border-gray-300 transition-colors min-w-0"
+      className="flex items-center justify-start gap-2 px-2 py-2 rounded-lg bg-[var(--od-surface)] border border-[var(--od-divider)] hover:border-[var(--od-fg-300)] transition-colors min-w-0"
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img src={iconSrc} alt="" className="flex-shrink-0 w-5 h-5 rounded-full object-cover" />
-      <span className="text-[13px] leading-tight text-gray-700 font-medium whitespace-nowrap">{label}</span>
+      <span className="text-[13px] leading-tight text-[var(--od-fg-700)] font-medium whitespace-nowrap">{label}</span>
     </button>
   )
 }
 
 // ── 예식 장소 ────────────────────────────────────────────────────────────────
-function VenueSection({ accent, content, showEnglish, module }: { accent: string; content: InvitationContent; showEnglish: boolean; module: InvitationModule }) {
+function VenueSection({ accent, content, showEnglish, module, isDark }: { accent: string; content: InvitationContent; showEnglish: boolean; module: InvitationModule; isDark: boolean }) {
+  const labels = useLabels()
+  const [copied, setCopied] = useState(false)
+  useEffect(() => {
+    if (!copied) return
+    const t = setTimeout(() => setCopied(false), 1600)
+    return () => clearTimeout(t)
+  }, [copied])
   const cfg = (module.config ?? {}) as VenueModuleConfig
   const venue = cfg.mapVenue ?? content.venue
   const venueKoreanLabelVisible = content.venueKoreanLabelVisible !== false
@@ -426,21 +522,31 @@ function VenueSection({ accent, content, showEnglish, module }: { accent: string
   const titleBig = content.venueTitleBig
   const titleSmall = content.venueTitleSmall
   return (
-    <section className="py-10 mx-4 border-t border-gray-200 text-center">
-      {venueKoreanLabelVisible && <p className="text-sm mb-1" style={{ color: accent, ...venueKoreanLabelStyle }}>{content.venueKoreanTitle ?? '행사 장소'}</p>}
-      {showEnglish && venueLabelVisible && <p className="text-xs mb-1" style={{ color: accent, fontFamily: 'Georgia, serif', ...venueLabelStyle }}>{content.venueEnglishTitle ?? 'Location'}</p>}
+    <section className="py-10 mx-4 border-t border-[var(--od-divider)] text-center">
+      {venueKoreanLabelVisible && <p className="text-sm mb-1" style={{ color: accent, ...venueKoreanLabelStyle }}>{content.venueKoreanTitle ?? labels.venue}</p>}
+      {showEnglish && venueLabelVisible && <p className="text-xs mb-1" style={{ color: accent, fontFamily: 'Georgia, serif', ...venueLabelStyle }}>{content.venueEnglishTitle ?? labels.venueEn}</p>}
       {venueTitleBigVisible && titleBig && (
-        <div className="text-sm text-gray-800 mb-1" style={venueTitleBigStyle}>{titleBig}</div>
+        <div className="text-sm text-[var(--od-fg-800)] mb-1" style={venueTitleBigStyle}>{titleBig}</div>
       )}
       {venueTitleSmallVisible && titleSmall && (
-        <div className="text-xs text-gray-400 mb-5" style={venueTitleSmallStyle}>{titleSmall}</div>
+        <div className="text-xs text-[var(--od-fg-400)] mb-1" style={venueTitleSmallStyle}>{titleSmall}</div>
+      )}
+      {/* 상세주소 — 택시/외부앱에 붙여넣을 수 있게 탭하면 복사된다 */}
+      {venue?.address && (
+        <button
+          type="button"
+          onClick={() => { navigator.clipboard?.writeText(venue.address ?? '').then(() => setCopied(true)).catch(() => {}) }}
+          className="text-xs text-[var(--od-fg-400)] mb-5 mx-auto block underline underline-offset-4 decoration-1 decoration-[var(--od-fg-300)]"
+        >
+          {copied ? '주소가 복사되었습니다' : venue.address}
+        </button>
       )}
       {(venue?.address || (venue?.lat != null && venue?.lng != null)) ? (
-        <div className="rounded-lg overflow-hidden border border-gray-100 mb-3">
-          <NaverMap lat={venue?.lat} lng={venue?.lng} address={venue?.address} markerTitle={venue?.name} height="180px" />
+        <div className="rounded-lg overflow-hidden border border-[var(--od-surface-border)] mb-3">
+          <NaverMap lat={venue?.lat} lng={venue?.lng} address={venue?.address} markerTitle={venue?.name} height="180px" theme={isDark ? 'dark' : 'light'} markerColor={accent} />
         </div>
       ) : (
-        <div className="w-full h-40 bg-gray-200 rounded-lg flex items-center justify-center text-xs text-gray-400 border border-gray-100 mb-3">
+        <div className="w-full h-40 bg-[var(--od-placeholder)] rounded-lg flex items-center justify-center text-xs text-[var(--od-fg-400)] border border-[var(--od-surface-border)] mb-3">
           주소 검색으로 지도를 설정하세요
         </div>
       )}
@@ -493,24 +599,24 @@ function SoloProfileSection({ accent, content, showEnglish, module }: { accent: 
   const titleBig = cfg.titleBig as string | undefined
   const titleSmall = cfg.titleSmall as string | undefined
   return (
-    <section className="py-10 mx-4 border-t border-gray-200 text-center">
+    <section className="py-10 mx-4 border-t border-[var(--od-divider)] text-center">
       {cfg.koreanLabelVisible !== false && <p className="text-sm mb-1" style={{ color: accent }}>{koreanTitle ?? '프로필'}</p>}
       {showEnglish && cfg.labelVisible !== false && <p className="text-xs mb-1" style={{ color: accent, fontFamily: 'Georgia, serif' }}>{englishTitle ?? 'Profile'}</p>}
-      {cfg.titleBigVisible !== false && titleBig && <div className="text-sm text-gray-800 mb-1">{titleBig}</div>}
-      {cfg.titleSmallVisible !== false && titleSmall && <div className="text-xs text-gray-400 mb-4">{titleSmall}</div>}
+      {bigTitle(titleBig, koreanTitle, cfg.titleBigVisible as boolean | undefined) && <div className="text-sm text-[var(--od-fg-800)] mb-1">{titleBig}</div>}
+      {cfg.titleSmallVisible !== false && titleSmall && <div className="text-xs text-[var(--od-fg-400)] mb-4">{titleSmall}</div>}
       <div className="space-y-3 mt-2">
         {display.map((person, i) => {
           const hashtags = (person.hashtags ?? []).map(h => `#${h}`).join(' ')
           const descVisible = person.descriptionVisible !== false
           return (
-            <div key={i} className="bg-white rounded-2xl p-5">
+            <div key={i} className="bg-[var(--od-surface)] rounded-2xl p-5">
               <div className="w-32 mx-auto mb-4">
                 <ClickableImage
                   src={person.image}
                   crop={person.imageCrop}
                   fallbackAspect="1/1"
                   rounded="rounded-full"
-                  placeholder={<ImageIcon size={28} className="text-gray-300" strokeWidth={1} />}
+                  placeholder={<ImageIcon size={28} className="text-[var(--od-fg-300)]" strokeWidth={1} />}
                 />
               </div>
               <div className="mb-2">
@@ -519,8 +625,8 @@ function SoloProfileSection({ accent, content, showEnglish, module }: { accent: 
               {hashtags && <div className="text-xs mb-2" style={{ color: accent }}>{hashtags}</div>}
               {descVisible && (
                 person.description
-                  ? <RichText html={person.description} className="text-xs text-gray-500 leading-relaxed whitespace-pre-line" />
-                  : <div className="text-xs text-gray-400 leading-relaxed">소개 자리입니다.</div>
+                  ? <RichText html={person.description} className="text-xs text-[var(--od-fg-500)] leading-relaxed whitespace-pre-line" />
+                  : <div className="text-xs text-[var(--od-fg-400)] leading-relaxed">소개 자리입니다.</div>
               )}
             </div>
           )
@@ -541,27 +647,27 @@ function BabyProfileSection({ accent, content, showEnglish, module }: { accent: 
   })() : ''
   const hashtags = (baby.hashtags ?? []).map(h => `#${h}`).join(' ')
   return (
-    <section className="py-10 mx-4 border-t border-gray-200 text-center">
+    <section className="py-10 mx-4 border-t border-[var(--od-divider)] text-center">
       {cfg.koreanLabelVisible !== false && <p className="text-sm mb-1" style={{ color: accent }}>{cfg.koreanTitle ?? '주인공 소개'}</p>}
       {showEnglish && cfg.labelVisible !== false && <p className="text-xs mb-1" style={{ color: accent, fontFamily: 'Georgia, serif' }}>{cfg.englishTitle ?? 'About Baby'}</p>}
-      {cfg.titleBigVisible !== false && cfg.titleBig && <div className="text-sm text-gray-800 mb-1">{cfg.titleBig}</div>}
-      {cfg.titleSmallVisible !== false && cfg.titleSmall && <div className="text-xs text-gray-400 mb-4">{cfg.titleSmall}</div>}
-      <div className="bg-white rounded-2xl p-5 mt-2">
+      {bigTitle(cfg.titleBig, cfg.koreanTitle, cfg.titleBigVisible) && <div className="text-sm text-[var(--od-fg-800)] mb-1">{cfg.titleBig}</div>}
+      {cfg.titleSmallVisible !== false && cfg.titleSmall && <div className="text-xs text-[var(--od-fg-400)] mb-4">{cfg.titleSmall}</div>}
+      <div className="bg-[var(--od-surface)] rounded-2xl p-5 mt-2">
         <div className="w-32 mx-auto mb-4">
           <ClickableImage
             src={cfg.babyImage}
             crop={cfg.babyImageCrop}
             fallbackAspect="1/1"
             rounded="rounded-full"
-            placeholder={<ImageIcon size={28} className="text-gray-300" strokeWidth={1} />}
+            placeholder={<ImageIcon size={28} className="text-[var(--od-fg-300)]" strokeWidth={1} />}
           />
         </div>
         {baby.name && (
           <div className="tracking-widest mb-1" style={{ color: accent, fontSize: '1.25rem' }}>{baby.name}</div>
         )}
-        {birthDateStr && <div className="text-xs text-gray-500 mb-1">{birthDateStr}</div>}
+        {birthDateStr && <div className="text-xs text-[var(--od-fg-500)] mb-1">{birthDateStr}</div>}
         {hashtags && <div className="text-xs mb-2" style={{ color: accent }}>{hashtags}</div>}
-        {baby.description && <div className="text-xs text-gray-500 leading-relaxed whitespace-pre-line">{baby.description}</div>}
+        {baby.description && <div className="text-xs text-[var(--od-fg-500)] leading-relaxed whitespace-pre-line">{baby.description}</div>}
       </div>
     </section>
   )
@@ -585,11 +691,11 @@ function ProfileSection({ accent, content, showEnglish, module }: { accent: stri
   const titleBigStyle: React.CSSProperties = { fontWeight: (cfg.titleBigBold as boolean) ? 'bold' : 'medium', fontStyle: (cfg.titleBigItalic as boolean) ? 'italic' : undefined, textAlign: ((cfg.titleBigAlign as React.CSSProperties['textAlign']) ?? 'center'), whiteSpace: 'pre-line' }
   const titleSmallStyle: React.CSSProperties = { fontWeight: (cfg.titleSmallBold as boolean) ? 'bold' : undefined, fontStyle: (cfg.titleSmallItalic as boolean) ? 'italic' : undefined, textAlign: ((cfg.titleSmallAlign as React.CSSProperties['textAlign']) ?? 'center'), whiteSpace: 'pre-line' }
   return (
-    <section className="py-10 mx-4 border-t border-gray-200">
+    <section className="py-10 mx-4 border-t border-[var(--od-divider)]">
       {cfg.koreanLabelVisible !== false && <p className="text-sm mb-1 text-center" style={{ color: accent, ...koreanLabelStyle }}>{koreanTitle ?? '프로필'}</p>}
       {showEnglish && labelVisible && <p className="text-xs mb-1 text-center" style={{ color: accent, fontFamily: 'Georgia, serif', ...labelStyle }}>{englishTitle ?? 'Profile'}</p>}
-      {cfg.titleBigVisible !== false && titleBig && <div className="text-sm text-gray-800 mb-1 text-center" style={titleBigStyle}>{titleBig}</div>}
-      {cfg.titleSmallVisible !== false && titleSmall && <div className="text-xs text-gray-400 mb-4 text-center" style={titleSmallStyle}>{titleSmall}</div>}
+      {bigTitle(titleBig, koreanTitle, cfg.titleBigVisible as boolean | undefined) && <div className="text-sm text-[var(--od-fg-800)] mb-1 text-center" style={titleBigStyle}>{titleBig}</div>}
+      {cfg.titleSmallVisible !== false && titleSmall && <div className="text-xs text-[var(--od-fg-400)] mb-4 text-center" style={titleSmallStyle}>{titleSmall}</div>}
       <div className="space-y-3 mb-4">
         {persons.map((person, i) => (
           <ProfileCard
@@ -600,7 +706,7 @@ function ProfileSection({ accent, content, showEnglish, module }: { accent: stri
           />
         ))}
       </div>
-      {introText && cfg.introTextVisible !== false && <RichText html={introText} className="text-xs text-gray-500 leading-relaxed text-center" />}
+      {introText && cfg.introTextVisible !== false && <RichText html={introText} className="text-xs text-[var(--od-fg-500)] leading-relaxed text-center" />}
     </section>
   )
 }
@@ -615,7 +721,7 @@ function ProfileCard({ accent, person, imageSide }: { accent: string; person: Pr
         crop={person.imageCrop}
         fallbackAspect="1/1"
         rounded="rounded-xl"
-        placeholder={<ImageIcon size={22} className="text-gray-300" strokeWidth={1} />}
+        placeholder={<ImageIcon size={22} className="text-[var(--od-fg-300)]" strokeWidth={1} />}
       />
     </div>
   )
@@ -625,13 +731,13 @@ function ProfileCard({ accent, person, imageSide }: { accent: string; person: Pr
       {hashtags && <span className="text-[10px]" style={{ color: accent }}>{hashtags}</span>}
       {descVisible && (
         person.description
-          ? <RichText html={person.description} className="text-xs text-gray-500 leading-relaxed [&_p]:m-0" />
-          : <span className="text-xs text-gray-400 leading-relaxed">소개 자리입니다.</span>
+          ? <RichText html={person.description} className="text-xs text-[var(--od-fg-500)] leading-relaxed [&_p]:m-0" />
+          : <span className="text-xs text-[var(--od-fg-400)] leading-relaxed">소개 자리입니다.</span>
       )}
     </div>
   )
   return (
-    <div className="flex gap-3 bg-white rounded-2xl p-3 items-stretch">
+    <div className="flex gap-3 bg-[var(--od-surface)] rounded-2xl p-3 items-stretch">
       {imageSide === 'left' ? <>{image}{body}</> : <>{body}{image}</>}
     </div>
   )
@@ -652,8 +758,8 @@ function TimelineHeader({ accent, showEnglish, module, defaultKorean = '타임�
     <>
       {(cfg?.koreanLabelVisible as boolean) !== false && <p className="text-sm mb-1 text-center" style={{ color: accent, ...koreanLabelStyle }}>{(cfg?.koreanTitle as string | undefined) ?? defaultKorean}</p>}
       {showEnglish && labelVisible && <p className="text-xs mb-1 text-center" style={{ color: accent, fontFamily: 'Georgia, serif', ...labelStyle }}>{englishTitle}</p>}
-      {(cfg?.titleBigVisible as boolean) !== false && (cfg?.titleBig as string | undefined) && <div className="text-sm text-gray-800 mb-1 text-center" style={titleBigStyle}>{cfg?.titleBig as string}</div>}
-      {(cfg?.titleSmallVisible as boolean) !== false && (cfg?.titleSmall as string | undefined) && <div className="text-xs text-gray-400 mb-4 text-center" style={titleSmallStyle}>{cfg?.titleSmall as string}</div>}
+      {bigTitle(cfg?.titleBig as string | undefined, cfg?.koreanTitle as string | undefined, cfg?.titleBigVisible as boolean | undefined) && <div className="text-sm text-[var(--od-fg-800)] mb-1 text-center" style={titleBigStyle}>{cfg?.titleBig as string}</div>}
+      {(cfg?.titleSmallVisible as boolean) !== false && (cfg?.titleSmall as string | undefined) && <div className="text-xs text-[var(--od-fg-400)] mb-4 text-center" style={titleSmallStyle}>{cfg?.titleSmall as string}</div>}
     </>
   )
 }
@@ -679,7 +785,7 @@ function TimelineTitleBadge({ html, accent, align = 'left' }: { html: string; ac
 function TimelineSection({ accent, showEnglish, module }: { accent: string; showEnglish: boolean; module: InvitationModule }) {
   const items = (module.config?.items as TimelineItemData[]) ?? []
   return (
-    <section className="py-10 mx-4 border-t border-gray-200">
+    <section className="py-10 mx-4 border-t border-[var(--od-divider)]">
       <TimelineHeader accent={accent} showEnglish={showEnglish} module={module} defaultKorean="타임라인" defaultEnglish="Timeline" />
       {items.length > 0 ? (
         <div className="relative">
@@ -694,7 +800,7 @@ function TimelineSection({ accent, showEnglish, module }: { accent: string; show
                     crop={item.crop}
                     fallbackAspect="1/1"
                     rounded="rounded-md"
-                    placeholder={<ImageIcon size={18} className="text-gray-300" strokeWidth={1} />}
+                    placeholder={<ImageIcon size={18} className="text-[var(--od-fg-300)]" strokeWidth={1} />}
                   />
                 </div>
               )
@@ -706,7 +812,7 @@ function TimelineSection({ accent, showEnglish, module }: { accent: string; show
               const textCell = (
                 <div className={`${imageOnLeft ? 'text-left' : 'text-right'} space-y-1.5`}>
                   {item.titleVisible !== false && <TimelineTitleBadge html={item.title || '제목 자리입니다.'} accent={accent} align={imageOnLeft ? 'left' : 'right'} />}
-                  {item.contentVisible !== false && <RichText html={item.content || '내용 자리입니다.'} className="text-xs text-gray-500 leading-relaxed" />}
+                  {item.contentVisible !== false && <RichText html={item.content || '내용 자리입니다.'} className="text-xs text-[var(--od-fg-500)] leading-relaxed" />}
                 </div>
               )
               return (
@@ -720,7 +826,7 @@ function TimelineSection({ accent, showEnglish, module }: { accent: string; show
           </div>
         </div>
       ) : (
-        <div className="w-full h-20 bg-gray-100 rounded-xl" />
+        <div className="w-full h-20 bg-[var(--od-surface-muted)] rounded-xl" />
       )}
     </section>
   )
@@ -732,7 +838,7 @@ const POLAROID_ROTATIONS = [-3, 2, -2, 3, -1.5, 2.5]
 function TimelinePolaroidSection({ accent, showEnglish, module }: { accent: string; showEnglish: boolean; module: InvitationModule }) {
   const items = (module.config?.items as TimelineItemData[]) ?? []
   return (
-    <section className="py-10 mx-4 border-t border-gray-200">
+    <section className="py-10 mx-4 border-t border-[var(--od-divider)]">
       <TimelineHeader accent={accent} showEnglish={showEnglish} module={module} defaultKorean="폴라로이드" defaultEnglish="Polaroid" />
       {items.length > 0 ? (
         <div className="space-y-10 px-6">
@@ -741,29 +847,29 @@ function TimelinePolaroidSection({ accent, showEnglish, module }: { accent: stri
             return (
               <div
                 key={i}
-                className="relative bg-white rounded-sm p-3 pb-4 shadow-sm"
+                className="relative bg-[var(--od-surface)] rounded-sm p-3 pb-4 shadow-sm"
                 style={{ transform: `rotate(${rot}deg)` }}
               >
-                <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-12 h-3 bg-gray-300/40 rounded-sm" />
+                <div className="absolute -top-1.5 left-1/2 -translate-x-1/2 w-12 h-3 bg-[var(--od-placeholder)] rounded-sm" />
                 <div className="mb-3">
                   <ClickableImage
                     src={item.image}
                     crop={item.crop}
                     fallbackAspect="1/1"
                     rounded="rounded-sm"
-                    placeholder={<ImageIcon size={24} className="text-gray-300" strokeWidth={1} />}
+                    placeholder={<ImageIcon size={24} className="text-[var(--od-fg-300)]" strokeWidth={1} />}
                   />
                 </div>
                 <div className="text-center space-y-1.5">
                   {item.titleVisible !== false && <TimelineTitleBadge html={item.title || '제목 자리입니다.'} accent={accent} align="center" />}
-                  {item.contentVisible !== false && <RichText html={item.content || '내용 자리입니다.'} className="text-xs text-gray-500 leading-relaxed" />}
+                  {item.contentVisible !== false && <RichText html={item.content || '내용 자리입니다.'} className="text-xs text-[var(--od-fg-500)] leading-relaxed" />}
                 </div>
               </div>
             )
           })}
         </div>
       ) : (
-        <div className="w-full h-20 bg-gray-100 rounded-xl" />
+        <div className="w-full h-20 bg-[var(--od-surface-muted)] rounded-xl" />
       )}
     </section>
   )
@@ -779,22 +885,22 @@ function InterviewSection({ accent, showEnglish, module }: { accent: string; sho
   const titleBigStyle: React.CSSProperties = { fontWeight: (module.config?.titleBigBold as boolean) ? 'bold' : 'medium', fontStyle: (module.config?.titleBigItalic as boolean) ? 'italic' : undefined, textAlign: (module.config?.titleBigAlign as React.CSSProperties['textAlign']) ?? 'center', whiteSpace: 'pre-line' }
   const titleSmallStyle: React.CSSProperties = { fontWeight: (module.config?.titleSmallBold as boolean) ? 'bold' : undefined, fontStyle: (module.config?.titleSmallItalic as boolean) ? 'italic' : undefined, textAlign: (module.config?.titleSmallAlign as React.CSSProperties['textAlign']) ?? 'center', whiteSpace: 'pre-line' }
   return (
-    <section className="py-10 mx-4 border-t border-gray-200">
+    <section className="py-10 mx-4 border-t border-[var(--od-divider)]">
       {(module.config?.koreanLabelVisible as boolean) !== false && <p className="text-sm mb-1 text-center" style={{ color: accent, ...koreanLabelStyle }}>{(module.config?.koreanTitle as string | undefined) ?? '인터뷰'}</p>}
       {showEnglish && labelVisible && <p className="text-xs mb-1 text-center" style={{ color: accent, fontFamily: 'Georgia, serif', ...labelStyle }}>{englishTitle}</p>}
-      {(module.config?.titleBigVisible as boolean) !== false && (module.config?.titleBig as string | undefined) && <div className="text-sm text-gray-800 mb-1 text-center" style={titleBigStyle}>{module.config?.titleBig as string}</div>}
-      {(module.config?.titleSmallVisible as boolean) !== false && (module.config?.titleSmall as string | undefined) && <div className="text-xs text-gray-400 mb-4 text-center" style={titleSmallStyle}>{module.config?.titleSmall as string}</div>}
+      {bigTitle(module.config?.titleBig as string | undefined, module.config?.koreanTitle as string | undefined, module.config?.titleBigVisible as boolean | undefined) && <div className="text-sm text-[var(--od-fg-800)] mb-1 text-center" style={titleBigStyle}>{module.config?.titleBig as string}</div>}
+      {(module.config?.titleSmallVisible as boolean) !== false && (module.config?.titleSmall as string | undefined) && <div className="text-xs text-[var(--od-fg-400)] mb-4 text-center" style={titleSmallStyle}>{module.config?.titleSmall as string}</div>}
       {items.length > 0 ? (
         <div className="space-y-3">
           {items.map((item, i) => (
-            <div key={i} className="border border-gray-100 rounded-xl p-4 text-left">
-              {item.questionVisible !== false && <div className="text-xs font-medium text-gray-700 mb-1 flex gap-1"><span>Q.</span><RichText html={item.question || '질문 자리입니다.'} /></div>}
-              {item.answerVisible !== false && <div className="text-xs text-gray-500 leading-5 flex gap-1"><span>A.</span><RichText html={item.answer || '답변 자리입니다.'} /></div>}
+            <div key={i} className="border border-[var(--od-surface-border)] rounded-xl p-4 text-left">
+              {item.questionVisible !== false && <div className="text-xs font-medium text-[var(--od-fg-700)] mb-1 flex gap-1"><span>Q.</span><RichText html={item.question || '질문 자리입니다.'} /></div>}
+              {item.answerVisible !== false && <div className="text-xs text-[var(--od-fg-500)] leading-5 flex gap-1"><span>A.</span><RichText html={item.answer || '답변 자리입니다.'} /></div>}
             </div>
           ))}
         </div>
       ) : (
-        <div className="w-full h-20 bg-gray-100 rounded-xl" />
+        <div className="w-full h-20 bg-[var(--od-surface-muted)] rounded-xl" />
       )}
     </section>
   )
@@ -809,22 +915,22 @@ function MidphotoSection({ accent, showEnglish, module }: { accent: string; show
   const titleSmallStyle: React.CSSProperties = { fontWeight: cfg.titleSmallBold ? 'bold' : undefined, fontStyle: cfg.titleSmallItalic ? 'italic' : undefined, textAlign: (cfg.titleSmallAlign as React.CSSProperties['textAlign']) ?? 'center', whiteSpace: 'pre-line' }
   const noMargin = cfg.noSideMargin === true
   return (
-    <section className={`py-10 border-t border-gray-200 text-center ${noMargin ? '' : 'mx-4'}`}>
+    <section className={`py-10 border-t border-[var(--od-divider)] text-center ${noMargin ? '' : 'mx-4'}`}>
       {cfg.koreanLabelVisible !== false && <p className={`text-sm mb-1 ${noMargin ? 'mx-4' : ''}`} style={{ color: accent, ...koreanLabelStyle }}>{cfg.koreanTitle ?? '단독'}</p>}
       {showEnglish && cfg.labelVisible !== false && <p className={`text-xs mb-1 ${noMargin ? 'mx-4' : ''}`} style={{ color: accent, fontFamily: 'Georgia, serif', ...labelStyle }}>{cfg.englishTitle ?? 'Photo'}</p>}
-      {cfg.titleBigVisible !== false && cfg.titleBig && (
-        <div className={`text-sm text-gray-800 mb-1 ${noMargin ? 'mx-4' : ''}`} style={titleBigStyle}>{cfg.titleBig}</div>
+      {bigTitle(cfg.titleBig, cfg.koreanTitle, cfg.titleBigVisible) && (
+        <div className={`text-sm text-[var(--od-fg-800)] mb-1 ${noMargin ? 'mx-4' : ''}`} style={titleBigStyle}>{cfg.titleBig}</div>
       )}
       {cfg.titleSmallVisible !== false && cfg.titleSmall && (
-        <div className={`text-xs text-gray-400 mb-5 ${noMargin ? 'mx-4' : ''}`} style={titleSmallStyle}>{cfg.titleSmall}</div>
+        <div className={`text-xs text-[var(--od-fg-400)] mb-5 ${noMargin ? 'mx-4' : ''}`} style={titleSmallStyle}>{cfg.titleSmall}</div>
       )}
       <ClickableImage
         src={cfg.image}
         crop={cfg.imageCrop}
         fallbackAspect="4/3"
-        placeholder={<ImageIcon size={40} className="text-gray-300" strokeWidth={1} />}
+        placeholder={<ImageIcon size={40} className="text-[var(--od-fg-300)]" strokeWidth={1} />}
       />
-      {cfg.caption && <div className={`text-center py-3 text-xs text-gray-500 italic ${noMargin ? 'mx-4' : ''}`}>{cfg.caption}</div>}
+      {cfg.caption && <div className={`text-center py-3 text-xs text-[var(--od-fg-500)] italic ${noMargin ? 'mx-4' : ''}`}>{cfg.caption}</div>}
     </section>
   )
 }
@@ -848,18 +954,18 @@ function PhotoFrameSection({ accent, fontFamily, showEnglish, module }: { accent
   const titleSmallStyle: React.CSSProperties = { fontWeight: cfg.titleSmallBold ? 'bold' : undefined, fontStyle: cfg.titleSmallItalic ? 'italic' : undefined, textAlign: (cfg.titleSmallAlign as React.CSSProperties['textAlign']) ?? 'center', whiteSpace: 'pre-line' }
   const noMargin = cfg.noSideMargin === true
   return (
-    <section className={`py-10 border-t border-gray-200 text-center ${noMargin ? '' : 'mx-4'}`}>
+    <section className={`py-10 border-t border-[var(--od-divider)] text-center ${noMargin ? '' : 'mx-4'}`}>
       {cfg.koreanLabelVisible !== false && cfg.koreanTitle && (
         <p className={`text-sm mb-1 ${noMargin ? 'mx-4' : ''}`} style={{ color: accent, ...koreanLabelStyle }}>{cfg.koreanTitle}</p>
       )}
       {showEnglish && cfg.labelVisible !== false && cfg.englishTitle && (
         <p className={`text-xs mb-1 ${noMargin ? 'mx-4' : ''}`} style={{ color: accent, fontFamily: 'Georgia, serif', ...labelStyle }}>{cfg.englishTitle}</p>
       )}
-      {cfg.titleBigVisible !== false && cfg.titleBig && (
-        <div className={`text-sm text-gray-800 mb-1 ${noMargin ? 'mx-4' : ''}`} style={titleBigStyle}>{cfg.titleBig}</div>
+      {bigTitle(cfg.titleBig, cfg.koreanTitle, cfg.titleBigVisible) && (
+        <div className={`text-sm text-[var(--od-fg-800)] mb-1 ${noMargin ? 'mx-4' : ''}`} style={titleBigStyle}>{cfg.titleBig}</div>
       )}
       {cfg.titleSmallVisible !== false && cfg.titleSmall && (
-        <div className={`text-xs text-gray-400 mb-5 ${noMargin ? 'mx-4' : ''}`} style={titleSmallStyle}>{cfg.titleSmall}</div>
+        <div className={`text-xs text-[var(--od-fg-400)] mb-5 ${noMargin ? 'mx-4' : ''}`} style={titleSmallStyle}>{cfg.titleSmall}</div>
       )}
       <div className={`${noMargin ? '' : 'border-8 border-white'}`}>
         <ClickableImage
@@ -867,17 +973,17 @@ function PhotoFrameSection({ accent, fontFamily, showEnglish, module }: { accent
           crop={cfg.imageCrop}
           fallbackAspect="4/5"
           alt="액자"
-          placeholder={<ImageIcon size={40} className="text-gray-300" strokeWidth={1} />}
+          placeholder={<ImageIcon size={40} className="text-[var(--od-fg-300)]" strokeWidth={1} />}
         />
       </div>
       {(cfg.showTitle !== false && cfg.bottomText) && (
         <div className={`mt-4 ${noMargin ? 'mx-4' : ''}`} style={{ fontFamily }}>
-          <RichText html={cfg.bottomText} className="text-sm text-gray-700" />
+          <RichText html={cfg.bottomText} className="text-sm text-[var(--od-fg-700)]" />
         </div>
       )}
       {(cfg.showSubText !== false && cfg.subText) && (
         <div className={`mt-1 ${noMargin ? 'mx-4' : ''}`} style={{ fontFamily }}>
-          <RichText html={cfg.subText} className="text-xs text-gray-400" />
+          <RichText html={cfg.subText} className="text-xs text-[var(--od-fg-400)]" />
         </div>
       )}
     </section>
@@ -904,20 +1010,20 @@ function TabSection({ accent, showEnglish, module, readOnly }: { accent: string;
   const titleSmallStyle: React.CSSProperties = { fontWeight: cfg.titleSmallBold ? 'bold' : undefined, fontStyle: cfg.titleSmallItalic ? 'italic' : undefined, textAlign: (cfg.titleSmallAlign as React.CSSProperties['textAlign']) ?? 'center', whiteSpace: 'pre-line' }
 
   return (
-    <section className="py-10 mx-4 border-t border-gray-200 text-center">
+    <section className="py-10 mx-4 border-t border-[var(--od-divider)] text-center">
       {koreanLabelVisible && <p className="text-sm mb-1" style={{ color: accent, ...koreanLabelStyle }}>{koreanLabel}</p>}
       {showEnglish && labelVisible && <p className="text-xs mb-1" style={{ color: accent, fontFamily: 'Georgia, serif', ...labelStyle }}>{englishTitle}</p>}
-      {cfg.titleBigVisible !== false && cfg.titleBig && <div className="text-sm text-gray-800 mb-1" style={titleBigStyle}>{cfg.titleBig}</div>}
-      {cfg.titleSmallVisible !== false && cfg.titleSmall && <div className="text-xs text-gray-400 mb-4" style={titleSmallStyle}>{cfg.titleSmall}</div>}
+      {bigTitle(cfg.titleBig, cfg.koreanTitle, cfg.titleBigVisible) && <div className="text-sm text-[var(--od-fg-800)] mb-1" style={titleBigStyle}>{cfg.titleBig}</div>}
+      {cfg.titleSmallVisible !== false && cfg.titleSmall && <div className="text-xs text-[var(--od-fg-400)] mb-4" style={titleSmallStyle}>{cfg.titleSmall}</div>}
 
       {tabs.length === 0 ? (
-        <div className="w-full h-16 bg-gray-100 rounded-xl" />
+        <div className="w-full h-16 bg-[var(--od-surface-muted)] rounded-xl" />
       ) : (
         <>
           <div className="flex gap-1 mb-4">
             {tabs.map((t, i) => (
               <button key={i} onClick={() => setActiveIdx(i)}
-                className={`flex-1 py-1.5 rounded-xl text-xs transition-colors ${activeIdx === i ? 'text-white' : 'border border-gray-200 text-gray-500'}`}
+                className={`flex-1 py-1.5 rounded-xl text-xs transition-colors ${activeIdx === i ? 'text-white' : 'border border-[var(--od-divider)] text-[var(--od-fg-500)]'}`}
                 style={activeIdx === i ? { backgroundColor: accent } : {}}
               >{t.label || `탭 ${i + 1}`}</button>
             ))}
@@ -930,11 +1036,11 @@ function TabSection({ accent, showEnglish, module, readOnly }: { accent: string;
                   crop={active.imageCrop}
                   fallbackAspect="4/3"
                   rounded="rounded-xl"
-                  placeholder={<ImageIcon size={28} className="text-gray-300" strokeWidth={1} />}
+                  placeholder={<ImageIcon size={28} className="text-[var(--od-fg-300)]" strokeWidth={1} />}
                 />
               )}
               {active.contentVisible !== false && active.content && (
-                <RichText html={active.content} className="text-xs text-gray-500 text-center leading-6" />
+                <RichText html={active.content} className="text-xs text-[var(--od-fg-500)] text-center leading-6" />
               )}
             </div>
           )}
@@ -964,11 +1070,11 @@ function GallerySection({ accent, showEnglish, module }: { accent: string; showE
   const titleBigStyle: React.CSSProperties = { fontWeight: (module.config?.titleBigBold as boolean) ? 'bold' : 'medium', fontStyle: (module.config?.titleBigItalic as boolean) ? 'italic' : undefined, textAlign: (module.config?.titleBigAlign as React.CSSProperties['textAlign']) ?? 'center', whiteSpace: 'pre-line' }
   const titleSmallStyle: React.CSSProperties = { fontWeight: (module.config?.titleSmallBold as boolean) ? 'bold' : undefined, fontStyle: (module.config?.titleSmallItalic as boolean) ? 'italic' : undefined, textAlign: (module.config?.titleSmallAlign as React.CSSProperties['textAlign']) ?? 'center', whiteSpace: 'pre-line' }
   return (
-    <section className="py-10 border-t border-gray-200 text-center">
+    <section className="py-10 border-t border-[var(--od-divider)] text-center">
       {(module.config?.koreanLabelVisible as boolean) !== false && <p className="text-sm mb-1 mx-4" style={{ color: accent, ...koreanLabelStyle }}>{(module.config?.koreanTitle as string | undefined) ?? '갤러리'}</p>}
       {showEnglish && labelVisible && <p className="text-xs mb-1 mx-4" style={{ color: accent, fontFamily: 'Georgia, serif', ...labelStyle }}>{englishTitle}</p>}
-      {(module.config?.titleBigVisible as boolean) !== false && (module.config?.titleBig as string | undefined) && <div className="text-sm text-gray-800 mb-1 mx-4" style={titleBigStyle}>{module.config?.titleBig as string}</div>}
-      {(module.config?.titleSmallVisible as boolean) !== false && (module.config?.titleSmall as string | undefined) && <div className="text-xs text-gray-400 mb-4 mx-4" style={titleSmallStyle}>{module.config?.titleSmall as string}</div>}
+      {bigTitle(module.config?.titleBig as string | undefined, module.config?.koreanTitle as string | undefined, module.config?.titleBigVisible as boolean | undefined) && <div className="text-sm text-[var(--od-fg-800)] mb-1 mx-4" style={titleBigStyle}>{module.config?.titleBig as string}</div>}
+      {(module.config?.titleSmallVisible as boolean) !== false && (module.config?.titleSmall as string | undefined) && <div className="text-xs text-[var(--od-fg-400)] mb-4 mx-4" style={titleSmallStyle}>{module.config?.titleSmall as string}</div>}
       {images.length > 0 ? (
         // 첨부 개수에 맞춰 열 수를 정해 빈 칸 없이 영역을 채운다.
         //  1장→1열, 2장→2열, 4장→2열(2×2), 그 외(3·5~9장)→3열
@@ -985,8 +1091,8 @@ function GallerySection({ accent, showEnglish, module }: { accent: string; showE
       ) : (
         <div className="grid grid-cols-3 gap-0.5 mx-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="aspect-square bg-gray-200 flex items-center justify-center">
-              <ImageIcon size={20} className="text-gray-300" strokeWidth={1} />
+            <div key={i} className="aspect-square bg-[var(--od-placeholder)] flex items-center justify-center">
+              <ImageIcon size={20} className="text-[var(--od-fg-300)]" strokeWidth={1} />
             </div>
           ))}
         </div>
@@ -1052,14 +1158,14 @@ function SlideSection({ accent, showEnglish, module }: { accent: string; showEng
   }
 
   return (
-    <section className="py-10 mx-4 border-t border-gray-200 text-center">
+    <section className="py-10 mx-4 border-t border-[var(--od-divider)] text-center">
       {koreanLabelVisible && <p className="text-sm mb-1" style={{ color: accent, ...koreanLabelStyle }}>{koreanLabel}</p>}
       {showEnglish && labelVisible && <p className="text-xs mb-1" style={{ color: accent, fontFamily: 'Georgia, serif', ...labelStyle }}>{englishTitle}</p>}
-      {cfg.titleBigVisible !== false && cfg.titleBig && <div className="text-sm text-gray-800 mb-1" style={titleBigStyle}>{cfg.titleBig}</div>}
-      {cfg.titleSmallVisible !== false && cfg.titleSmall && <div className="text-xs text-gray-400 mb-4" style={titleSmallStyle}>{cfg.titleSmall}</div>}
+      {bigTitle(cfg.titleBig, cfg.koreanTitle, cfg.titleBigVisible) && <div className="text-sm text-[var(--od-fg-800)] mb-1" style={titleBigStyle}>{cfg.titleBig}</div>}
+      {cfg.titleSmallVisible !== false && cfg.titleSmall && <div className="text-xs text-[var(--od-fg-400)] mb-4" style={titleSmallStyle}>{cfg.titleSmall}</div>}
 
       {slides.length === 0 ? (
-        <div className="w-full h-32 bg-gray-100 rounded-xl" />
+        <div className="w-full h-32 bg-[var(--od-surface-muted)] rounded-xl" />
       ) : (
         <>
           <div className="relative">
@@ -1090,15 +1196,15 @@ function SlideSection({ accent, showEnglish, module }: { accent: string; showEng
                           crop={slide.imageCrop}
                           fallbackAspect="16/9"
                           rounded="rounded-xl"
-                          placeholder={<ImageIcon size={28} className="text-gray-300" strokeWidth={1} />}
+                          placeholder={<ImageIcon size={28} className="text-[var(--od-fg-300)]" strokeWidth={1} />}
                         />
                       </div>
                     )}
                     {slide.titleVisible !== false && slide.title && (
-                      <RichText html={slide.title} className="text-base text-gray-800 text-center" />
+                      <RichText html={slide.title} className="text-base text-[var(--od-fg-800)] text-center" />
                     )}
                     {slide.contentVisible !== false && slide.content && (
-                      <RichText html={slide.content} className="text-xs text-gray-500 text-center leading-relaxed" />
+                      <RichText html={slide.content} className="text-xs text-[var(--od-fg-500)] text-center leading-relaxed" />
                     )}
                   </div>
                 ))}
@@ -1111,7 +1217,7 @@ function SlideSection({ accent, showEnglish, module }: { accent: string; showEng
                   onClick={() => go(-1)}
                   disabled={activeIdx === 0}
                   aria-label="이전 슬라이드"
-                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 p-1 text-gray-400 hover:text-gray-700 transition-colors z-10 disabled:opacity-30 disabled:hover:text-gray-400"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1 p-1 text-[var(--od-fg-400)] hover:text-[var(--od-fg-700)] transition-colors z-10 disabled:opacity-30 disabled:hover:text-[var(--od-fg-400)]"
                 >
                   <ChevronLeft size={22} strokeWidth={1.25} />
                 </button>
@@ -1120,7 +1226,7 @@ function SlideSection({ accent, showEnglish, module }: { accent: string; showEng
                   onClick={() => go(1)}
                   disabled={activeIdx === slides.length - 1}
                   aria-label="다음 슬라이드"
-                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1 p-1 text-gray-400 hover:text-gray-700 transition-colors z-10 disabled:opacity-30 disabled:hover:text-gray-400"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1 p-1 text-[var(--od-fg-400)] hover:text-[var(--od-fg-700)] transition-colors z-10 disabled:opacity-30 disabled:hover:text-[var(--od-fg-400)]"
                 >
                   <ChevronRight size={22} strokeWidth={1.25} />
                 </button>
@@ -1155,17 +1261,33 @@ type GuestbookSectionConfig = GuestbookModuleConfig & {
   titleSmall?: string; titleSmallVisible?: boolean; titleSmallBold?: boolean; titleSmallItalic?: boolean; titleSmallAlign?: string
 }
 
+// 샘플 방명록 시각 — 행사 하루 전 저녁으로 역산한다.
+// Date.now() 를 쓰면 SSR/CSR 시간 차이로 hydration mismatch 가 나므로 초대장 데이터에서
+// 결정론적으로 파생한다. 고정 날짜를 쓰면 부고(별세일보다 앞선 추모글)처럼 앞뒤가
+// 맞지 않는 문구가 나온다.
+const GUESTBOOK_SAMPLE_FALLBACK = '2026-01-01T00:00:00.000Z'
+
+function sampleGuestbookTime(eventDate?: string): string {
+  if (!eventDate) return GUESTBOOK_SAMPLE_FALLBACK
+  const d = new Date(`${eventDate}T00:00:00.000Z`)
+  if (Number.isNaN(d.getTime())) return GUESTBOOK_SAMPLE_FALLBACK
+  d.setUTCDate(d.getUTCDate() - 1)
+  d.setUTCHours(20, 12, 0, 0)
+  return d.toISOString()
+}
+
 // 에디터 프리뷰에서만 보이는 샘플 데이터. 실제 초대장 뷰에서는 DB 데이터로 교체됨.
-// createdAt 은 정적 ISO 문자열로 고정 — Date.now() 사용 시 SSR/CSR 시간 차이로 hydration mismatch.
-const GUESTBOOK_SAMPLE_ENTRIES: GuestbookEntry[] = [
-  {
-    id: 'sample-1',
-    name: '샘플 방명록',
-    message: '이 방명록은 미리보기용 예시입니다.\n에디터에서는 실제 데이터 대신 이렇게 샘플로 표시됩니다.',
-    password: '',
-    createdAt: '2026-01-01T00:00:00.000Z',
-  },
-]
+function guestbookSampleEntries(labels: CategoryLabels, eventDate?: string): GuestbookEntry[] {
+  return [
+    {
+      id: 'sample-1',
+      name: labels.sampleGuestName,
+      message: labels.sampleGuestMessage,
+      password: '',
+      createdAt: sampleGuestbookTime(eventDate),
+    },
+  ]
+}
 
 // UTC 기준으로 포맷 — 서버/클라이언트 타임존 차이로 인한 hydration mismatch 회피.
 function formatGuestbookDate(iso: string): string {
@@ -1174,9 +1296,10 @@ function formatGuestbookDate(iso: string): string {
   return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`
 }
 
-function GuestbookSection({ accent, showEnglish, module }: { accent: string; showEnglish: boolean; module: InvitationModule }) {
+function GuestbookSection({ accent, showEnglish, module, eventDate }: { accent: string; showEnglish: boolean; module: InvitationModule; eventDate?: string }) {
   const cfg = module.config as GuestbookSectionConfig
-  const [entries, setEntries] = useState<GuestbookEntry[]>(GUESTBOOK_SAMPLE_ENTRIES)
+  const labels = useLabels()
+  const [entries, setEntries] = useState<GuestbookEntry[]>(() => guestbookSampleEntries(labels, eventDate))
   const [open, setOpen] = useState(false)
   const pageSize = cfg.pageSize ?? 3
   const [visibleCount, setVisibleCount] = useState(pageSize)
@@ -1202,14 +1325,14 @@ function GuestbookSection({ accent, showEnglish, module }: { accent: string; sho
 
   return (
     <>
-      <section className="py-10 mx-4 border-t border-gray-200 text-center">
+      <section className="py-10 mx-4 border-t border-[var(--od-divider)] text-center">
         {cfg.koreanLabelVisible !== false && <p className="text-sm mb-1" style={{ color: accent, ...koreanLabelStyle }}>{cfg.koreanTitle ?? '방명록'}</p>}
         {showEnglish && cfg.labelVisible !== false && <p className="text-xs mb-1" style={{ color: accent, fontFamily: 'Georgia, serif', ...labelStyle }}>{cfg.englishTitle ?? 'Guestbook'}</p>}
-        {cfg.titleBigVisible !== false && cfg.titleBig && (
-          <div className="text-sm text-gray-800 mb-1" style={titleBigStyle}>{cfg.titleBig}</div>
+        {bigTitle(cfg.titleBig, cfg.koreanTitle, cfg.titleBigVisible) && (
+          <div className="text-sm text-[var(--od-fg-800)] mb-1" style={titleBigStyle}>{cfg.titleBig}</div>
         )}
         {cfg.titleSmallVisible !== false && cfg.titleSmall && (
-          <div className="text-xs text-gray-400 mb-4" style={titleSmallStyle}>{cfg.titleSmall}</div>
+          <div className="text-xs text-[var(--od-fg-400)] mb-4" style={titleSmallStyle}>{cfg.titleSmall}</div>
         )}
         <button
           type="button"
@@ -1223,23 +1346,23 @@ function GuestbookSection({ accent, showEnglish, module }: { accent: string; sho
         {visibleEntries.length > 0 && (
           <div className="space-y-3 text-left">
             {visibleEntries.map(entry => (
-              <div key={entry.id} className="bg-white rounded-2xl border border-gray-100 px-4 pt-3.5 pb-3">
+              <div key={entry.id} className="bg-[var(--od-surface)] rounded-2xl border border-[var(--od-surface-border)] px-4 pt-3.5 pb-3">
                 <div className="flex items-center justify-between mb-2.5">
-                  <span className="text-sm text-gray-800">
-                    <span className="text-gray-400">from.</span> {entry.name}
+                  <span className="text-sm text-[var(--od-fg-800)]">
+                    <span className="text-[var(--od-fg-400)]">from.</span> {entry.name}
                   </span>
                   <button
                     type="button"
                     onClick={() => removeEntry(entry.id)}
-                    className="text-gray-300 hover:text-gray-500 transition-colors"
+                    className="text-[var(--od-fg-300)] hover:text-[var(--od-fg-500)] transition-colors"
                     aria-label="방명록 삭제"
                   >
                     <X size={16} />
                   </button>
                 </div>
-                <div className="border-t border-gray-100 pt-3">
-                  <p className="text-sm text-gray-800 whitespace-pre-line leading-6">{entry.message}</p>
-                  <p className="text-xs text-gray-400 text-right mt-3">{formatGuestbookDate(entry.createdAt)}</p>
+                <div className="border-t border-[var(--od-surface-border)] pt-3">
+                  <p className="text-sm text-[var(--od-fg-800)] whitespace-pre-line leading-6">{entry.message}</p>
+                  <p className="text-xs text-[var(--od-fg-400)] text-right mt-3">{formatGuestbookDate(entry.createdAt)}</p>
                 </div>
               </div>
             ))}
@@ -1250,7 +1373,7 @@ function GuestbookSection({ accent, showEnglish, module }: { accent: string; sho
           <button
             type="button"
             onClick={() => setVisibleCount(v => v + pageSize)}
-            className="mt-5 inline-flex items-center gap-1 text-xs text-gray-500 hover:text-gray-700"
+            className="mt-5 inline-flex items-center gap-1 text-xs text-[var(--od-fg-500)] hover:text-[var(--od-fg-700)]"
           >
             더보기 <ChevronDown size={14} />
           </button>
@@ -1269,17 +1392,17 @@ function GuestAlbumSection({ accent, showEnglish, module }: { accent: string; sh
   const titleBigStyle: React.CSSProperties = { fontWeight: cfg.titleBigBold ? 'bold' : 'medium', fontStyle: cfg.titleBigItalic ? 'italic' : undefined, textAlign: (cfg.titleBigAlign as React.CSSProperties['textAlign']) ?? 'center', whiteSpace: 'pre-line' }
   const titleSmallStyle: React.CSSProperties = { fontWeight: cfg.titleSmallBold ? 'bold' : undefined, fontStyle: cfg.titleSmallItalic ? 'italic' : undefined, textAlign: (cfg.titleSmallAlign as React.CSSProperties['textAlign']) ?? 'center', whiteSpace: 'pre-line' }
   return (
-    <section className="py-10 mx-4 border-t border-gray-200 text-center">
+    <section className="py-10 mx-4 border-t border-[var(--od-divider)] text-center">
       {cfg.koreanLabelVisible !== false && <p className="text-sm mb-1" style={{ color: accent, ...koreanLabelStyle }}>{cfg.koreanTitle ?? '하객 앨범'}</p>}
       {showEnglish && cfg.labelVisible !== false && <p className="text-xs mb-1" style={{ color: accent, fontFamily: 'Georgia, serif', ...labelStyle }}>{cfg.englishTitle ?? 'Guest Album'}</p>}
-      {cfg.titleBigVisible !== false && cfg.titleBig && (
-        <div className="text-sm text-gray-800 mb-1" style={titleBigStyle}>{cfg.titleBig}</div>
+      {bigTitle(cfg.titleBig, cfg.koreanTitle, cfg.titleBigVisible) && (
+        <div className="text-sm text-[var(--od-fg-800)] mb-1" style={titleBigStyle}>{cfg.titleBig}</div>
       )}
       {cfg.titleSmallVisible !== false && cfg.titleSmall && (
-        <div className="text-xs text-gray-400 mb-5" style={titleSmallStyle}>{cfg.titleSmall}</div>
+        <div className="text-xs text-[var(--od-fg-400)] mb-5" style={titleSmallStyle}>{cfg.titleSmall}</div>
       )}
-      <div className="w-full h-20 bg-gray-100 rounded-lg border border-gray-100 flex items-center justify-center text-xs text-gray-400">
-        <Camera size={20} className="mr-2 text-gray-300" strokeWidth={1} />
+      <div className="w-full h-20 bg-[var(--od-surface-muted)] rounded-lg border border-[var(--od-surface-border)] flex items-center justify-center text-xs text-[var(--od-fg-400)]">
+        <Camera size={20} className="mr-2 text-[var(--od-fg-300)]" strokeWidth={1} />
         하객 사진
       </div>
     </section>
@@ -1307,23 +1430,23 @@ function AccountSection({ accent, showEnglish, module }: { accent: string; showE
   const titleSmallStyle: React.CSSProperties = { fontWeight: (cfg.titleSmallBold as boolean) ? 'bold' : undefined, fontStyle: (cfg.titleSmallItalic as boolean) ? 'italic' : undefined, textAlign: ((cfg.titleSmallAlign as string | undefined) ?? 'center') as React.CSSProperties['textAlign'], whiteSpace: 'pre-line' }
 
   return (
-    <section className="py-10 mx-4 border-t border-gray-200 text-center">
+    <section className="py-10 mx-4 border-t border-[var(--od-divider)] text-center">
       {koreanLabelVisible && <p className="text-sm mb-1" style={{ color: accent, ...koreanLabelStyle }}>{koreanLabel}</p>}
       {showEnglish && labelVisible && <p className="text-xs mb-1" style={{ color: accent, fontFamily: 'Georgia, serif', ...labelStyle }}>{englishLabel}</p>}
-      {(cfg.titleBigVisible as boolean) !== false && titleBig && <div className="text-sm text-gray-800 mb-1" style={titleBigStyle}>{titleBig}</div>}
-      {(cfg.titleSmallVisible as boolean) !== false && (cfg.titleSmall as string | undefined) && <div className="text-xs text-gray-400 mb-2" style={titleSmallStyle}>{cfg.titleSmall as string}</div>}
+      {(cfg.titleBigVisible as boolean) !== false && titleBig && <div className="text-sm text-[var(--od-fg-800)] mb-1" style={titleBigStyle}>{titleBig}</div>}
+      {(cfg.titleSmallVisible as boolean) !== false && (cfg.titleSmall as string | undefined) && <div className="text-xs text-[var(--od-fg-400)] mb-2" style={titleSmallStyle}>{cfg.titleSmall as string}</div>}
       <div className="mt-4" />
       {groups.map((group, gi) => {
         const isOpen = !!openMap[gi]
         return (
           <div key={gi} className="mb-3">
             <button
-              className={`w-full flex items-center justify-between px-4 py-3 bg-white text-xs text-gray-700 border border-gray-100 transition-[border-radius] ${isOpen ? 'rounded-t-xl border-b-0' : 'rounded-xl'}`}
+              className={`w-full flex items-center justify-between px-4 py-3 bg-[var(--od-surface)] text-xs text-[var(--od-fg-700)] border border-[var(--od-surface-border)] transition-[border-radius] ${isOpen ? 'rounded-t-xl border-b-0' : 'rounded-xl'}`}
               onClick={() => setOpenMap(m => ({ ...m, [gi]: !m[gi] }))}
             >
               <span>{group.label}</span>
               <motion.span
-                className="text-gray-400"
+                className="text-[var(--od-fg-400)]"
                 animate={{ rotate: isOpen ? 180 : 0 }}
                 transition={{ duration: 0.25, ease: 'easeInOut' }}
               >▼</motion.span>
@@ -1338,16 +1461,16 @@ function AccountSection({ accent, showEnglish, module }: { accent: string; showE
                   transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
                   className="overflow-hidden"
                 >
-                  <div className="bg-white rounded-b-xl border-x border-b border-gray-100 divide-y divide-gray-100">
+                  <div className="bg-[var(--od-surface)] rounded-b-xl border-x border-b border-[var(--od-surface-border)] divide-y divide-[var(--od-surface-border)]">
                     {group.accounts.map((acc, ai) => {
                       const digits = acc.number.replace(/\D/g, '')
                       const isCopied = copied === `${gi}-${ai}`
                       return (
                         <div key={ai} className="flex items-center justify-between px-4 py-3">
                           <div className="text-left">
-                            <p className="text-xs text-gray-500">{acc.bank}</p>
-                            <p className="text-sm font-medium text-gray-800">{acc.number}</p>
-                            <p className="text-xs text-gray-400">{acc.name}</p>
+                            <p className="text-xs text-[var(--od-fg-500)]">{acc.bank}</p>
+                            <p className="text-sm font-medium text-[var(--od-fg-800)]">{acc.number}</p>
+                            <p className="text-xs text-[var(--od-fg-400)]">{acc.name}</p>
                           </div>
                           <button
                             className="text-xs px-3 py-1.5 rounded-lg border transition-colors"
@@ -1397,18 +1520,18 @@ function ContactSection({ accent, content, showEnglish, module }: { accent: stri
   }
 
   return (
-    <section className="py-10 mx-4 border-t border-gray-200 text-center">
+    <section className="py-10 mx-4 border-t border-[var(--od-divider)] text-center">
       {koreanLabelVisible && <p className="text-sm mb-1" style={{ color: accent, ...koreanLabelStyle }}>{koreanLabel}</p>}
       {showEnglish && labelVisible && <p className="text-xs mb-1" style={{ color: accent, fontFamily: 'Georgia, serif', ...labelStyle }}>{englishLabel}</p>}
-      {titleBigVisible && titleBig && <div className="text-sm text-gray-800 mb-1" style={titleBigStyle}>{titleBig}</div>}
-      {(cfg.titleSmallVisible as boolean) !== false && (cfg.titleSmall as string | undefined) && <div className="text-xs text-gray-400 mb-2" style={titleSmallStyle}>{cfg.titleSmall as string}</div>}
+      {titleBigVisible && titleBig && <div className="text-sm text-[var(--od-fg-800)] mb-1" style={titleBigStyle}>{titleBig}</div>}
+      {(cfg.titleSmallVisible as boolean) !== false && (cfg.titleSmall as string | undefined) && <div className="text-xs text-[var(--od-fg-400)] mb-2" style={titleSmallStyle}>{cfg.titleSmall as string}</div>}
       <div className="mt-6 space-y-6">
         {groups.map((group, gi) => (
           <div key={gi}>
-            <div className="flex items-baseline justify-center gap-2 border-b border-gray-200 pb-2 mb-3">
-              <span className="text-sm font-medium text-gray-800">{group.label}</span>
+            <div className="flex items-baseline justify-center gap-2 border-b border-[var(--od-divider)] pb-2 mb-3">
+              <span className="text-sm font-medium text-[var(--od-fg-800)]">{group.label}</span>
               {group.englishLabel && (
-                <span className="text-[11px] text-gray-400 tracking-wider" style={{ fontFamily: 'Georgia, serif' }}>{group.englishLabel}</span>
+                <span className="text-[11px] text-[var(--od-fg-400)] tracking-wider" style={{ fontFamily: 'Georgia, serif' }}>{group.englishLabel}</span>
               )}
             </div>
             <div className="space-y-2">
@@ -1417,30 +1540,35 @@ function ContactSection({ accent, content, showEnglish, module }: { accent: stri
                 const digits = phone.replace(/[^0-9+]/g, '')
                 const disabled = digits.length === 0
                 return (
-                  <div key={ci} className="flex items-center justify-between bg-white border border-gray-100 rounded-xl px-4 py-3">
-                    <span className="text-sm text-gray-700 text-left">{c.name || '\u00A0'}</span>
-                    <div className="flex items-center gap-2">
-                      <button
-                        type="button"
-                        disabled={disabled}
-                        onClick={() => { if (!disabled) window.location.href = `tel:${digits}` }}
-                        className="w-9 h-9 rounded-full flex items-center justify-center transition-opacity disabled:opacity-40"
-                        style={{ backgroundColor: accent, color: '#fff' }}
-                        aria-label="전화"
-                      >
-                        <Phone size={15} strokeWidth={1.8} />
-                      </button>
-                      <button
-                        type="button"
-                        disabled={disabled}
-                        onClick={() => { if (!disabled) window.location.href = `sms:${digits}` }}
-                        className="w-9 h-9 rounded-full flex items-center justify-center transition-opacity disabled:opacity-40"
-                        style={{ backgroundColor: accent, color: '#fff' }}
-                        aria-label="문자"
-                      >
-                        <MessageCircle size={15} strokeWidth={1.8} />
-                      </button>
-                    </div>
+                  <div key={ci} className="flex items-center justify-between bg-[var(--od-surface)] border border-[var(--od-surface-border)] rounded-xl px-4 py-3">
+                    <span className="text-sm text-[var(--od-fg-700)] text-left">{c.name || '\u00A0'}</span>
+                    {/*
+                      번호가 없으면 아이콘 자체를 그리지 않는다.
+                      회색으로 죽은 원형 버튼 두 개가 떠 있으면 고장난 것처럼 보이고,
+                      부고의 유가족처럼 관습상 번호를 적지 않는 항목도 있다.
+                    */}
+                    {!disabled && (
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => { window.location.href = `tel:${digits}` }}
+                          className="w-9 h-9 rounded-full flex items-center justify-center"
+                          style={{ backgroundColor: accent, color: contrastOn(accent) }}
+                          aria-label={`${c.name || '연락처'}에게 전화`}
+                        >
+                          <Phone size={15} strokeWidth={1.8} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { window.location.href = `sms:${digits}` }}
+                          className="w-9 h-9 rounded-full flex items-center justify-center"
+                          style={{ backgroundColor: accent, color: contrastOn(accent) }}
+                          aria-label={`${c.name || '연락처'}에게 문자`}
+                        >
+                          <MessageCircle size={15} strokeWidth={1.8} />
+                        </button>
+                      </div>
+                    )}
                   </div>
                 )
               })}
@@ -1471,12 +1599,12 @@ function RsvpSection({ accent, showEnglish, module, invitationId, live }: { acce
   const buttonLabel = cfg.buttonLabel ?? '참석 여부 알리기'
   return (
     <>
-      <section className="py-10 mx-4 border-t border-gray-200 text-center">
+      <section className="py-10 mx-4 border-t border-[var(--od-divider)] text-center">
         {(cfg.koreanLabelVisible as boolean) !== false && <p className="text-sm mb-1" style={{ color: accent, ...koreanLabelStyle }}>{cfg.koreanTitle ?? '참석 의사'}</p>}
         {showEnglish && labelVisible && <p className="text-xs mb-1" style={{ color: accent, fontFamily: 'Georgia, serif', ...labelStyle }}>{cfg.englishTitle ?? 'RSVP'}</p>}
-        {cfg.titleBigVisible !== false && cfg.titleBig && <div className="text-sm text-gray-800 mb-1" style={titleBigStyle}>{cfg.titleBig}</div>}
-        {cfg.titleSmallVisible !== false && cfg.titleSmall && <div className="text-xs text-gray-400 mb-4" style={titleSmallStyle}>{cfg.titleSmall}</div>}
-        {cfg.deadline && <div className="text-xs text-gray-400 mb-4">{cfg.deadline}까지</div>}
+        {bigTitle(cfg.titleBig, cfg.koreanTitle, cfg.titleBigVisible) && <div className="text-sm text-[var(--od-fg-800)] mb-1" style={titleBigStyle}>{cfg.titleBig}</div>}
+        {cfg.titleSmallVisible !== false && cfg.titleSmall && <div className="text-xs text-[var(--od-fg-400)] mb-4" style={titleSmallStyle}>{cfg.titleSmall}</div>}
+        {cfg.deadline && <div className="text-xs text-[var(--od-fg-400)] mb-4">{cfg.deadline}까지</div>}
         <button
           type="button"
           onClick={() => setOpen(true)}
@@ -1496,7 +1624,10 @@ function DdaySection({ accent, content, showEnglish, module }: { accent: string;
   const target = content.eventDate ? new Date(content.eventDate) : new Date('2026-10-18')
   const today = new Date()
   const diff = Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-  const label = diff > 0 ? `D-${diff}` : diff === 0 ? 'D-Day' : `D+${Math.abs(diff)}`
+  // 지난 행사에 'D+65' 를 크게 띄우는 건 어색하다. showPastDays 를 켠 경우에만 노출한다.
+  const showPastDays = (module.config?.showPastDays as boolean) === true
+  const label = diff > 0 ? `D-${diff}` : diff === 0 ? 'D-Day' : showPastDays ? `D+${Math.abs(diff)}` : ''
+  const pastNotice = diff < 0 && !showPastDays
   const englishTitle = (module.config?.englishTitle as string | undefined) ?? 'D-Day'
   const ddayLabelVisible = (module.config?.labelVisible as boolean) !== false
   const koreanLabelStyle: React.CSSProperties = { fontWeight: (module.config?.koreanLabelBold as boolean) ? 'bold' : undefined, fontStyle: (module.config?.koreanLabelItalic as boolean) ? 'italic' : undefined, textAlign: ((module.config?.koreanLabelAlign as string | undefined) ?? 'center') as React.CSSProperties['textAlign'], whiteSpace: 'pre-line' }
@@ -1504,12 +1635,14 @@ function DdaySection({ accent, content, showEnglish, module }: { accent: string;
   const titleBigStyle: React.CSSProperties = { fontWeight: (module.config?.titleBigBold as boolean) ? 'bold' : 'medium', fontStyle: (module.config?.titleBigItalic as boolean) ? 'italic' : undefined, textAlign: (module.config?.titleBigAlign as React.CSSProperties['textAlign']) ?? 'center', whiteSpace: 'pre-line' }
   const titleSmallStyle: React.CSSProperties = { fontWeight: (module.config?.titleSmallBold as boolean) ? 'bold' : undefined, fontStyle: (module.config?.titleSmallItalic as boolean) ? 'italic' : undefined, textAlign: (module.config?.titleSmallAlign as React.CSSProperties['textAlign']) ?? 'center', whiteSpace: 'pre-line' }
   return (
-    <section className="py-10 mx-4 border-t border-gray-200 text-center">
+    <section className="py-10 mx-4 border-t border-[var(--od-divider)] text-center">
       {(module.config?.koreanLabelVisible as boolean) !== false && <p className="text-sm mb-1" style={{ color: accent, ...koreanLabelStyle }}>{(module.config?.koreanTitle as string | undefined) ?? '남은 기한'}</p>}
       {showEnglish && ddayLabelVisible && <p className="text-xs mb-1" style={{ color: accent, fontFamily: 'Georgia, serif', ...ddayLabelStyle }}>{englishTitle}</p>}
-      {(module.config?.titleBigVisible as boolean) !== false && (module.config?.titleBig as string | undefined) && <div className="text-sm text-gray-800 mb-1" style={titleBigStyle}>{module.config?.titleBig as string}</div>}
-      {(module.config?.titleSmallVisible as boolean) !== false && (module.config?.titleSmall as string | undefined) && <div className="text-xs text-gray-400 mb-3" style={titleSmallStyle}>{module.config?.titleSmall as string}</div>}
-      <div className="text-4xl font-light tracking-wider" style={{ color: accent }}>{label}</div>
+      {bigTitle(module.config?.titleBig as string | undefined, module.config?.koreanTitle as string | undefined, module.config?.titleBigVisible as boolean | undefined) && <div className="text-sm text-[var(--od-fg-800)] mb-1" style={titleBigStyle}>{module.config?.titleBig as string}</div>}
+      {(module.config?.titleSmallVisible as boolean) !== false && (module.config?.titleSmall as string | undefined) && <div className="text-xs text-[var(--od-fg-400)] mb-3" style={titleSmallStyle}>{module.config?.titleSmall as string}</div>}
+      {pastNotice
+        ? <div className="text-sm text-[var(--od-fg-400)]">행사가 종료되었습니다</div>
+        : <div className="text-4xl font-light tracking-wider" style={{ color: accent }}>{label}</div>}
     </section>
   )
 }
@@ -1540,19 +1673,19 @@ function VideoSection({ accent, showEnglish, module }: { accent: string; showEng
     <>
       {koreanLabelVisible && <p className="text-sm mb-1" style={{ color: accent, ...koreanLabelStyle }}>{koreanTitle}</p>}
       {showEnglish && labelVisible && <p className="text-xs mb-1" style={{ color: accent, fontFamily: 'Georgia, serif', ...labelStyle }}>{englishTitle}</p>}
-      {titleBigVisible && titleBig && <div className="text-sm text-gray-800 mb-1" style={titleBigStyle}>{titleBig}</div>}
-      {titleSmallVisible && titleSmall && <div className="text-xs text-gray-400 mb-4" style={titleSmallStyle}>{titleSmall}</div>}
+      {titleBigVisible && titleBig && <div className="text-sm text-[var(--od-fg-800)] mb-1" style={titleBigStyle}>{titleBig}</div>}
+      {titleSmallVisible && titleSmall && <div className="text-xs text-[var(--od-fg-400)] mb-4" style={titleSmallStyle}>{titleSmall}</div>}
     </>
   )
 
   // videoId 없을 때 placeholder
   if (!videoId) {
     return (
-      <section className="py-10 mx-4 border-t border-gray-200 text-center">
+      <section className="py-10 mx-4 border-t border-[var(--od-divider)] text-center">
         {labelHeader}
-        <div className="w-full aspect-video bg-gray-100 rounded-xl border border-gray-100 flex flex-col items-center justify-center gap-2">
-          <Film size={28} className="text-gray-300" strokeWidth={1} />
-          <p className="text-xs text-gray-400">YouTube URL을 입력해 주세요</p>
+        <div className="w-full aspect-video bg-[var(--od-surface-muted)] rounded-xl border border-[var(--od-surface-border)] flex flex-col items-center justify-center gap-2">
+          <Film size={28} className="text-[var(--od-fg-300)]" strokeWidth={1} />
+          <p className="text-xs text-[var(--od-fg-400)]">YouTube URL을 입력해 주세요</p>
         </div>
       </section>
     )
@@ -1562,7 +1695,7 @@ function VideoSection({ accent, showEnglish, module }: { accent: string; showEng
 
   if (variant === 'video_cinema') {
     return (
-      <section className="border-t border-gray-200 bg-black relative">
+      <section className="border-t border-[var(--od-divider)] bg-black relative">
         {(koreanLabelVisible || (showEnglish && labelVisible)) && (
           <div className="absolute top-3 left-0 right-0 z-10 px-4 text-center">
             {koreanLabelVisible && <p className="text-sm" style={{ color: '#fff', ...koreanLabelStyle }}>{koreanTitle}</p>}
@@ -1576,9 +1709,9 @@ function VideoSection({ accent, showEnglish, module }: { accent: string; showEng
 
   if (variant === 'video_polaroid') {
     return (
-      <section className="py-10 mx-6 border-t border-gray-200 text-center">
+      <section className="py-10 mx-6 border-t border-[var(--od-divider)] text-center">
         {labelHeader}
-        <div className="bg-white p-3 pb-10 rounded-md border border-gray-100 -rotate-1 mx-2">
+        <div className="bg-[var(--od-surface)] p-3 pb-10 rounded-md border border-[var(--od-surface-border)] -rotate-1 mx-2">
           <div className="rounded-sm overflow-hidden">{player}</div>
         </div>
       </section>
@@ -1587,10 +1720,10 @@ function VideoSection({ accent, showEnglish, module }: { accent: string; showEng
 
   if (variant === 'video_floating_bordered') {
     return (
-      <section className="py-10 mx-4 border-t border-gray-200 text-center">
+      <section className="py-10 mx-4 border-t border-[var(--od-divider)] text-center">
         {labelHeader}
-        <div className="bg-gray-50 p-3 rounded-3xl">
-          <div className="rounded-2xl overflow-hidden border border-gray-100">{player}</div>
+        <div className="bg-[var(--od-surface-muted)] p-3 rounded-3xl">
+          <div className="rounded-2xl overflow-hidden border border-[var(--od-surface-border)]">{player}</div>
         </div>
       </section>
     )
@@ -1598,7 +1731,7 @@ function VideoSection({ accent, showEnglish, module }: { accent: string; showEng
 
   if (variant === 'video_fullbleed') {
     return (
-      <section className="border-t border-gray-200">
+      <section className="border-t border-[var(--od-divider)]">
         {(koreanLabelVisible || (showEnglish && labelVisible)) && (
           <div className="pt-6 pb-3 text-center">
             {koreanLabelVisible && <p className="text-sm" style={{ color: accent, ...koreanLabelStyle }}>{koreanTitle}</p>}
@@ -1612,13 +1745,13 @@ function VideoSection({ accent, showEnglish, module }: { accent: string; showEng
 
   if (variant === 'video_carousel') {
     return (
-      <section className="py-10 mx-4 border-t border-gray-200 text-center">
+      <section className="py-10 mx-4 border-t border-[var(--od-divider)] text-center">
         {labelHeader}
-        <div className="rounded-2xl overflow-hidden border border-gray-100">{player}</div>
+        <div className="rounded-2xl overflow-hidden border border-[var(--od-surface-border)]">{player}</div>
         <div className="mt-3 flex justify-center gap-1.5">
           <span className="block w-1.5 h-1.5 rounded-full" style={{ backgroundColor: accent }} />
-          <span className="block w-1.5 h-1.5 rounded-full bg-gray-100" />
-          <span className="block w-1.5 h-1.5 rounded-full bg-gray-100" />
+          <span className="block w-1.5 h-1.5 rounded-full bg-[var(--od-surface-muted)]" />
+          <span className="block w-1.5 h-1.5 rounded-full bg-[var(--od-surface-muted)]" />
         </div>
       </section>
     )
@@ -1626,12 +1759,12 @@ function VideoSection({ accent, showEnglish, module }: { accent: string; showEng
 
   if (variant === 'video_thumbnail_row') {
     return (
-      <section className="py-10 mx-4 border-t border-gray-200 text-center">
+      <section className="py-10 mx-4 border-t border-[var(--od-divider)] text-center">
         {labelHeader}
-        <div className="rounded-2xl overflow-hidden border border-gray-100">{player}</div>
+        <div className="rounded-2xl overflow-hidden border border-[var(--od-surface-border)]">{player}</div>
         <div className="mt-3 grid grid-cols-3 gap-1.5">
           {[0, 1, 2].map(i => (
-            <div key={i} className="aspect-video bg-gray-100 rounded-md border border-gray-100" />
+            <div key={i} className="aspect-video bg-[var(--od-surface-muted)] rounded-md border border-[var(--od-surface-border)]" />
           ))}
         </div>
       </section>
@@ -1640,9 +1773,9 @@ function VideoSection({ accent, showEnglish, module }: { accent: string; showEng
 
   // video_single_card (default)
   return (
-    <section className="py-10 mx-4 border-t border-gray-200 text-center">
+    <section className="py-10 mx-4 border-t border-[var(--od-divider)] text-center">
       {labelHeader}
-      <div className="rounded-2xl overflow-hidden border border-gray-100">{player}</div>
+      <div className="rounded-2xl overflow-hidden border border-[var(--od-surface-border)]">{player}</div>
     </section>
   )
 }
@@ -1653,16 +1786,16 @@ function VideoSection({ accent, showEnglish, module }: { accent: string; showEng
 function EndingSection({ module }: { module: InvitationModule }) {
   const cfg = module.config as { image?: string; imageCrop?: ImageCropData; message?: string }
   return (
-    <section className="border-t border-gray-200">
+    <section className="border-t border-[var(--od-divider)]">
       <ClickableImage
         src={cfg.image}
         crop={cfg.imageCrop}
         fallbackAspect="4/3"
-        placeholder={<ImageIcon size={40} className="text-gray-300" strokeWidth={1} />}
+        placeholder={<ImageIcon size={40} className="text-[var(--od-fg-300)]" strokeWidth={1} />}
       />
       {cfg.message && (cfg as Record<string, unknown>).messageVisible !== false && (
         <div className="py-8 text-center mx-4">
-          <RichText html={cfg.message} className="text-xs text-gray-500 leading-6" />
+          <RichText html={cfg.message} className="text-xs text-[var(--od-fg-500)] leading-6" />
         </div>
       )}
     </section>
@@ -1674,12 +1807,12 @@ function SimpleSection({ label, accent, showEnglish, englishLabel }: {
   label: string; accent: string; showEnglish: boolean; englishLabel?: string
 }) {
   return (
-    <section className="py-10 mx-4 border-t border-gray-200 text-center">
+    <section className="py-10 mx-4 border-t border-[var(--od-divider)] text-center">
       {showEnglish && englishLabel && (
         <p className="italic text-xs mb-1" style={{ color: accent, fontFamily: 'Georgia, serif' }}>{englishLabel}</p>
       )}
       <div className="text-sm mb-4" style={{ color: accent }}>{label}</div>
-      <div className="w-full h-20 bg-gray-100 rounded-lg border border-gray-100" />
+      <div className="w-full h-20 bg-[var(--od-surface-muted)] rounded-lg border border-[var(--od-surface-border)]" />
     </section>
   )
 }
@@ -1703,7 +1836,7 @@ function renderModule(
     case 'photo_frame': return <PhotoFrameSection accent={accent} fontFamily={fontFamily} showEnglish={showEnglish} module={module} />
     case 'greeting': return <GreetingSection accent={accent} content={content} showEnglish={showEnglish} />
     case 'datetime': return <DatetimeSection accent={accent} content={content} showEnglish={showEnglish} />
-    case 'venue': return <VenueSection accent={accent} content={content} showEnglish={showEnglish} module={module} />
+    case 'venue': return <VenueSection accent={accent} content={content} showEnglish={showEnglish} module={module} isDark={relativeLuminance(bgColor) < 0.18} />
     case 'profile': return <ProfileSection accent={accent} content={content} showEnglish={showEnglish} module={module} />
     case 'solo_profile': return <SoloProfileSection accent={accent} content={content} showEnglish={showEnglish} module={module} />
     case 'timeline': return <TimelineSection accent={accent} showEnglish={showEnglish} module={module} />
@@ -1713,7 +1846,7 @@ function renderModule(
     case 'tab': return <TabSection accent={accent} showEnglish={showEnglish} module={module} readOnly={readOnly} />
     case 'slide': return <SlideSection accent={accent} showEnglish={showEnglish} module={module} />
     case 'gallery': return <GallerySection accent={accent} showEnglish={showEnglish} module={module} />
-    case 'guestbook': return <GuestbookSection accent={accent} showEnglish={showEnglish} module={module} />
+    case 'guestbook': return <GuestbookSection accent={accent} showEnglish={showEnglish} module={module} eventDate={content.eventDate} />
     case 'photo_share': {
       // 에디터/발행 뷰 모두 동일한 그리드를 보여준다. 단 에디터에서는 업로드 버튼을
       // '발행 후 사용 가능' 안내로 대체한다 (upload-token 라우트가 isPublished=true 만 허용).
@@ -1806,9 +1939,12 @@ interface PreviewPaneProps {
   /** 실제 발행 하객 뷰인지 여부. true 일 때만 RSVP 제출이 API 로 전송된다.
    * 에디터 프리뷰(기본 false)에서는 제출이 no-op 로 유지된다. */
   live?: boolean
+  /** 카테고리별 기본 문구(섹션 라벨·공유 버튼·샘플 방명록) 결정용.
+   * 미지정 시 store.categorySlug 로 폴백한다. */
+  categorySlug?: string | null
 }
 
-export default function PreviewPane({ panelRef, contentOverride, modulesOverride, stylesOverride, readOnly, invitationId, live = false }: PreviewPaneProps) {
+export default function PreviewPane({ panelRef, contentOverride, modulesOverride, stylesOverride, readOnly, invitationId, live = false, categorySlug }: PreviewPaneProps) {
   const store = useEditorStore()
   const content = contentOverride ?? store.content
   const modules = modulesOverride ?? store.modules
@@ -1824,7 +1960,12 @@ export default function PreviewPane({ panelRef, contentOverride, modulesOverride
   const fontFamily = FONT_MAP[styles.font ?? '고운돋움'] ?? FONT_MAP['고운돋움']
   const showEnglish = styles.showEnglishTitle ?? true
   const fontSize = styles.fontSize === 'large' ? '15px' : styles.fontSize === 'xlarge' ? '17px' : '14px'
-  const bgEffect = getBgEffect(styles.bgEffect)
+  const isDarkTheme = relativeLuminance(bgColor) < 0.18
+  const themeVars = surfaceVars(bgColor)
+  const bgEffect = getBgEffect(styles.bgEffect, isDarkTheme)
+  const effectiveCategory = categorySlug ?? store.categorySlug
+  const labels = useMemo(() => categoryLabels(effectiveCategory), [effectiveCategory])
+  const useSolidKakao = !isDarkTheme && effectiveCategory !== 'memorial'
 
   useEffect(() => {
     const fontUrl = FONT_URLS[styles.font ?? '고운돋움']
@@ -1874,6 +2015,7 @@ export default function PreviewPane({ panelRef, contentOverride, modulesOverride
   }
 
   return (
+    <LabelsContext.Provider value={labels}>
     <ImageLightboxProvider zoomEnabled={!(styles.zoomDisabled ?? true)}>
     <div
       data-preview
@@ -1881,11 +2023,12 @@ export default function PreviewPane({ panelRef, contentOverride, modulesOverride
       className="w-[375px] text-center relative"
       style={{
         backgroundColor: spacingColor,
-        color: '#333',
         fontFamily,
         fontSize,
         lineHeight: '2rem',
         '--spacing-color': spacingColor,
+        ...themeVars,
+        color: 'var(--od-body)',
         padding: '0 10px',
         boxSizing: 'border-box',
       } as React.CSSProperties}
@@ -1901,22 +2044,22 @@ export default function PreviewPane({ panelRef, contentOverride, modulesOverride
         <section className="pb-10">
           <header className="pt-10 pb-8 tracking-widest" style={{ color: accent, fontFamily, fontSize: '1.125rem' }}>
             <div>{firstName}</div>
-            <div className="my-1 text-gray-400 text-sm">그리고</div>
+            <div className="my-1 text-[var(--od-fg-400)] text-sm">그리고</div>
             <div>{secondName}</div>
           </header>
           <div className="mx-3.5 border-8 border-white">
-            <div className="w-full aspect-[4/5] bg-gray-200 flex items-center justify-center overflow-hidden">
+            <div className="w-full aspect-[4/5] bg-[var(--od-placeholder)] flex items-center justify-center overflow-hidden">
               {content.coverImage ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img src={content.coverImage} alt="커버" className="w-full h-full object-cover" />
               ) : (
-                <ImageIcon size={40} className="text-gray-300" strokeWidth={1} />
+                <ImageIcon size={40} className="text-[var(--od-fg-300)]" strokeWidth={1} />
               )}
             </div>
-            <div className="py-6 bg-white text-center">
-              <div className="text-xs text-gray-600">{dateStr} {timeStr}</div>
+            <div className="py-6 bg-[var(--od-surface)] text-center">
+              <div className="text-xs text-[var(--od-fg-600)]">{dateStr} {timeStr}</div>
               {(content.venue?.name || content.venue?.hall) && (
-                <div className="text-xs text-gray-400 mt-1">
+                <div className="text-xs text-[var(--od-fg-400)] mt-1">
                   {content.venue.name}{content.venue.hall ? ` ${content.venue.hall}` : ''}
                 </div>
               )}
@@ -1943,19 +2086,29 @@ export default function PreviewPane({ panelRef, contentOverride, modulesOverride
         })
       })()}
 
-      <footer className="py-8 border-t border-gray-200">
+      <footer className="py-8 border-t border-[var(--od-divider)]">
         <div className="space-y-2 mx-4">
-          <button className="w-full py-3 rounded-xl text-xs font-medium" style={{ backgroundColor: '#FAE100', color: '#3A1D1D' }}>
-            카카오톡으로 공유하기
+          {/*
+            카카오 노란색은 밝은 템플릿에서만 쓴다. 다크 템플릿(VIP 나이트 등)과
+            부고에서는 풀블리드 형광 노랑이 화면 톤을 깨므로 아웃라인 변형으로 대체한다.
+          */}
+          <button
+            className="w-full py-3 rounded-xl text-xs font-medium border"
+            style={useSolidKakao
+              ? { backgroundColor: '#FAE100', color: '#3A1D1D', borderColor: '#FAE100' }
+              : { backgroundColor: 'transparent', color: accent, borderColor: accent }}
+          >
+            {labels.kakaoShare}
           </button>
-          <button className="w-full py-3 rounded-xl text-xs border border-gray-200 text-gray-600">
-            청첩장 주소 복사하기
+          <button className="w-full py-3 rounded-xl text-xs border border-[var(--od-divider)] text-[var(--od-fg-600)]">
+            {labels.copyShare}
           </button>
         </div>
-        <div className="mt-6 text-xs text-gray-300">Copyright 2025. OPENDAY. All rights reserved.</div>
+        <div className="mt-6 text-xs text-[var(--od-fg-300)]">Copyright 2025. OPENDAY. All rights reserved.</div>
       </footer>
     </div>
     </div>
     </ImageLightboxProvider>
+    </LabelsContext.Provider>
   )
 }

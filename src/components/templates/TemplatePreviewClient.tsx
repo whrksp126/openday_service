@@ -8,9 +8,10 @@ interface Props {
   content: InvitationContent
   modules: InvitationModule[]
   styles: InvitationStyles
+  categorySlug?: string | null
 }
 
-export default function TemplatePreviewClient({ content, modules, styles }: Props) {
+export default function TemplatePreviewClient({ content, modules, styles, categorySlug }: Props) {
   return (
     <div className="flex justify-center">
       <div className="relative w-[375px]">
@@ -22,6 +23,7 @@ export default function TemplatePreviewClient({ content, modules, styles }: Prop
           contentOverride={content}
           modulesOverride={modules}
           stylesOverride={styles}
+          categorySlug={categorySlug}
         />
       </div>
     </div>
