@@ -12,7 +12,7 @@
 //   - 초대장 삭제 → users/{userId}/invitations/{invitationId}/ 정리
 //   - 템플릿 자산 갱신 → templates/{templateId}/ 안에서만
 //
-// 베이스 URL은 빌드 타임 상수(모든 환경 dev/stg/prod/local 동일 버킷). 이렇게 두면
+// 베이스 URL은 빌드 타임 상수(모든 환경 dev/prod/local 동일 버킷). 이렇게 두면
 // 클라이언트 컴포넌트도 NEXT_PUBLIC_ 환경 변수 없이 그대로 URL을 사용할 수 있다.
 //
 // 서버 사이드 업로드 URL 생성은 `src/lib/objectstore.ts`의 `getPublicUrl(key)`를 사용.

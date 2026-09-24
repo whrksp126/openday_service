@@ -9,7 +9,6 @@ out/
 .env
 .env.local
 .env.dev
-.env.stg
 .env_backup/
 
 # Debug

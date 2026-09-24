@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # OpenDay V3 배포 스크립트
-# 사용법: ./deploy.sh [dev|stg|prod]
+# 사용법: ./deploy.sh [dev|prod]
 
 ENV=$1
 
@@ -12,7 +12,7 @@ SSH_PORT="222"
 REMOTE_DIR="/srv/projects/openday"
 
 if [[ -z "$ENV" ]]; then
-    echo "사용법: ./deploy.sh [dev|stg|prod]"
+    echo "사용법: ./deploy.sh [dev|prod]"
     exit 1
 fi
 
@@ -23,12 +23,6 @@ case $ENV in
         DOMAIN="dev-openday.ghmate.com"
         ENV_FILE=".env.dev"
         ;;
-    stg)
-        COMPOSE_FILE="docker-compose.stg.yml"
-        PROJECT_NAME="openday_stg"
-        DOMAIN="stg-openday.ghmate.com"
-        ENV_FILE=".env.stg"
-        ;;
     prod)
         COMPOSE_FILE="docker-compose.yml"
         PROJECT_NAME="openday_prod"
@@ -36,7 +30,7 @@ case $ENV in
         ENV_FILE=".env"
         ;;
     *)
-        echo "잘못된 환경: $ENV (dev, stg, prod 중 하나를 입력하세요)"
+        echo "잘못된 환경: $ENV (dev, prod 중 하나를 입력하세요)"
         exit 1
         ;;
 esac
