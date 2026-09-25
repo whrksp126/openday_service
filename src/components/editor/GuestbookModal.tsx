@@ -12,7 +12,8 @@ interface Props {
   onClose: () => void
   config: GuestbookModuleConfig
   accent: string
-  onSubmit: (entry: GuestbookEntry) => void
+  /** 발행 뷰에서는 서버 저장을 기다린다. 실패 시 throw 하면 모달이 열린 채 에러를 보여준다. */
+  onSubmit: (entry: GuestbookEntry) => void | Promise<void>
 }
 
 export default function GuestbookModal({ open, onClose, config, accent, onSubmit }: Props) {
@@ -20,6 +21,8 @@ export default function GuestbookModal({ open, onClose, config, accent, onSubmit
   const [message, setMessage] = useState('')
   const [password, setPassword] = useState('')
   const [passwordTouched, setPasswordTouched] = useState(false)
+  const [submitting, setSubmitting] = useState(false)
+  const [errorMsg, setErrorMsg] = useState('')
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => { setMounted(true) }, [])
@@ -30,6 +33,8 @@ export default function GuestbookModal({ open, onClose, config, accent, onSubmit
       setMessage('')
       setPassword('')
       setPasswordTouched(false)
+      setSubmitting(false)
+      setErrorMsg('')
     }
   }, [open])
 
@@ -49,7 +54,7 @@ export default function GuestbookModal({ open, onClose, config, accent, onSubmit
   const isPasswordValid = /^\d{4}$/.test(password)
   const passwordError = passwordTouched && !isPasswordValid
   const canSubmit =
-    name.trim().length > 0 && message.trim().length > 0 && isPasswordValid
+    name.trim().length > 0 && message.trim().length > 0 && isPasswordValid && !submitting
 
   // 숫자만 통과, 최대 4자리. 한글/영문/특수문자 자동 제거.
   const handlePasswordChange = (raw: string) => {
@@ -57,16 +62,24 @@ export default function GuestbookModal({ open, onClose, config, accent, onSubmit
     setPassword(digitsOnly)
   }
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!canSubmit) return
-    onSubmit({
-      id: nanoid(),
-      name: name.trim(),
-      message: message.trim(),
-      password: password.trim(),
-      createdAt: new Date().toISOString(),
-    })
-    onClose()
+    setSubmitting(true)
+    setErrorMsg('')
+    try {
+      await onSubmit({
+        id: nanoid(),
+        name: name.trim(),
+        message: message.trim(),
+        password: password.trim(),
+        createdAt: new Date().toISOString(),
+      })
+      onClose()
+    } catch (e) {
+      setErrorMsg(e instanceof Error ? e.message : '등록에 실패했어요. 잠시 후 다시 시도해주세요.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   if (!mounted) return null
@@ -156,6 +169,7 @@ export default function GuestbookModal({ open, onClose, config, accent, onSubmit
             </div>
 
             <div className="px-6 py-5">
+              {errorMsg && <p className="text-xs text-red-500 mb-3 text-center">{errorMsg}</p>}
               <button
                 type="button"
                 onClick={handleSubmit}
@@ -167,7 +181,7 @@ export default function GuestbookModal({ open, onClose, config, accent, onSubmit
                     : { backgroundColor: '#d1d5db', color: 'white' }
                 }
               >
-                {submitLabel}
+                {submitting ? '등록 중…' : submitLabel}
               </button>
             </div>
           </motion.div>

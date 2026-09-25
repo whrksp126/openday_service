@@ -1272,7 +1272,7 @@ function sampleGuestbookTime(eventDate?: string): string {
   const d = new Date(`${eventDate}T00:00:00.000Z`)
   if (Number.isNaN(d.getTime())) return GUESTBOOK_SAMPLE_FALLBACK
   d.setUTCDate(d.getUTCDate() - 1)
-  d.setUTCHours(20, 12, 0, 0)
+  d.setUTCHours(11, 12, 0, 0) // KST 20:12
   return d.toISOString()
 }
 
@@ -1289,17 +1289,41 @@ function guestbookSampleEntries(labels: CategoryLabels, eventDate?: string): Gue
   ]
 }
 
-// UTC 기준으로 포맷 — 서버/클라이언트 타임존 차이로 인한 hydration mismatch 회피.
+// KST 고정 오프셋으로 포맷 — 브라우저 타임존과 무관하게 결정적이라 hydration mismatch 가 없다.
 function formatGuestbookDate(iso: string): string {
-  const d = new Date(iso)
+  const d = new Date(new Date(iso).getTime() + 9 * 3600_000)
   const pad = (n: number) => String(n).padStart(2, '0')
   return `${d.getUTCFullYear()}-${pad(d.getUTCMonth() + 1)}-${pad(d.getUTCDate())} ${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}`
 }
 
-function GuestbookSection({ accent, showEnglish, module, eventDate }: { accent: string; showEnglish: boolean; module: InvitationModule; eventDate?: string }) {
+type GuestbookApiEntry = { id: string; authorName: string; message: string; createdAt: string }
+
+function fromApiEntry(e: GuestbookApiEntry): GuestbookEntry {
+  return { id: e.id, name: e.authorName, message: e.message, password: '', createdAt: e.createdAt }
+}
+
+function GuestbookSection({ accent, showEnglish, module, eventDate, invitationId, live }: { accent: string; showEnglish: boolean; module: InvitationModule; eventDate?: string; invitationId?: string; live?: boolean }) {
   const cfg = module.config as GuestbookSectionConfig
   const labels = useLabels()
-  const [entries, setEntries] = useState<GuestbookEntry[]>(() => guestbookSampleEntries(labels, eventDate))
+  // 발행 뷰(live)는 DB 엔트리를, 에디터 프리뷰는 샘플을 보여준다
+  const isLive = !!live && !!invitationId
+  const [entries, setEntries] = useState<GuestbookEntry[]>(() => (isLive ? [] : guestbookSampleEntries(labels, eventDate)))
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null)
+  const [deletePassword, setDeletePassword] = useState('')
+  const [deleteError, setDeleteError] = useState('')
+  const [deleting, setDeleting] = useState(false)
+
+  useEffect(() => {
+    if (!isLive) return
+    let cancelled = false
+    fetch(`/api/invitations/${invitationId}/guestbook`)
+      .then(r => (r.ok ? r.json() : null))
+      .then((data: { entries?: GuestbookApiEntry[] } | null) => {
+        if (!cancelled && data?.entries) setEntries(data.entries.map(fromApiEntry))
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [isLive, invitationId])
   const [open, setOpen] = useState(false)
   const pageSize = cfg.pageSize ?? 3
   const [visibleCount, setVisibleCount] = useState(pageSize)
@@ -1313,14 +1337,59 @@ function GuestbookSection({ accent, showEnglish, module, eventDate }: { accent: 
   const visibleEntries = entries.slice(0, visibleCount)
   const hasMore = entries.length > visibleCount
 
-  const addEntry = (entry: GuestbookEntry) => {
+  const addEntry = async (entry: GuestbookEntry) => {
+    if (isLive) {
+      const res = await fetch(`/api/invitations/${invitationId}/guestbook`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ authorName: entry.name, message: entry.message, password: entry.password }),
+      })
+      if (!res.ok) throw new Error('등록에 실패했어요. 잠시 후 다시 시도해주세요.')
+      const data = (await res.json()) as { entry: GuestbookApiEntry }
+      entry = fromApiEntry(data.entry)
+    }
     setEntries(prev => [entry, ...prev])
     setVisibleCount(v => v + 1)
   }
 
-  // 에디터 프리뷰에서는 초대장 소유자로 간주하여 확인 없이 로컬 삭제
+  const closeDelete = () => {
+    setDeleteTarget(null)
+    setDeletePassword('')
+    setDeleteError('')
+  }
+
+  // 에디터 프리뷰에서는 초대장 소유자로 간주하여 확인 없이 로컬 삭제.
+  // 발행 뷰에서는 작성 시 입력한 비밀번호로 서버에서 삭제한다.
   const removeEntry = (id: string) => {
-    setEntries(prev => prev.filter(e => e.id !== id))
+    if (!isLive) {
+      setEntries(prev => prev.filter(e => e.id !== id))
+      return
+    }
+    setDeleteTarget(prev => (prev === id ? null : id))
+    setDeletePassword('')
+    setDeleteError('')
+  }
+
+  const confirmDelete = async () => {
+    if (!deleteTarget || deleting || !/^\d{4}$/.test(deletePassword)) return
+    setDeleting(true)
+    setDeleteError('')
+    try {
+      const res = await fetch(`/api/invitations/${invitationId}/guestbook/${deleteTarget}`, {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password: deletePassword }),
+      })
+      if (res.status === 403 || res.status === 401) throw new Error('비밀번호가 일치하지 않아요.')
+      if (!res.ok) throw new Error('삭제에 실패했어요. 잠시 후 다시 시도해주세요.')
+      const removedId = deleteTarget
+      setEntries(prev => prev.filter(e => e.id !== removedId))
+      closeDelete()
+    } catch (e) {
+      setDeleteError(e instanceof Error ? e.message : '삭제에 실패했어요.')
+    } finally {
+      setDeleting(false)
+    }
   }
 
   return (
@@ -1364,6 +1433,36 @@ function GuestbookSection({ accent, showEnglish, module, eventDate }: { accent: 
                   <p className="text-sm text-[var(--od-fg-800)] whitespace-pre-line leading-6">{entry.message}</p>
                   <p className="text-xs text-[var(--od-fg-400)] text-right mt-3">{formatGuestbookDate(entry.createdAt)}</p>
                 </div>
+                {deleteTarget === entry.id && (
+                  <div className="border-t border-[var(--od-surface-border)] mt-3 pt-3">
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="password"
+                        inputMode="numeric"
+                        maxLength={4}
+                        value={deletePassword}
+                        placeholder="작성 시 비밀번호 4자리"
+                        onChange={(e) => setDeletePassword(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                        onKeyDown={(e) => { if (e.key === 'Enter') confirmDelete() }}
+                        className="flex-1 min-w-0 bg-white border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-800 placeholder:text-gray-400 focus:outline-none focus:border-gray-400"
+                        aria-label="방명록 비밀번호"
+                      />
+                      <button
+                        type="button"
+                        onClick={confirmDelete}
+                        disabled={deleting || deletePassword.length !== 4}
+                        className="px-3 py-2 rounded-lg text-xs text-white disabled:opacity-50"
+                        style={{ backgroundColor: accent }}
+                      >
+                        {deleting ? '삭제 중…' : '삭제'}
+                      </button>
+                      <button type="button" onClick={closeDelete} className="px-2 py-2 text-xs text-[var(--od-fg-400)]">
+                        취소
+                      </button>
+                    </div>
+                    {deleteError && <p className="text-xs text-red-500 mt-2">{deleteError}</p>}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -1846,7 +1945,7 @@ function renderModule(
     case 'tab': return <TabSection accent={accent} showEnglish={showEnglish} module={module} readOnly={readOnly} />
     case 'slide': return <SlideSection accent={accent} showEnglish={showEnglish} module={module} />
     case 'gallery': return <GallerySection accent={accent} showEnglish={showEnglish} module={module} />
-    case 'guestbook': return <GuestbookSection accent={accent} showEnglish={showEnglish} module={module} eventDate={content.eventDate} />
+    case 'guestbook': return <GuestbookSection accent={accent} showEnglish={showEnglish} module={module} eventDate={content.eventDate} invitationId={invitationId} live={live} />
     case 'photo_share': {
       // 에디터/발행 뷰 모두 동일한 그리드를 보여준다. 단 에디터에서는 업로드 버튼을
       // '발행 후 사용 가능' 안내로 대체한다 (upload-token 라우트가 isPublished=true 만 허용).

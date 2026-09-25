@@ -3,6 +3,7 @@ import { z } from 'zod'
 import bcrypt from 'bcryptjs'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { findEditableInvitation } from '@/lib/invitation-access'
 
 const CreateSchema = z.object({
   authorName: z.string().min(1).max(40),
@@ -12,8 +13,15 @@ const CreateSchema = z.object({
 
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const invitation = await prisma.invitation.findUnique({ where: { id }, select: { id: true } })
+  const invitation = await prisma.invitation.findUnique({ where: { id }, select: { id: true, isPublished: true } })
   if (!invitation) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+  // 비공개 초대장은 소유자·짝꿍만 조회 가능. 존재 여부 노출을 막기 위해 404로 응답
+  if (!invitation.isPublished) {
+    const session = await auth()
+    const editable = session?.user?.id ? await findEditableInvitation(id, session.user.id) : null
+    if (!editable) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  }
 
   const entries = await prisma.guestbookEntry.findMany({
     where: { invitationId: id },
